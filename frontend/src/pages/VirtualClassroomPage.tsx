@@ -105,14 +105,23 @@ const fetchQuestions = async () => {
 
       setClase({ ...classData, is_completed: !!completion });
 
-      // If recorded, fetch the temporary access link
-      if (classData.status === 'RECORDED') {
-        const res = await fetch(`${API_URL}/courses/classes/${lessonId}/recording-link`, {
-          headers: { 'Authorization': `Bearer ${session?.access_token}` }
-        });
-        if (res.ok) {
-          const linkData = await res.json();
-          setRecordingLink(linkData.download_link);
+      // Priority 1: Use direct video_url if available in database
+      if (classData.video_url) {
+        setRecordingLink(classData.video_url);
+      }
+
+      // Priority 2: Fetch temporary access link if recorded but no direct URL yet
+      if (classData.status === 'RECORDED' && !classData.video_url) {
+        try {
+          const res = await fetch(`${API_URL}/courses/classes/${lessonId}/recording-link`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          });
+          if (res.ok) {
+            const linkData = await res.json();
+            setRecordingLink(linkData.download_link);
+          }
+        } catch (err) {
+          console.error('Error fetching dynamic recording link:', err);
         }
       }
 

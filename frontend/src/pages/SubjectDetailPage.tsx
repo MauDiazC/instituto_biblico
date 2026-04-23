@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { formatToLocal } from '../utils/date';
 
 interface Clase {
   id: number;
@@ -146,7 +147,7 @@ const SubjectDetailPage: React.FC = () => {
                           <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
                         )}
                         <span className="text-[10px] text-on-surface-variant font-medium">
-                          {clase.status === 'SCHEDULED' ? new Date(clase.scheduled_at).toLocaleString() : 'Disponible'}
+                          {clase.status === 'SCHEDULED' ? formatToLocal(clase.scheduled_at) : 'Disponible'}
                         </span>
                       </div>
                     </div>

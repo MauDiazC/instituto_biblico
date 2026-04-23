@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { UserCheck, ListTodo, ArrowRight, Users, BookOpen, Video, Filter, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import { parseUTC } from '../utils/date';
 
 interface Course {
   id: number;
@@ -97,7 +98,7 @@ const TeacherDashboardPage: React.FC = () => {
           const classData = clases[0] as any;
           setNextClass(classData);
           
-          const startTime = new Date(classData.scheduled_at).getTime();
+          const startTime = parseUTC(classData.scheduled_at).getTime();
           const now = Date.now();
           
           if (startTime <= now) {
@@ -120,8 +121,8 @@ const TeacherDashboardPage: React.FC = () => {
     if (!nextClass) return;
 
     const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const target = new Date(nextClass.scheduled_at).getTime();
+      const now = Date.now();
+      const target = parseUTC(nextClass.scheduled_at).getTime();
       const diff = target - now;
 
       if (diff <= 0) {
@@ -348,4 +349,3 @@ const TeacherDashboardPage: React.FC = () => {
 };
 
 export default TeacherDashboardPage;
-// final fix verification

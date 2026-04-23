@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
+import { formatToLocal } from '../utils/date';
 
 interface Tarea {
   id: number;
@@ -332,7 +333,7 @@ const VirtualClassroomPage: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-sm text-primary font-headline">{tarea.title}</h4>
-                    <p className="text-[10px] text-on-surface-variant font-label uppercase">Vence: {tarea.due_date ? new Date(tarea.due_date).toLocaleDateString() : 'Sin fecha'}</p>
+                    <p className="text-[10px] text-on-surface-variant font-label uppercase">Vence: {tarea.due_date ? formatToLocal(tarea.due_date) : 'Sin fecha'}</p>
                   </div>
                   {tarea.file_url && (
                     <a href={tarea.file_url} target="_blank" rel="noreferrer" download className="p-2 bg-primary/5 text-primary rounded-full hover:bg-primary/10"><Download className="w-5 h-5" /></a>

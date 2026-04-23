@@ -35,5 +35,5 @@ app.add_middleware(
 # 5. Routers
 app.include_router(health.router, tags=["monitoring"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-app.include_router(courses.router, prefix="/api/v1", tags=["courses"])
+app.include_router(courses.router, prefix="/api/v1/courses", tags=["courses"])
 app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["webhooks"])

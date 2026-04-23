@@ -62,10 +62,12 @@ const VirtualClassroomPage: React.FC = () => {
   const [isAsking, setIsAsking] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
 
-  // File Upload State
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
+const getApiUrl = () => {
+  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+  if (!url.startsWith('http')) { url = `https://${url}`; }
+  return url.replace(/\/$/, '');
+};
+const VITE_API_URL = getApiUrl();
 
 const fetchQuestions = async () => {
     try {

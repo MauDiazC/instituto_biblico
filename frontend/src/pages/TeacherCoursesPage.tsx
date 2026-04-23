@@ -25,6 +25,13 @@ interface Recording {
   };
 }
 
+const getApiUrl = () => {
+  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+  if (!url.startsWith('http')) { url = `https://${url}`; }
+  return url.replace(/\/$/, '');
+};
+const VITE_API_URL = getApiUrl();
+
 const TeacherCoursesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);

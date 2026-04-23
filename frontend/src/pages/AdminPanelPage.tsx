@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Users, BookOpen, Settings, Search, Plus, MoreVertical, Shield, Mail, Calendar, Loader2, CheckCircle, XCircle, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface UserData {
   id: string;
@@ -32,36 +34,36 @@ const getApiUrl = () => {
 const VITE_API_URL = getApiUrl();
 
 const AdminPanelPage: React.FC = () => {
+  const { role } = useAuth();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [materias, setMaterias] = useState<MateriaData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [selectedMateria, setSelectedMateria] = useState<MateriaData | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
-  const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
-  const [searchQuery, setSearchQuery] = useState('');
   
-  // Create Course Modal State
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newMateria, setNewMateria] = useState({
-    name: '',
-    description: '',
-    cover_image_url: ''
-  });
+  // Tab logic: Teachers always see courses. Admins can switch.
+  const [activeTab, setActiveTab] = useState<'users' | 'courses'>(
+    role === 'teacher' ? 'courses' : (searchParams.get('tab') === 'courses' ? 'courses' : 'users')
+  );
+  
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // Fetch Users
-      const { data: userData, error: usersError } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (usersError) throw usersError;
-      setUsers(userData || []);
+      // Fetch Users (Only for Admins)
+      if (role === 'admin') {
+        const { data: userData, error: usersError } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (usersError) throw usersError;
+        setUsers(userData || []);
+      }
 
       // Fetch Materias
       const { data: materiasData, error: materiasError } = await supabase
@@ -81,7 +83,7 @@ const AdminPanelPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [role]);
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
@@ -96,37 +98,6 @@ const AdminPanelPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating role:', error);
       alert('Error al actualizar el rol');
-    }
-  };
-
-  const handleAddMateria = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMateria.name) return;
-
-    try {
-      setIsSubmitting(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(`${VITE_API_URL}/courses/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newMateria)
-      });
-
-      if (!response.ok) throw new Error('Error al crear la materia');
-
-      await fetchData();
-      setShowAddModal(false);
-      setNewMateria({ name: '', description: '', cover_image_url: '' });
-      alert('Materia creada con éxito');
-    } catch (error) {
-      console.error('Error adding course:', error);
-      alert('Hubo un error al crear la materia.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -174,23 +145,30 @@ const AdminPanelPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black font-headline text-primary tracking-tight uppercase">Panel de Administración</h1>
-          <p className="text-on-surface-variant font-body">Gestión global de usuarios y currículo académico</p>
+          <h1 className="text-4xl font-black font-headline text-primary tracking-tight uppercase">
+            {role === 'admin' ? 'Panel de Administración' : 'Gestión de Materias'}
+          </h1>
+          <p className="text-on-surface-variant font-body">
+            {role === 'admin' ? 'Gestión global de usuarios y currículo académico' : 'Administra los contenidos y alumnos de tus materias.'}
+          </p>
         </div>
-        <div className="flex bg-surface-container-low p-1 rounded-xl shadow-sm border border-outline-variant/10">
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={`px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
-          >
-            <Users className="w-4 h-4 inline-block mr-2" /> Usuarios
-          </button>
-          <button 
-            onClick={() => setActiveTab('courses')}
-            className={`px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${activeTab === 'courses' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
-          >
-            <BookOpen className="w-4 h-4 inline-block mr-2" /> Materias
-          </button>
-        </div>
+        
+        {role === 'admin' && (
+          <div className="flex bg-surface-container-low p-1 rounded-xl shadow-sm border border-outline-variant/10">
+            <button 
+              onClick={() => setActiveTab('users')}
+              className={`px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
+            >
+              <Users className="w-4 h-4 inline-block mr-2" /> Usuarios
+            </button>
+            <button 
+              onClick={() => setActiveTab('courses')}
+              className={`px-6 py-2 rounded-lg text-xs font-black uppercase transition-all ${activeTab === 'courses' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
+            >
+              <BookOpen className="w-4 h-4 inline-block mr-2" /> Materias
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area */}
@@ -201,7 +179,7 @@ const AdminPanelPage: React.FC = () => {
             <div className="p-6 border-b border-outline-variant/10 bg-surface-container-low/30 flex flex-col sm:flex-row justify-between items-center gap-4">
               <h2 className="font-headline font-bold text-primary flex items-center gap-2">
                 {activeTab === 'users' ? <Users className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
-                {activeTab === 'users' ? 'Directorio de Usuarios' : 'Gestión de Materias'}
+                {activeTab === 'users' ? 'Directorio de Usuarios' : 'Listado de Materias'}
               </h2>
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-4 h-4" />
@@ -215,7 +193,7 @@ const AdminPanelPage: React.FC = () => {
             </div>
 
             <div className="overflow-x-auto">
-              {activeTab === 'users' ? (
+              {activeTab === 'users' && role === 'admin' ? (
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-surface-container-low/20 text-[10px] font-black text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/5">
@@ -276,15 +254,26 @@ const AdminPanelPage: React.FC = () => {
                       </div>
                       <h3 className="font-headline font-bold text-sm mb-1">{m.name}</h3>
                       <p className={`text-[10px] line-clamp-2 ${selectedMateria?.id === m.id ? 'text-white/70' : 'text-on-surface-variant'}`}>{m.description}</p>
+                      
+                      <div className="mt-4 pt-4 border-t border-outline-variant/10 flex justify-end">
+                        <Link 
+                          to={`/dashboard/teacher/editor?materiaId=${m.id}`}
+                          className={`text-[10px] font-black uppercase tracking-widest ${selectedMateria?.id === m.id ? 'text-secondary-fixed' : 'text-primary'} hover:underline`}
+                        >
+                          Gestionar Contenido →
+                        </Link>
+                      </div>
                     </div>
                   ))}
-                  <button 
-                    onClick={() => setShowAddModal(true)}
+                  
+                  {/* The button you were looking for! */}
+                  <Link 
+                    to="/dashboard/teacher/editor"
                     className="p-4 rounded-xl border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-all group"
                   >
                     <Plus className="w-6 h-6 text-outline group-hover:text-primary transition-colors" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-outline group-hover:text-primary">Nueva Materia</span>
-                  </button>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-outline group-hover:text-primary">Agregar Materia</span>
+                  </Link>
                 </div>
               )}
             </div>
@@ -318,95 +307,31 @@ const AdminPanelPage: React.FC = () => {
                    <p className="text-center py-10 text-[10px] font-bold text-outline uppercase italic">No hay alumnos inscritos aún.</p>
                  )}
                </div>
-               
-               <button className="w-full mt-8 py-3 bg-surface-container-low text-primary rounded-xl font-headline font-bold text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2">
-                 <Plus className="w-3 h-3" /> Inscribir Alumno
-               </button>
             </div>
           ) : (
             <div className="bg-surface-container-low/30 rounded-2xl p-10 border-2 border-dashed border-outline-variant/10 flex flex-col items-center justify-center text-center opacity-40">
               <Shield className="w-12 h-12 mb-4 text-primary/20" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Consola de Seguridad</p>
-              <p className="text-[9px] mt-2 leading-relaxed">Selecciona un elemento para ver detalles y gestionar permisos o contenidos.</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Consola Académica</p>
+              <p className="text-[9px] mt-2 leading-relaxed">Selecciona una materia para ver sus alumnos inscritos.</p>
             </div>
           )}
 
           {/* Activity Mini-Log */}
           <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
-            <h4 className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4">Actividad del Sistema</h4>
+            <h4 className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4">Estado del Sistema</h4>
             <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 flex-shrink-0"></div>
-                <p className="text-[10px] text-on-surface-variant"><span className="font-bold text-primary">Servidor API:</span> Operativo y sincronizado con Supabase.</p>
+                <p className="text-[10px] text-on-surface-variant"><span className="font-bold text-primary">Servidor:</span> En línea</p>
               </div>
               <div className="flex gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 flex-shrink-0"></div>
-                <p className="text-[10px] text-on-surface-variant"><span className="font-bold text-primary">Certificados:</span> Módulo de generación de diplomas activo.</p>
+                <p className="text-[10px] text-on-surface-variant"><span className="font-bold text-primary">Base de Datos:</span> Sincronizada</p>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add Materia Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-          <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low">
-              <h3 className="text-2xl font-black text-primary font-headline tracking-tight uppercase">Nueva Materia</h3>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
-                <X className="w-6 h-6 text-primary" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddMateria} className="p-8 space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">Nombre de la Materia</label>
-                <input 
-                  required
-                  type="text" 
-                  value={newMateria.name}
-                  onChange={(e) => setNewMateria({...newMateria, name: e.target.value})}
-                  placeholder="Ej: Teología Sistemática I"
-                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">Descripción</label>
-                <textarea 
-                  required
-                  value={newMateria.description}
-                  onChange={(e) => setNewMateria({...newMateria, description: e.target.value})}
-                  rows={3}
-                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all outline-none"
-                  placeholder="Describe brevemente el alcance de la materia..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">URL de Portada (Opcional)</label>
-                <input 
-                  type="url" 
-                  value={newMateria.cover_image_url}
-                  onChange={(e) => setNewMateria({...newMateria, cover_image_url: e.target.value})}
-                  placeholder="https://..."
-                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
-                />
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary text-white py-4 rounded-2xl font-headline font-black tracking-widest text-sm hover:bg-primary-container transition-all shadow-premium active:scale-[0.98] disabled:opacity-50"
-              >
-                {isSubmitting ? 'CREANDO...' : 'CREAR MATERIA ACADÉMICA'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

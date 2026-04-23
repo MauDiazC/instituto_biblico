@@ -89,19 +89,21 @@ const TeacherDashboardPage: React.FC = () => {
           .from('clases')
           .select('id, title, scheduled_at, status, bloque:bloques(materia_id)')
           .gt('scheduled_at', twelveHoursAgo)
-          .neq('status', 'RECORDED')
-          .order('scheduled_at', { ascending: true })
-          .limit(1);
+          .order('scheduled_at', { ascending: true });
 
         if (clasesError) throw clasesError;
         if (clases && clases.length > 0) {
-          const classData = clases[0] as any;
-          setNextClass(classData);
+          // Prioritize: LIVE > upcoming SCHEDULED > most recent RECORDED
+          const liveClass = clases.find(c => c.status === 'LIVE');
+          const nextScheduled = clases.find(c => c.status === 'SCHEDULED' && parseUTC(c.scheduled_at).getTime() > Date.now());
           
-          const startTime = parseUTC(classData.scheduled_at).getTime();
+          const selected = liveClass || nextScheduled || clases[clases.length - 1];
+          setNextClass(selected);
+          
+          const startTime = parseUTC(selected.scheduled_at).getTime();
           const now = Date.now();
           
-          if (startTime <= now) {
+          if (selected.status === 'LIVE' || (selected.status === 'SCHEDULED' && startTime <= now)) {
             setIsLive(true);
           }
         }
@@ -317,12 +319,15 @@ const TeacherDashboardPage: React.FC = () => {
               )}
 
               <button 
-                disabled={!nextClass}
+                disabled={!nextClass || (nextClass as any).status === 'RECORDED'}
                 onClick={handleStartClass}
-                className={`w-full ${nextClass ? 'bg-secondary' : 'bg-white/10 cursor-not-allowed'} text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2`}
+                className={`w-full ${nextClass && (nextClass as any).status !== 'RECORDED' ? 'bg-secondary' : 'bg-white/10 cursor-not-allowed'} text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2`}
               >
                 <Video className="w-5 h-5" />
-                {nextClass ? (isLive ? 'UNIRSE AHORA' : 'INICIAR TRANSMISIÓN') : 'SIN DIRECTOS'}
+                {nextClass ? (
+                  (nextClass as any).status === 'RECORDED' ? 'TRANSMISIÓN TERMINADA' :
+                  (isLive ? 'UNIRSE AHORA' : 'INICIAR TRANSMISIÓN')
+                ) : 'SIN DIRECTOS'}
               </button>
             </div>
           </div>

@@ -90,6 +90,21 @@ async def get_or_create_daily_room(
         
     return clase
 
+@router.post("/classes/{class_id}/end")
+async def end_class(
+    class_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
+):
+    clase = db.query(Clase).filter(Clase.id == class_id).first()
+    if not clase:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    clase.status = ClassStatus.RECORDED
+    clase.room_url = None
+    db.commit()
+    return {"status": "success"}
+
 @router.get("/classes/{class_id}/recording-link")
 async def get_recording_link(
     class_id: int,

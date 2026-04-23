@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { formatToLocal } from '../utils/date';
+import { useAuth } from '../context/AuthContext';
 
 interface Tarea {
   id: number;
@@ -54,6 +55,8 @@ const VITE_API_URL = getApiUrl();
 
 const VirtualClassroomPage: React.FC = () => {
   const { id, lessonId } = useParams();
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const [clase, setClase] = useState<Clase | null>(null);
   const [loading, setLoading] = useState(true);
   const [recordingLink, setRecordingLink] = useState<string | null>(null);
@@ -63,6 +66,7 @@ const VirtualClassroomPage: React.FC = () => {
   
   // Progress State
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
   // Ticket System State
   const [questions, setQuestions] = useState<Consulta[]>([]);
@@ -189,6 +193,31 @@ const VirtualClassroomPage: React.FC = () => {
     }
   };
 
+  const handleEndClass = async () => {
+    if (!window.confirm('¿Estás seguro de que deseas finalizar la transmisión? Esto marcará la clase como grabada para los estudiantes.')) return;
+    
+    try {
+      setIsEnding(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/end`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+
+      if (response.ok) {
+        alert('Transmisión finalizada con éxito.');
+        navigate('/dashboard/teacher');
+      } else {
+        throw new Error('Error al finalizar la clase');
+      }
+    } catch (error) {
+      console.error('Error ending class:', error);
+      alert('Error al finalizar la clase.');
+    } finally {
+      setIsEnding(false);
+    }
+  };
+
   const handleSubmitTarea = async (tareaId: number) => {
     if (!submission.trim() && !selectedFile) return;
     
@@ -276,6 +305,8 @@ const VirtualClassroomPage: React.FC = () => {
 
   if (!clase) return <div className="text-center py-20">Clase no encontrada</div>;
 
+  const isTeacher = role === 'teacher' || role === 'admin';
+
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
       <div className="lg:col-span-8 space-y-6">
@@ -303,18 +334,30 @@ const VirtualClassroomPage: React.FC = () => {
               </span>
               <h1 className="text-3xl font-black font-headline text-primary mt-2">{clase.title}</h1>
             </div>
-            <button 
-              onClick={handleToggleCompletion}
-              disabled={isCompleting}
-              className={`px-6 py-3 rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 ${
-                clase.is_completed 
-                ? 'bg-green-100 text-green-700 border border-green-200' 
-                : 'bg-secondary-fixed-dim hover:bg-secondary-fixed text-on-secondary-fixed'
-              }`}
-            >
-              {clase.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-              {clase.is_completed ? 'Completada' : 'Marcar como completada'}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {isTeacher && clase.status === 'LIVE' && (
+                <button 
+                  onClick={handleEndClass}
+                  disabled={isEnding}
+                  className="px-6 py-3 bg-error text-white rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 hover:bg-error-container hover:text-on-error-container"
+                >
+                  <Square className="w-5 h-5 fill-current" />
+                  {isEnding ? 'Finalizando...' : 'Finalizar Clase'}
+                </button>
+              )}
+              <button 
+                onClick={handleToggleCompletion}
+                disabled={isCompleting}
+                className={`px-6 py-3 rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 ${
+                  clase.is_completed 
+                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                  : 'bg-secondary-fixed-dim hover:bg-secondary-fixed text-on-secondary-fixed'
+                }`}
+              >
+                {clase.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+                {clase.is_completed ? 'Completada' : 'Marcar como completada'}
+              </button>
+            </div>
           </div>
 
           <div className="p-6 bg-surface-container-lowest rounded-xl shadow-sm border-l-4 border-secondary">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, Settings, Search, Plus, MoreVertical, Shield, Mail, Calendar, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Users, BookOpen, Settings, Search, Plus, MoreVertical, Shield, Mail, Calendar, Loader2, CheckCircle, XCircle, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface UserData {
@@ -14,6 +14,7 @@ interface MateriaData {
   id: number;
   name: string;
   description: string;
+  cover_image_url?: string;
 }
 
 interface Student {
@@ -39,6 +40,15 @@ const AdminPanelPage: React.FC = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Create Course Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newMateria, setNewMateria] = useState({
+    name: '',
+    description: '',
+    cover_image_url: ''
+  });
 
   const fetchData = async () => {
     try {
@@ -89,6 +99,37 @@ const AdminPanelPage: React.FC = () => {
     }
   };
 
+  const handleAddMateria = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMateria.name) return;
+
+    try {
+      setIsSubmitting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${VITE_API_URL}/courses/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newMateria)
+      });
+
+      if (!response.ok) throw new Error('Error al crear la materia');
+
+      await fetchData();
+      setShowAddModal(false);
+      setNewMateria({ name: '', description: '', cover_image_url: '' });
+      alert('Materia creada con éxito');
+    } catch (error) {
+      console.error('Error adding course:', error);
+      alert('Hubo un error al crear la materia.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const fetchMateriaStudents = async (materia: MateriaData) => {
     setSelectedMateria(materia);
     setLoadingStudents(true);
@@ -101,7 +142,6 @@ const AdminPanelPage: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        // Map enrollment response to Student interface
         setStudents(data.map((e: any) => ({
           id: e.user.id,
           full_name: e.user.full_name,
@@ -238,7 +278,10 @@ const AdminPanelPage: React.FC = () => {
                       <p className={`text-[10px] line-clamp-2 ${selectedMateria?.id === m.id ? 'text-white/70' : 'text-on-surface-variant'}`}>{m.description}</p>
                     </div>
                   ))}
-                  <button className="p-4 rounded-xl border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-all group">
+                  <button 
+                    onClick={() => setShowAddModal(true)}
+                    className="p-4 rounded-xl border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-all group"
+                  >
                     <Plus className="w-6 h-6 text-outline group-hover:text-primary transition-colors" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-outline group-hover:text-primary">Nueva Materia</span>
                   </button>
@@ -304,6 +347,66 @@ const AdminPanelPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Materia Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
+          <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low">
+              <h3 className="text-2xl font-black text-primary font-headline tracking-tight uppercase">Nueva Materia</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
+                <X className="w-6 h-6 text-primary" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddMateria} className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">Nombre de la Materia</label>
+                <input 
+                  required
+                  type="text" 
+                  value={newMateria.name}
+                  onChange={(e) => setNewMateria({...newMateria, name: e.target.value})}
+                  placeholder="Ej: Teología Sistemática I"
+                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">Descripción</label>
+                <textarea 
+                  required
+                  value={newMateria.description}
+                  onChange={(e) => setNewMateria({...newMateria, description: e.target.value})}
+                  rows={3}
+                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all outline-none"
+                  placeholder="Describe brevemente el alcance de la materia..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">URL de Portada (Opcional)</label>
+                <input 
+                  type="url" 
+                  value={newMateria.cover_image_url}
+                  onChange={(e) => setNewMateria({...newMateria, cover_image_url: e.target.value})}
+                  placeholder="https://..."
+                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary text-white py-4 rounded-2xl font-headline font-black tracking-widest text-sm hover:bg-primary-container transition-all shadow-premium active:scale-[0.98] disabled:opacity-50"
+              >
+                {isSubmitting ? 'CREANDO...' : 'CREAR MATERIA ACADÉMICA'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

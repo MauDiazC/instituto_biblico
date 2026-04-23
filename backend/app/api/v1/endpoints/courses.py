@@ -67,8 +67,11 @@ async def get_or_create_daily_room(
                 "name": room_name,
                 "properties": {
                     "enable_recording": "cloud",
-                    "start_video_off": False,
-                    "start_audio_off": False,
+                    "start_video_off": True,
+                    "start_audio_off": True,
+                    "enable_chat": True,
+                    "enable_people_ui": True,
+                    "lang": "es"
                 }
             }
         )

@@ -311,9 +311,13 @@ const VirtualClassroomPage: React.FC = () => {
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
       <div className="lg:col-span-8 space-y-6">
         {/* Video Player */}
-        <div className="aspect-video w-full rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
+        <div className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
           {clase.status === 'LIVE' && clase.room_url ? (
-            <iframe src={clase.room_url} allow="camera; microphone; fullscreen; display-capture" className="w-full h-full border-0" />
+            <iframe 
+              src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=0&tbar=1`} 
+              allow="camera; microphone; fullscreen; display-capture" 
+              className="w-full h-full border-0" 
+            />
           ) : clase.status === 'RECORDED' && recordingLink ? (
             <div className="w-full h-full bg-black flex items-center justify-center">
               <video src={recordingLink} controls className="w-full h-full object-contain" />

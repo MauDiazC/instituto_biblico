@@ -269,7 +269,6 @@ const VirtualClassroomPage: React.FC = () => {
       if (response.ok) {
         const result = await response.json();
         setUserSubmission(result);
-        alert('Tarea enviada.');
       }
     } catch (error) {
       console.error('Error submitting:', error);
@@ -323,7 +322,6 @@ const VirtualClassroomPage: React.FC = () => {
         setAnswerText('');
         setAnsweringId(null);
         await fetchQuestions();
-        alert('Respuesta enviada con éxito.');
       } else {
         const err = await response.text();
         throw new Error(err);

@@ -7,7 +7,6 @@ import time
 router = APIRouter()
 
 @router.get("/health")
-@router.get("/")
 async def health_check(db: Session = Depends(get_db)):
     """
     Comprehensive health check to verify API and Database connectivity.
@@ -26,3 +25,11 @@ async def health_check(db: Session = Depends(get_db)):
         "timestamp": time.time(),
         "latency_seconds": time.time() - start_time
     }
+
+@router.get("/")
+async def liveness_probe():
+    """
+    Minimal root endpoint for Railway Liveness Probe.
+    Returns 200 immediately to show the process is running.
+    """
+    return {"status": "alive", "message": "Sacred Archive API is running"}

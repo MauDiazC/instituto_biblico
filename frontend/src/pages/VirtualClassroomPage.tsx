@@ -92,9 +92,9 @@ const VirtualClassroomPage: React.FC = () => {
     }
   };
 
-  const fetchClassData = async () => {
+  const fetchClassData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       
       const { data: classData, error } = await supabase
@@ -155,7 +155,7 @@ const VirtualClassroomPage: React.FC = () => {
     } catch (error) {
       console.error('Error fetching class:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -165,22 +165,39 @@ const VirtualClassroomPage: React.FC = () => {
 
       const questionsChannel = supabase
         .channel('realtime_questions_vc')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas', filter: `clase_id=eq.${lessonId}` }, () => {
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'consultas', 
+          filter: `clase_id=eq.${lessonId}` 
+        }, () => {
           fetchQuestions();
         })
         .subscribe();
 
       const classChannel = supabase
         .channel('realtime_class_status')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clases', filter: `id=eq.${lessonId}` }, () => {
-          console.log('Class status changed, re-fetching...');
-          fetchClassData();
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'clases', 
+          filter: `id=eq.${lessonId}` 
+        }, () => {
+          console.log('Class status update detected via realtime');
+          fetchClassData(true);
         })
         .subscribe();
+
+      // Fallback Polling: Check every 15 seconds in case realtime is not enabled on table
+      const pollingInterval = setInterval(() => {
+        console.log('Performing background check for class updates...');
+        fetchClassData(true);
+      }, 15000);
 
       return () => { 
         supabase.removeChannel(questionsChannel);
         supabase.removeChannel(classChannel);
+        clearInterval(pollingInterval);
       };
     }
   }, [lessonId]);

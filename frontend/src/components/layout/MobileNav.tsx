@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../../context/AuthContext';
 
 import { 
   LayoutDashboard as DashboardIcon, 
@@ -9,11 +10,13 @@ import {
   FileEdit as EditorIcon,
   Library as LibraryIcon,
   User as ProfileIcon,
-  Settings as AdminIcon
+  Settings as AdminIcon,
+  LogOut as LogoutIcon
 } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
 
   const getNavItems = () => {
     if (location.pathname.includes('/dashboard/teacher')) {
@@ -54,7 +57,7 @@ const MobileNav: React.FC = () => {
             key={item.name}
             to={item.path}
             className={twMerge(
-              "flex flex-col items-center justify-center p-2 transition-all duration-300 rounded-2xl min-w-[64px]",
+              "flex flex-col items-center justify-center p-2 transition-all duration-300 rounded-2xl min-w-[56px]",
               isActive ? "bg-primary text-white scale-110 shadow-lg" : "text-slate-400 hover:text-primary"
             )}
           >
@@ -68,6 +71,17 @@ const MobileNav: React.FC = () => {
           </Link>
         );
       })}
+      
+      {/* Log Out Button */}
+      <button
+        onClick={signOut}
+        className="flex flex-col items-center justify-center p-2 transition-all duration-300 rounded-2xl min-w-[56px] text-error hover:text-error/80"
+      >
+        <LogoutIcon className="w-5 h-5" />
+        <span className="font-label text-[9px] uppercase tracking-widest mt-1 font-bold opacity-70">
+          Salir
+        </span>
+      </button>
     </nav>
   );
 };

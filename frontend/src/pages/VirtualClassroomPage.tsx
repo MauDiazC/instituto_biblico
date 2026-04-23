@@ -168,7 +168,7 @@ const fetchQuestions = async () => {
     try {
       setIsCompleting(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/classes/${lessonId}/complete`, {
+      const response = await fetch(`${API_URL}/courses/classes/${lessonId}/complete`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
       });
@@ -212,7 +212,7 @@ const fetchQuestions = async () => {
         finalContent = publicUrl;
       }
 
-      const response = await fetch(`http://localhost:8000/api/v1/courses/assignments/${tareaId}/submit`, {
+      const response = await fetch(`${API_URL}/courses/assignments/${tareaId}/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -239,7 +239,7 @@ const fetchQuestions = async () => {
     try {
       setIsAsking(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/classes/${lessonId}/questions`, {
+      const response = await fetch(`${API_URL}/courses/classes/${lessonId}/questions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,

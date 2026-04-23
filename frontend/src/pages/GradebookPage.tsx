@@ -36,6 +36,8 @@ interface Consulta {
   };
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
 const GradebookPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'submissions' | 'questions'>('submissions');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -56,7 +58,7 @@ const GradebookPage: React.FC = () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('http://localhost:8000/api/v1/courses/teacher/submissions', {
+      const response = await fetch(`${API_URL}/courses/teacher/submissions`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -80,7 +82,7 @@ const GradebookPage: React.FC = () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('http://localhost:8000/api/v1/courses/teacher/questions', {
+      const response = await fetch(`${API_URL}/courses/teacher/questions`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -127,7 +129,7 @@ const GradebookPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/submissions/${sub.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
+      const response = await fetch(`${API_URL}/courses/submissions/${sub.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -153,7 +155,7 @@ const GradebookPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/questions/${que.id}/answer`, {
+      const response = await fetch(`${API_URL}/courses/questions/${que.id}/answer`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -289,8 +291,7 @@ const GradebookPage: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-on-surface-variant font-medium mb-1 font-label uppercase tracking-wider opacity-70 truncate">{que.question}</p>
                 <p className="text-[9px] text-outline flex items-center gap-1 font-label uppercase tracking-widest">
-                  <Clock className="w-2.5 h-2.5" /> {new Date(que.created_at).toLocaleDateString()}
-                </p>
+                  <Clock className="w-2.5 h-2.5" /> {new Date(que.created_at).toLocaleDateString()}</p>
               </div>
             )) : (
               <div className="text-center py-10 opacity-40">

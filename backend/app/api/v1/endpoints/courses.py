@@ -16,7 +16,7 @@ from app.schemas.course import (
 )
 from app.schemas.common import PaginatedResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/courses")
 
 @router.get("/books", response_model=List[LibroRead])
 async def list_books(

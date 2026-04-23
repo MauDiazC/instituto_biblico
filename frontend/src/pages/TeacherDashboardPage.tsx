@@ -21,6 +21,8 @@ interface LiveClass {
   };
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
 const TeacherDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('...');
@@ -31,8 +33,6 @@ const TeacherDashboardPage: React.FC = () => {
   const [nextClass, setNextClass] = useState<LiveClass | null>(null);
   const [timeLeft, setTimeLeft] = useState({ hours: '00', mins: '00', secs: '00' });
   const [isLive, setIsLive] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -148,11 +148,7 @@ const TeacherDashboardPage: React.FC = () => {
         throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
       }
 
-      // 1. Sanitize and normalize API URL
-      let baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
-      
-      const targetUrl = `${baseUrl}/courses/classes/${nextClass.id}/room`;
+      const targetUrl = `${API_URL}/courses/classes/${nextClass.id}/room`;
       
       console.log('DEBUG: Attempting fetch to:', targetUrl);
       console.log('DEBUG: Auth Token exists:', !!session.access_token);

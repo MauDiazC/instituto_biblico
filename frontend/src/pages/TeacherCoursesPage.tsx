@@ -36,6 +36,14 @@ const TeacherCoursesPage: React.FC = () => {
       try {
         setLoading(true);
 
+        // 0. Sync recordings with Daily.co (Silently)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+           await fetch(`${VITE_API_URL}/courses/teacher/recordings/sync`, {
+             headers: { 'Authorization': `Bearer ${session.access_token}` }
+           }).catch(err => console.error('Silent sync failed:', err));
+        }
+
         // 1. Fetch Materias
         const { data: materias, error: materiasError } = await supabase
           .from('materias')

@@ -306,6 +306,53 @@ async def list_all_questions_for_teacher(
         })
     return result
 
+@router.get("/teacher/recordings/sync")
+async def sync_recordings_with_daily(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
+):
+    """
+    Syncs local database with Daily.co recordings to ensure no recording is lost.
+    """
+    if not settings.DAILY_API_KEY:
+        raise HTTPException(status_code=500, detail="Daily.co API Key not configured")
+
+    sync_count = 0
+    async with httpx.AsyncClient() as client:
+        # 1. Fetch recent recordings from Daily.co
+        response = await client.get(
+            "https://api.daily.co/v1/recordings",
+            headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"}
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Error from Daily API: {response.text}")
+            
+        recordings_data = response.json()
+        recordings = recordings_data.get("data", [])
+
+        for rec in recordings:
+            room_name = rec.get("room_name", "")
+            # We look for recordings that follow our naming convention: class-{id}-...
+            if room_name and room_name.startswith("class-"):
+                try:
+                    parts = room_name.split("-")
+                    class_id = int(parts[1])
+                    
+                    # 2. Find the class in our DB
+                    clase = db.query(Clase).filter(Clase.id == class_id).first()
+                    
+                    # 3. Update if local data is missing or status is not RECORDED
+                    if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
+                        clase.status = ClassStatus.RECORDED
+                        clase.external_video_id = rec.get("id")
+                        db.commit()
+                        sync_count += 1
+                except (IndexError, ValueError):
+                    continue
+
+    return {"status": "success", "synced_items": sync_count}
+
 @router.patch("/questions/{question_id}/answer", response_model=ConsultaRead)
 async def answer_question(
     question_id: int,

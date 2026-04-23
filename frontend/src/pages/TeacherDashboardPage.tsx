@@ -150,8 +150,12 @@ const TeacherDashboardPage: React.FC = () => {
 
       const targetUrl = `${VITE_API_URL}/courses/classes/${nextClass.id}/room`;
       
-      console.log('DEBUG: Attempting fetch to:', targetUrl);
-      console.log('DEBUG: Auth Token exists:', !!session.access_token);
+      console.log('--- DEBUG START CLASS ---');
+      console.log('Base VITE_API_URL:', VITE_API_URL);
+      console.log('Full targetUrl:', targetUrl);
+      console.log('Class ID:', nextClass.id);
+      console.log('Auth Token exists:', !!session.access_token);
+      console.log('--- END DEBUG ---');
 
       const response = await fetch(targetUrl, {
         method: 'POST',

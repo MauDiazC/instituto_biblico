@@ -163,19 +163,39 @@ const VirtualClassroomPage: React.FC = () => {
     if (lessonId) {
       fetchClassData();
 
+      // HYPER-RELIABLE REALTIME: Subscribe to all changes in the 'public' schema
+      // This is often more reliable than filtered table subscriptions in some Supabase configs
       const mainChannel = supabase
-        .channel(`vc-lesson-${lessonId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
+        .channel(`vc-master-${lessonId}`)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'clases'
+        }, (payload: any) => {
+          // Manually filter for this lesson
           if (payload.new && payload.new.id === parseInt(lessonId)) {
+            console.log('REALTIME-MASTER: Class update detected!', payload.new.status);
             fetchClassData(true);
           }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas', filter: `clase_id=eq.${lessonId}` }, () => {
-          fetchQuestions();
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'consultas'
+        }, (payload: any) => {
+          if (payload.new && payload.new.clase_id === parseInt(lessonId)) {
+            fetchQuestions();
+          }
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`REALTIME-MASTER: Connection status: ${status}`);
+        });
 
-      const interval = setInterval(() => fetchClassData(true), 10000);
+      // FAST POLLING: Every 4 seconds. Very lightweight, guaranteed fallback.
+      const interval = setInterval(() => {
+        fetchClassData(true);
+      }, 4000);
+
       return () => { 
         supabase.removeChannel(mainChannel);
         clearInterval(interval);
@@ -239,7 +259,10 @@ const VirtualClassroomPage: React.FC = () => {
 
       const response = await fetch(`${VITE_API_URL}/courses/assignments/${tareaId}/submit`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${session?.access_token}`, 
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify({ tarea_id: tareaId, content: finalContent })
       });
 
@@ -262,7 +285,10 @@ const VirtualClassroomPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/questions`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${session?.access_token}`, 
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify({ question: newQuestion, clase_id: parseInt(lessonId || '0') })
       });
       if (response.ok) {
@@ -282,18 +308,29 @@ const VirtualClassroomPage: React.FC = () => {
     try {
       setIsAnswering(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${VITE_API_URL}/courses/questions/${questionId}/answer?answer=${encodeURIComponent(answerText)}`, {
+      
+      // FIXED: Sending answer in the BODY as JSON, as required by backend schema
+      const response = await fetch(`${VITE_API_URL}/courses/questions/${questionId}/answer`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        headers: { 
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ answer: answerText })
       });
+
       if (response.ok) {
         setAnswerText('');
         setAnsweringId(null);
         await fetchQuestions();
-        alert('Respuesta enviada.');
+        alert('Respuesta enviada con éxito.');
+      } else {
+        const err = await response.text();
+        throw new Error(err);
       }
     } catch (error) {
       console.error('Error answering:', error);
+      alert('Hubo un error al enviar la respuesta.');
     } finally {
       setIsAnswering(false);
     }

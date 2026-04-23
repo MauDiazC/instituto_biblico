@@ -28,7 +28,7 @@ const MobileNav: React.FC = () => {
     if (location.pathname.includes('/dashboard/admin')) {
       return [
         { name: 'Admin', path: '/dashboard/admin', icon: AdminIcon },
-        { name: 'Cursos', path: '/dashboard/courses', icon: CoursesIcon },
+        { name: 'Cursos', path: '/dashboard', icon: CoursesIcon },
         { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
         { name: 'Perfil', path: '/dashboard/profile', icon: ProfileIcon },
       ];
@@ -36,7 +36,7 @@ const MobileNav: React.FC = () => {
 
     return [
       { name: 'Inicio', path: '/dashboard', icon: DashboardIcon },
-      { name: 'Cursos', path: '/dashboard/courses', icon: CoursesIcon },
+      { name: 'Cursos', path: '/dashboard', icon: CoursesIcon },
       { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
       { name: 'Perfil', path: '/dashboard/profile', icon: ProfileIcon },
     ];

@@ -19,16 +19,16 @@ const MobileNav: React.FC = () => {
     if (location.pathname.includes('/dashboard/teacher')) {
       return [
         { name: 'Inicio', path: '/dashboard/teacher', icon: DashboardIcon },
-        { name: 'Gestión', path: '/dashboard/admin', icon: AdminIcon },
+        { name: 'Cursos', path: '/dashboard/teacher/courses', icon: CoursesIcon },
         { name: 'Notas', path: '/dashboard/teacher/gradebook', icon: GradeIcon },
-        { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
+        { name: 'Gestión', path: '/dashboard/admin', icon: AdminIcon },
       ];
     }
     
     if (location.pathname.includes('/dashboard/admin')) {
       return [
         { name: 'Admin', path: '/dashboard/admin', icon: AdminIcon },
-        { name: 'Cursos', path: '/dashboard', icon: CoursesIcon },
+        { name: 'Cursos', path: '/dashboard/teacher/courses', icon: CoursesIcon },
         { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
         { name: 'Perfil', path: '/dashboard/profile', icon: ProfileIcon },
       ];
@@ -36,7 +36,6 @@ const MobileNav: React.FC = () => {
 
     return [
       { name: 'Inicio', path: '/dashboard', icon: DashboardIcon },
-      { name: 'Cursos', path: '/dashboard', icon: CoursesIcon },
       { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
       { name: 'Perfil', path: '/dashboard/profile', icon: ProfileIcon },
     ];

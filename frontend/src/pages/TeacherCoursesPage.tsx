@@ -97,23 +97,15 @@ const TeacherCoursesPage: React.FC = () => {
           <h1 className="text-4xl font-black text-primary font-headline tracking-tighter">Gestión de Cursos</h1>
           <p className="text-on-surface-variant font-body">Administra tus materias y revisa las grabaciones de tus clases.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link 
-            to="/dashboard/teacher/editor"
-            className="bg-secondary text-white px-6 py-3 rounded-xl font-bold font-headline text-sm shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center gap-2"
-          >
-            <BookOpen className="w-5 h-5" /> Nueva Materia
-          </Link>
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/40" />
-            <input 
-              type="text" 
-              placeholder="Buscar curso..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-0 rounded-xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
-            />
-          </div>
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/40" />
+          <input 
+            type="text" 
+            placeholder="Buscar por nombre de curso..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-0 rounded-xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+          />
         </div>
       </section>
 

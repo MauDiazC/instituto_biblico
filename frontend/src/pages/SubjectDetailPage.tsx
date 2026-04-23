@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
@@ -37,8 +37,9 @@ const SubjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [materia, setMateria] = useState<Materia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<string>(new Date().toLocaleTimeString());
 
-  const fetchMateria = async (silent = false) => {
+  const fetchMateria = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -46,48 +47,59 @@ const SubjectDetailPage: React.FC = () => {
       const response = await fetch(`${VITE_API_URL}/courses/${id}`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
-        }
+        },
+        // Force no-cache to ensure we get the latest DB state
+        cache: 'no-store'
       });
 
       if (!response.ok) throw new Error('Error fetching materia');
       
       const data = await response.json();
+      
+      // Update state and timestamp to force React to consider it a fresh update
       setMateria(data);
+      setLastUpdate(new Date().toLocaleTimeString());
+      
+      if (silent) {
+        console.log(`POLLING: Data refreshed at ${new Date().toLocaleTimeString()}`);
+      }
     } catch (error) {
       console.error('Error fetching materia:', error);
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       fetchMateria();
 
-      // Realtime subscription for class status changes
+      // Realtime subscription: More aggressive catch-all
       const channel = supabase
-        .channel(`course-detail-${id}`)
+        .channel(`course-realtime-${id}`)
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public', 
-          table: 'clases' 
-        }, () => {
-          console.log('REALTIME: Class list update detected');
+          table: 'clases'
+        }, (payload) => {
+          console.log('REALTIME-DETECTED: Class change in table', payload);
           fetchMateria(true);
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`REALTIME-STATUS: ${status}`);
+        });
 
-      // Reliable Polling (Every 6 seconds)
+      // BLINDED POLLING: Every 3 seconds during testing to ensure state transitions are captured
       const interval = setInterval(() => {
         fetchMateria(true);
-      }, 6000);
+      }, 3000);
 
       return () => {
         supabase.removeChannel(channel);
         clearInterval(interval);
       };
     }
-  }, [id]);
+  }, [id, fetchMateria]);
 
   if (loading) {
     return (
@@ -114,6 +126,7 @@ const SubjectDetailPage: React.FC = () => {
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black font-headline text-primary mb-4 leading-none">{materia.name}</h1>
             <p className="text-on-surface-variant text-lg max-w-xl leading-relaxed">{materia.description}</p>
+            <p className="text-[9px] text-outline mt-2 font-mono opacity-50 uppercase tracking-tighter italic">Sincronización activa: {lastUpdate}</p>
           </div>
           <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient w-full md:w-72 border border-outline-variant/10">
             <div className="flex justify-between items-end mb-3">
@@ -149,12 +162,12 @@ const SubjectDetailPage: React.FC = () => {
                     key={clase.id} 
                     className={`flex items-center gap-4 p-4 rounded-xl transition-all border ${
                       clase.status === 'LIVE' 
-                      ? 'bg-primary/5 border-primary/20 ring-1 ring-primary/10' 
+                      ? 'bg-primary/5 border-primary/20 ring-2 ring-primary/5' 
                       : 'bg-surface-container-low border-transparent hover:border-outline-variant/20'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      clase.status === 'LIVE' ? 'bg-primary text-white' : 'bg-surface-container-highest text-primary'
+                      clase.status === 'LIVE' ? 'bg-primary text-white shadow-lg' : 'bg-surface-container-high text-primary'
                     }`}>
                       {clase.status === 'LIVE' ? <Video className="w-6 h-6 animate-pulse" /> : <PlayCircle className="w-6 h-6 opacity-40" />}
                     </div>
@@ -163,7 +176,13 @@ const SubjectDetailPage: React.FC = () => {
                       <h4 className="font-bold text-sm text-primary truncate">{clase.title}</h4>
                       <div className="flex items-center gap-2 mt-1">
                         {clase.status === 'LIVE' && (
-                          <span className="text-[9px] font-black bg-error text-white px-2 py-0.5 rounded-full animate-pulse uppercase tracking-widest">EN VIVO</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+                            </span>
+                            <span className="text-[10px] font-black text-error uppercase tracking-widest">CLASE EN VIVO</span>
+                          </div>
                         )}
                         {clase.status === 'RECORDED' && (
                           <span className="text-[9px] font-black bg-secondary-fixed/50 text-secondary px-2 py-0.5 rounded-full uppercase tracking-widest">GRABADA</span>
@@ -172,7 +191,7 @@ const SubjectDetailPage: React.FC = () => {
                           <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
                         )}
                         <span className="text-[10px] text-on-surface-variant font-medium">
-                          {clase.status === 'LIVE' ? '¡Unirse ahora!' : formatToLocal(clase.scheduled_at)}
+                          {clase.status === 'LIVE' ? '¡Únete ahora mismo!' : formatToLocal(clase.scheduled_at)}
                         </span>
                       </div>
                     </div>
@@ -181,7 +200,7 @@ const SubjectDetailPage: React.FC = () => {
                       onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
                       className={`px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all ${
                         clase.status === 'LIVE' 
-                        ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105' 
+                        ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95' 
                         : 'text-primary hover:bg-primary/5'
                       }`}
                     >

@@ -33,41 +33,6 @@ const VITE_API_URL = getApiUrl();
 
 const SubjectDetailPage: React.FC = () => {
   const { id } = useParams();
-... User modified the `new_string` content to be: import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2 } from 'lucide-react';
-import { supabase } from '../utils/supabase';
-
-interface Clase {
-  id: number;
-  title: string;
-  status: 'SCHEDULED' | 'LIVE' | 'RECORDED' | 'PROCESSING';
-  scheduled_at: string;
-}
-
-interface Bloque {
-  id: number;
-  name: string;
-  clases: Clase[];
-}
-
-interface Materia {
-  id: number;
-  name: string;
-  description: string;
-  progress?: number;
-  bloques: Bloque[];
-}
-
-const getApiUrl = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-  if (!url.startsWith('http')) { url = `https://${url}`; }
-  return url.replace(/\/$/, '');
-};
-const VITE_API_URL = getApiUrl();
-
-const SubjectDetailPage: React.FC = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
   const [materia, setMateria] = useState<Materia | null>(null);
   const [loading, setLoading] = useState(true);

@@ -21,29 +21,6 @@ const VITE_API_URL = getApiUrl();
 
 const StudentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
-... User modified the `new_string` content to be: import React, { useEffect, useState } from 'react';
-import { LayoutGrid, List, Loader2, BookOpen, ArrowRight, CheckCircle, Plus } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../utils/supabase';
-
-interface Course {
-  id: number;
-  name: string;
-  cover_image_url: string;
-  description: string;
-  is_enrolled?: boolean;
-  progress?: number;
-}
-
-const getApiUrl = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-  if (!url.startsWith('http')) { url = `https://${url}`; }
-  return url.replace(/\/$/, '');
-};
-const VITE_API_URL = getApiUrl();
-
-const StudentDashboard: React.FC = () => {
-  const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);

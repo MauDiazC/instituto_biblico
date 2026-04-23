@@ -22,30 +22,6 @@ const VITE_API_URL = getApiUrl();
 const VirtualLibraryPage: React.FC = () => {
   const [books, setBooks] = useState<Libro[]>([]);
   const [loading, setLoading] = useState(true);
-... User modified the `new_string` content to be: import React, { useEffect, useState } from 'react';
-import { Search, Download, Quote, Loader2, BookOpen, Plus, X } from 'lucide-react';
-import { supabase } from '../utils/supabase';
-
-interface Libro {
-  id: number;
-  title: string;
-  author: string;
-  category: string;
-  cover_url: string | null;
-  file_url: string;
-  description: string | null;
-}
-
-const getApiUrl = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-  if (!url.startsWith('http')) { url = `https://${url}`; }
-  return url.replace(/\/$/, '');
-};
-const VITE_API_URL = getApiUrl();
-
-const VirtualLibraryPage: React.FC = () => {
-  const [books, setBooks] = useState<Libro[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [isTeacher, setIsTeacher] = useState(false);

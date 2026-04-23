@@ -5,60 +5,6 @@ import { supabase } from '../utils/supabase';
 
 interface Submission {
   id: number;
-... User modified the `new_string` content to be: import React, { useEffect, useState } from 'react';
-import { Search, ChevronRight, FileText, CheckCircle, Clock, Save, Send, ArrowLeft, Loader2, MessageSquare, HelpCircle } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
-import { supabase } from '../utils/supabase';
-
-interface Submission {
-  id: number;
-  content: string;
-  grade: number | null;
-  feedback: string | null;
-  created_at: string;
-  user: {
-    full_name: string;
-    email: string;
-  };
-  tarea: {
-    id: number;
-    title: string;
-    materia_name: string;
-  };
-}
-
-interface Consulta {
-  id: number;
-  question: string;
-  answer: string | null;
-  status: string;
-  created_at: string;
-  student: {
-    full_name: string;
-    email: string;
-  };
-  clase: {
-    title: string;
-    materia_name: string;
-  };
-}
-
-const getApiUrl = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-  if (!url.startsWith('http')) { url = `https://${url}`; }
-  return url.replace(/\/$/, '');
-};
-const VITE_API_URL = getApiUrl();
-
-const GradebookPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'submissions' | 'questions'>('submissions');
-... User modified the `new_string` content to be: import React, { useEffect, useState } from 'react';
-import { Search, ChevronRight, FileText, CheckCircle, Clock, Save, Send, ArrowLeft, Loader2, MessageSquare, HelpCircle } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
-import { supabase } from '../utils/supabase';
-
-interface Submission {
-  id: number;
   content: string;
   grade: number | null;
   feedback: string | null;
@@ -350,7 +296,8 @@ const GradebookPage: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-on-surface-variant font-medium mb-1 font-label uppercase tracking-wider opacity-70 truncate">{que.question}</p>
                 <p className="text-[9px] text-outline flex items-center gap-1 font-label uppercase tracking-widest">
-                  <Clock className="w-2.5 h-2.5" /> {new Date(que.created_at).toLocaleDateString()}</p>
+                  <Clock className="w-2.5 h-2.5" /> {new Date(que.created_at).toLocaleDateString()}
+                </p>
               </div>
             )) : (
               <div className="text-center py-10 opacity-40">

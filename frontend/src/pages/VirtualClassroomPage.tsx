@@ -44,6 +44,13 @@ interface Clase {
   tareas?: Tarea[];
 }
 
+const getApiUrl = () => {
+  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+  if (!url.startsWith('http')) { url = `https://${url}`; }
+  return url.replace(/\/$/, '');
+};
+const VITE_API_URL = getApiUrl();
+
 const VirtualClassroomPage: React.FC = () => {
   const { id, lessonId } = useParams();
   const [clase, setClase] = useState<Clase | null>(null);
@@ -62,14 +69,10 @@ const VirtualClassroomPage: React.FC = () => {
   const [isAsking, setIsAsking] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
 
-const getApiUrl = () => {
-  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
-  if (!url.startsWith('http')) { url = `https://${url}`; }
-  return url.replace(/\/$/, '');
-};
-const VITE_API_URL = getApiUrl();
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-const fetchQuestions = async () => {
+  const fetchQuestions = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/questions`, {

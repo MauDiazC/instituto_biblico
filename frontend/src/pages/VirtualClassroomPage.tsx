@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle } from 'lucide-react';
+import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { formatToLocal } from '../utils/date';
@@ -163,35 +163,24 @@ const VirtualClassroomPage: React.FC = () => {
     if (lessonId) {
       fetchClassData();
 
-      // HYPER-RELIABLE REALTIME: Subscribe to all changes in the 'public' schema
-      // This is often more reliable than filtered table subscriptions in some Supabase configs
+      // Realtime subscription (Broad schema for reliability)
       const mainChannel = supabase
-        .channel(`vc-master-${lessonId}`)
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'clases'
-        }, (payload: any) => {
-          // Manually filter for this lesson
-          if (payload.new && payload.new.id === parseInt(lessonId)) {
-            console.log('REALTIME-MASTER: Class update detected!', payload.new.status);
+        .channel(`vc-master-final-${lessonId}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
+          if (payload.new && Number(payload.new.id) === Number(lessonId)) {
+            console.log('MASTER-SYNC: State updated via realtime', payload.new.status);
             fetchClassData(true);
           }
         })
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'consultas'
-        }, (payload: any) => {
-          if (payload.new && payload.new.clase_id === parseInt(lessonId)) {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas' }, (payload: any) => {
+          if (payload.new && Number(payload.new.clase_id) === Number(lessonId)) {
             fetchQuestions();
           }
         })
-        .subscribe((status) => {
-          console.log(`REALTIME-MASTER: Connection status: ${status}`);
-        });
+        .subscribe();
 
-      // FAST POLLING: Every 4 seconds. Very lightweight, guaranteed fallback.
+      // AGGRESSIVE POLLING: 4 seconds. Fast enough to feel like realtime, 
+      // safe enough to work even if Supabase Realtime is disabled.
       const interval = setInterval(() => {
         fetchClassData(true);
       }, 4000);
@@ -230,7 +219,6 @@ const VirtualClassroomPage: React.FC = () => {
       });
       if (response.ok) {
         setClase(prev => prev ? { ...prev, status: 'RECORDED', room_url: null } : null);
-        alert('Clase finalizada.');
         navigate('/dashboard/teacher');
       }
     } catch (error) {
@@ -259,10 +247,7 @@ const VirtualClassroomPage: React.FC = () => {
 
       const response = await fetch(`${VITE_API_URL}/courses/assignments/${tareaId}/submit`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${session?.access_token}`, 
-          'Content-Type': 'application/json' 
-        },
+        headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ tarea_id: tareaId, content: finalContent })
       });
 
@@ -284,10 +269,7 @@ const VirtualClassroomPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/questions`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${session?.access_token}`, 
-          'Content-Type': 'application/json' 
-        },
+        headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: newQuestion, clase_id: parseInt(lessonId || '0') })
       });
       if (response.ok) {
@@ -307,8 +289,6 @@ const VirtualClassroomPage: React.FC = () => {
     try {
       setIsAnswering(true);
       const { data: { session } } = await supabase.auth.getSession();
-      
-      // FIXED: Sending answer in the BODY as JSON, as required by backend schema
       const response = await fetch(`${VITE_API_URL}/courses/questions/${questionId}/answer`, {
         method: 'PATCH',
         headers: { 
@@ -317,18 +297,13 @@ const VirtualClassroomPage: React.FC = () => {
         },
         body: JSON.stringify({ answer: answerText })
       });
-
       if (response.ok) {
         setAnswerText('');
         setAnsweringId(null);
         await fetchQuestions();
-      } else {
-        const err = await response.text();
-        throw new Error(err);
       }
     } catch (error) {
       console.error('Error answering:', error);
-      alert('Hubo un error al enviar la respuesta.');
     } finally {
       setIsAnswering(false);
     }
@@ -356,7 +331,7 @@ const VirtualClassroomPage: React.FC = () => {
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/60 text-center p-8">
               <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 animate-pulse"><Video className="w-10 h-10 text-white/50" /></div>
               <h3 className="text-2xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'La transmisión terminó'}</h3>
-              <p className="text-white/60 max-w-xs mx-auto font-body">{clase.status === 'PLANNED' ? 'Espera a que el tutor inicie la clase. Esta página se actualizará sola.' : 'El video de la sesión estará disponible en unos minutos.'}</p>
+              <p className="text-white/60 max-w-xs mx-auto font-body">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible pronto.'}</p>
             </div>
           )}
         </div>
@@ -371,7 +346,7 @@ const VirtualClassroomPage: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               {isTeacher && (clase.status === 'LIVE' || clase.status === 'PLANNED') && (
-                <button onClick={handleEndClass} disabled={isEnding} className="px-6 py-3 bg-error text-white rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"><Square className="w-5 h-5 fill-current" /> {isEnding ? '...' : 'Finalizar'}</button>
+                <button onClick={handleEndClass} disabled={isEnding} className="px-6 py-3 bg-error text-white rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"><Square className="w-5 h-5 fill-current" /> Finalizar</button>
               )}
               <button onClick={handleToggleCompletion} disabled={isCompleting} className={`px-6 py-3 rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 ${clase.is_completed ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-secondary-fixed-dim hover:bg-secondary-fixed text-on-secondary-fixed'}`}>{clase.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />} {clase.is_completed ? 'Hecha' : 'Completar'}</button>
             </div>

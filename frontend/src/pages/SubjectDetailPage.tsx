@@ -7,7 +7,7 @@ import { formatToLocal } from '../utils/date';
 interface Clase {
   id: number;
   title: string;
-  status: 'SCHEDULED' | 'LIVE' | 'RECORDED' | 'PROCESSING';
+  status: 'SCHEDULED' | 'LIVE' | 'RECORDED' | 'PROCESSING' | 'PLANNED';
   scheduled_at: string;
 }
 
@@ -38,30 +38,55 @@ const SubjectDetailPage: React.FC = () => {
   const [materia, setMateria] = useState<Materia | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchMateria = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${VITE_API_URL}/courses/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Error fetching materia');
+      
+      const data = await response.json();
+      setMateria(data);
+    } catch (error) {
+      console.error('Error fetching materia:', error);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMateria = async () => {
-      try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        const response = await fetch(`${VITE_API_URL}/courses/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`
-          }
-        });
+    if (id) {
+      fetchMateria();
 
-        if (!response.ok) throw new Error('Error fetching materia');
-        
-        const data = await response.json();
-        setMateria(data);
-      } catch (error) {
-        console.error('Error fetching materia:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Realtime subscription for class status changes
+      const channel = supabase
+        .channel(`course-detail-${id}`)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'clases' 
+        }, () => {
+          console.log('REALTIME: Class list update detected');
+          fetchMateria(true);
+        })
+        .subscribe();
 
-    if (id) fetchMateria();
+      // Reliable Polling (Every 6 seconds)
+      const interval = setInterval(() => {
+        fetchMateria(true);
+      }, 6000);
+
+      return () => {
+        supabase.removeChannel(channel);
+        clearInterval(interval);
+      };
+    }
   }, [id]);
 
   if (loading) {
@@ -143,11 +168,11 @@ const SubjectDetailPage: React.FC = () => {
                         {clase.status === 'RECORDED' && (
                           <span className="text-[9px] font-black bg-secondary-fixed/50 text-secondary px-2 py-0.5 rounded-full uppercase tracking-widest">GRABADA</span>
                         )}
-                        {clase.status === 'SCHEDULED' && (
+                        {(clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
                           <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
                         )}
                         <span className="text-[10px] text-on-surface-variant font-medium">
-                          {clase.status === 'SCHEDULED' ? formatToLocal(clase.scheduled_at) : 'Disponible'}
+                          {clase.status === 'LIVE' ? '¡Unirse ahora!' : formatToLocal(clase.scheduled_at)}
                         </span>
                       </div>
                     </div>

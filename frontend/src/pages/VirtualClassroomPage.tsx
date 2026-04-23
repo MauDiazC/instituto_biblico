@@ -163,14 +163,25 @@ const VirtualClassroomPage: React.FC = () => {
     if (lessonId) {
       fetchClassData();
 
-      const channel = supabase
+      const questionsChannel = supabase
         .channel('realtime_questions_vc')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas', filter: `clase_id=eq.${lessonId}` }, () => {
           fetchQuestions();
         })
         .subscribe();
 
-      return () => { supabase.removeChannel(channel); };
+      const classChannel = supabase
+        .channel('realtime_class_status')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clases', filter: `id=eq.${lessonId}` }, () => {
+          console.log('Class status changed, re-fetching...');
+          fetchClassData();
+        })
+        .subscribe();
+
+      return () => { 
+        supabase.removeChannel(questionsChannel);
+        supabase.removeChannel(classChannel);
+      };
     }
   }, [lessonId]);
 

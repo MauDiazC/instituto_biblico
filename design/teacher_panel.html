@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Teacher Dashboard - Sacred Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;family=Lexend:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#1b365d",
+                      "primary": "#002046",
+                      "surface": "#faf9f6",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#e9e8e5",
+                      "on-primary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#001b3d",
+                      "surface-container-highest": "#e3e2e0",
+                      "surface-bright": "#faf9f6",
+                      "on-primary-fixed-variant": "#2e476f",
+                      "on-secondary-fixed-variant": "#5d4201",
+                      "tertiary-fixed": "#d6e3ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-surface": "#1a1c1a",
+                      "on-background": "#1a1c1a",
+                      "on-surface-variant": "#44474e",
+                      "on-primary-container": "#87a0cd",
+                      "surface-variant": "#e3e2e0",
+                      "surface-dim": "#dbdad7",
+                      "on-secondary-fixed": "#261900",
+                      "on-tertiary-fixed": "#001b3d",
+                      "inverse-surface": "#2f312f",
+                      "secondary": "#775a19",
+                      "tertiary": "#002046",
+                      "on-error-container": "#93000a",
+                      "background": "#faf9f6",
+                      "surface-tint": "#465f88",
+                      "outline": "#74777f",
+                      "on-secondary-container": "#785a1a",
+                      "on-tertiary-container": "#87a0cd",
+                      "secondary-fixed": "#ffdea5",
+                      "secondary-container": "#fed488",
+                      "tertiary-container": "#1b365d",
+                      "secondary-fixed-dim": "#e9c176",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f2f1ee",
+                      "primary-fixed-dim": "#aec7f7",
+                      "on-tertiary-fixed-variant": "#2e476f",
+                      "surface-container": "#efeeeb",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#aec7f7",
+                      "surface-container-low": "#f4f3f1",
+                      "tertiary-fixed-dim": "#aec7f7",
+                      "primary-fixed": "#d6e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "body": ["Lexend"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Lexend', sans-serif; background-color: #faf9f6; }
+        .font-headline { font-family: 'Inter', sans-serif; }
+        .ambient-shadow { shadow: 0 8px 24px -4px rgba(26,28,26,0.06); }
+        .glass-nav { background: rgba(250, 249, 246, 0.8); backdrop-filter: blur(20px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-on-surface bg-surface min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#FAF9F6]/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4">
+<span class="text-xl font-black text-[#1B365D] dark:text-blue-200 font-headline">Instituto de Formación Bíblica</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-6 items-center">
+<span class="material-symbols-outlined text-slate-500 hover:text-[#1B365D] cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-[#1B365D] dark:text-blue-400">account_circle</span>
+</div>
+<button class="hidden md:block bg-primary text-on-primary px-6 py-2 rounded-lg font-label font-bold text-sm transition-transform active:scale-95">Publicar Contenido</button>
+</div>
+</div>
+</header>
+<div class="flex pt-[72px]">
+<!-- SideNavBar -->
+<aside class="h-[calc(100vh-72px)] w-64 hidden md:flex flex-col bg-[#F4F3F1] dark:bg-slate-900 p-4 space-y-2 sticky top-[72px]">
+<div class="mb-8 px-2 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">auto_stories</span>
+</div>
+<div>
+<p class="text-[#1B365D] font-bold text-lg font-headline">Sacred Archive</p>
+<p class="text-xs text-on-surface-variant font-body">Portal Académico</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#1B365D] rounded-lg shadow-sm font-bold transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label">Dashboard Docente</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 rounded-lg transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">grade</span>
+<span class="font-label">Calificaciones</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 rounded-lg transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-label">Editor de Cursos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 rounded-lg transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">local_library</span>
+<span class="font-label">Biblioteca Virtual</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 rounded-lg transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label">Comunidad</span>
+</a>
+</nav>
+<div class="pt-4 mt-4 border-t border-outline-variant/15 space-y-1">
+<button class="w-full flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg font-bold transition-transform active:scale-95 mb-4">
+<span class="material-symbols-outlined">add</span>
+<span class="font-label">Nueva Lección</span>
+</button>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label">Ajustes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label">Cerrar Sesión</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-8 py-10 max-w-6xl mx-auto pb-24 md:pb-10">
+<!-- 1. Welcome Header -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-5xl font-black text-primary font-headline tracking-tighter leading-none mb-2">Bienvenido,</h1>
+<p class="text-3xl font-light text-secondary font-body">Prof. Roberto Méndez</p>
+</div>
+<div class="text-right">
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-widest">Semestre Otoño 2024</p>
+<p class="text-primary font-bold font-headline">Estado: Docente Senior</p>
+</div>
+</div>
+</section>
+<!-- 2. Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] group hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary-container bg-surface-container-low p-3 rounded-lg">person_celebrate</span>
+<span class="text-xs font-bold text-secondary bg-secondary-fixed px-2 py-1 rounded-full">+12% este mes</span>
+</div>
+<p class="text-on-surface-variant text-sm font-label mb-1">Estudiantes Activos</p>
+<p class="text-4xl font-black text-primary font-headline">1,284</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] group hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary bg-secondary-fixed-dim p-3 rounded-lg">pending_actions</span>
+<span class="text-xs font-bold text-error bg-error-container px-2 py-1 rounded-full">Urgente</span>
+</div>
+<p class="text-on-surface-variant text-sm font-label mb-1">Entregas por Calificar</p>
+<p class="text-4xl font-black text-primary font-headline">42</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] group hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary-container bg-surface-container-low p-3 rounded-lg">timer</span>
+</div>
+<p class="text-on-surface-variant text-sm font-label mb-1">Horas en Vivo</p>
+<p class="text-4xl font-black text-primary font-headline">156.5</p>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- 3. My Courses Section (Left 2/3) -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-bold font-headline text-primary">Mis Cursos Activos</h2>
+<button class="text-secondary font-bold text-sm font-label flex items-center gap-1">Ver todos <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+</div>
+<div class="space-y-4">
+<!-- Course Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center gap-6 shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] border-l-4 border-secondary transition-all hover:bg-surface-container-low">
+<div class="w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="ancient bible manuscripts on heavy parchment paper with soft side lighting in a quiet library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_ZgZiKzJhSDabeqcDfR0ZHd6NypupTjQmnAeTryiiJ-mikXQUkVAIMLod8KpOt50hKuqF9fu18nDtM1LHukLhh2bybMz8mm_gLMF7ZKjeHZMK1LnVo1QhYlm0T8EH_574RdIcE-86We5U71Qpcx8ImIBGKVtC6D4GIBCsdyfQF6Yyj6Wgt74gGLWW2x8ThFN3R8t0aYY_SJSb1OgkTwf0uiEHJ1VDmoYpjjCatlzdnvLLq81i0AwBMdhqLdMFsxvyTq_W0hUXiN-R"/>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-primary text-lg font-headline">Exégesis del Nuevo Testamento</h3>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant mt-1">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">group</span> 450 Alumnos</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">auto_stories</span> 12 Módulos</span>
+</div>
+</div>
+<button class="bg-primary-container text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95">Gestionar</button>
+</div>
+<!-- Course Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center gap-6 shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] border-l-4 border-primary transition-all hover:bg-surface-container-low">
+<div class="w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="architectural view of a modern chapel with dramatic light beams cutting through the dark interior" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPzhZ4QNEUaEZ3lDuP6AjQyJW7riWjqW7FFm2PXfTTeW4ZrfJYCKjiaM1QyGvY-lqZ3op9KgAW3IMG9x6gkW5pMXnhdDp-UnIfr5P0LOVhNdFItbqb8MbthzMtr89CnhAst82BpAInCTKa5tcpNb4JDgxscC46npvW7NNJ6AIA077FdvmJah0Z-RaFRFx3MRkR0NnBVVPC4mjx4LMeaBIObVJjxh3mOfBfbz78nranvDII6xRnpUzB5-SEBT3hd1MkXQd1HBSOW7Og"/>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-primary text-lg font-headline">Historia de la Iglesia Primitiva</h3>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant mt-1">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">group</span> 834 Alumnos</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">auto_stories</span> 8 Módulos</span>
+</div>
+</div>
+<button class="bg-primary-container text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95">Gestionar</button>
+</div>
+</div>
+</div>
+<!-- Right Sidebar Column -->
+<div class="space-y-8">
+<!-- 4. Live Session Hub -->
+<div class="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-[0_8px_24px_-4px_rgba(0,32,70,0.3)]">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
+<div class="relative z-10">
+<p class="text-secondary-fixed-dim text-xs uppercase tracking-widest font-bold mb-2">Próxima Clase en Vivo</p>
+<h3 class="text-xl font-bold font-headline mb-4">Teología Sistemática II</h3>
+<div class="bg-white/10 rounded-xl p-4 mb-6 flex justify-around backdrop-blur-md">
+<div class="text-center">
+<p class="text-2xl font-black font-headline">02</p>
+<p class="text-[10px] uppercase font-label">Horas</p>
+</div>
+<div class="text-2xl font-black">:</div>
+<div class="text-center">
+<p class="text-2xl font-black font-headline">14</p>
+<p class="text-[10px] uppercase font-label">Mins</p>
+</div>
+<div class="text-2xl font-black">:</div>
+<div class="text-center">
+<p class="text-2xl font-black font-headline">35</p>
+<p class="text-[10px] uppercase font-label">Segs</p>
+</div>
+</div>
+<button class="w-full bg-secondary text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95">
+                                INICIAR TRANSMISIÓN
+                            </button>
+</div>
+</div>
+<!-- 5. Recent Submissions Quick View -->
+<div class="bg-[#F4F3F1] p-6 rounded-2xl">
+<h3 class="text-primary font-bold font-headline mb-4 flex items-center justify-between">
+                            Entregas Recientes
+                            <span class="material-symbols-outlined text-on-surface-variant text-sm">filter_list</span>
+</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-3 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">MA</div>
+<div class="flex-1 border-b border-outline-variant/15 pb-2">
+<p class="text-sm font-bold text-primary leading-tight">Miguel Angel Torres</p>
+<p class="text-xs text-on-surface-variant font-body">Ensayo: Gracia vs. Ley</p>
+</div>
+<p class="text-[10px] text-on-surface-variant italic whitespace-nowrap">Hace 5m</p>
+</div>
+<div class="flex items-center gap-3 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">EC</div>
+<div class="flex-1 border-b border-outline-variant/15 pb-2">
+<p class="text-sm font-bold text-primary leading-tight">Elena Contreras</p>
+<p class="text-xs text-on-surface-variant font-body">Cuestionario Módulo 4</p>
+</div>
+<p class="text-[10px] text-on-surface-variant italic whitespace-nowrap">Hace 12m</p>
+</div>
+<div class="flex items-center gap-3 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">JS</div>
+<div class="flex-1 border-b border-outline-variant/15 pb-2">
+<p class="text-sm font-bold text-primary leading-tight">Juan Sanabria</p>
+<p class="text-xs text-on-surface-variant font-body">Proyecto Final Semestre</p>
+</div>
+<p class="text-[10px] text-on-surface-variant italic whitespace-nowrap">Hace 1h</p>
+</div>
+<button class="w-full py-2 text-primary font-bold text-sm font-label border border-primary/20 rounded-lg hover:bg-white/50 transition-colors">
+                                Abrir Centro de Calificaciones
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 w-full rounded-t-2xl md:hidden z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-[#F4F3F1] shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+<div class="flex justify-around items-center px-4 py-3 pb-safe">
+<div class="flex flex-col items-center justify-center bg-[#1B365D] text-white rounded-xl p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">grade</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest">Notas</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">edit</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest">Editor</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">book</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest">Biblioteca</span>
+</div>
+</div>
+</nav>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#1B365D] dark:bg-black text-[#FAF9F6] mt-20">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div>
+<p class="text-white font-bold font-headline text-lg">Instituto de Formación Bíblica</p>
+<p class="font-['Lexend'] text-sm leading-relaxed text-slate-300">© 2024 Instituto de Formación Bíblica. El Archivo Sagrado.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors font-['Lexend'] text-sm" href="#">Privacidad</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors font-['Lexend'] text-sm" href="#">Términos de Uso</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors font-['Lexend'] text-sm" href="#">Contacto</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors font-['Lexend'] text-sm" href="#">Soporte Académico</a>
+</div>
+</div>
+</footer>
+</body></html>

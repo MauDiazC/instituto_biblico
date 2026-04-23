@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&amp;family=Lexend:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .click-feedback-ripple:active {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+        .tonal-layering {
+            background-color: #f4f3f1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fed488",
+                        "tertiary-container": "#1b365d",
+                        "secondary-fixed-dim": "#e9c176",
+                        "secondary-fixed": "#ffdea5",
+                        "background": "#faf9f6",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#002046",
+                        "on-secondary-container": "#785a1a",
+                        "surface-tint": "#465f88",
+                        "outline": "#74777f",
+                        "on-tertiary-container": "#87a0cd",
+                        "on-tertiary-fixed": "#001b3d",
+                        "inverse-surface": "#2f312f",
+                        "secondary": "#775a19",
+                        "primary-fixed": "#d6e3ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#aec7f7",
+                        "surface-container-low": "#f4f3f1",
+                        "tertiary-fixed-dim": "#aec7f7",
+                        "on-tertiary-fixed-variant": "#2e476f",
+                        "surface-container": "#efeeeb",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f1ee",
+                        "primary-fixed-dim": "#aec7f7",
+                        "surface-bright": "#faf9f6",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "on-secondary-fixed-variant": "#5d4201",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#001b3d",
+                        "surface-container-highest": "#e3e2e0",
+                        "surface-container-high": "#e9e8e5",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "primary-container": "#1b365d",
+                        "primary": "#002046",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#faf9f6",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dbdad7",
+                        "surface-variant": "#e3e2e0",
+                        "on-secondary-fixed": "#261900",
+                        "on-surface-variant": "#44474e",
+                        "on-primary-container": "#87a0cd",
+                        "on-surface": "#1a1c1a",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed": "#d6e3ff",
+                        "outline-variant": "#c4c6cf"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Lexend"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body antialiased min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 hidden md:flex flex-col bg-[#F4F3F1] border-r-0 fixed left-0 top-0 z-40 transition-all duration-200">
+<div class="flex flex-col p-4 space-y-6 h-full">
+<div class="px-2 py-4">
+<h2 class="text-lg font-bold text-[#1B365D] font-headline uppercase tracking-wider">Sacred Archive</h2>
+<p class="text-[10px] text-slate-500 font-label uppercase tracking-[0.2em]">Formación Teológica</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Inicio
+                </a>
+<a class="flex items-center gap-3 p-3 bg-white text-[#1B365D] rounded-lg shadow-sm font-bold font-label text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                    Mis Cursos
+                </a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+                    Biblioteca
+                </a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+                    Comunidad
+                </a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+                    Administración
+                </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 space-y-2">
+<button class="w-full bg-[#1B365D] text-white py-3 rounded-lg font-bold text-sm shadow-lg hover:shadow-[#1B365D]/20 transition-all click-feedback-ripple">
+                    Ir a Clase
+                </button>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    Ajustes
+                </a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg font-label font-medium text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Cerrar Sesión
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 min-h-screen pb-24 md:pb-12">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-0 md:left-64 bg-[#FAF9F6]/80 backdrop-blur-xl z-30 shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-secondary-fixed-dim transition-all" placeholder="Buscar materias..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden lg:flex items-center gap-2 bg-[#1B365D] text-white px-5 py-2 rounded-full font-headline font-bold tracking-tight text-sm click-feedback-ripple">
+                        Continuar Lección
+                    </button>
+<div class="flex items-center gap-2">
+<button class="p-2 text-[#1B365D] hover:bg-[#F4F3F1] rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-[#1B365D] hover:bg-[#F4F3F1] rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="mt-24 px-6 md:px-12 max-w-[1440px] mx-auto space-y-12">
+<!-- Hero Welcome Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+<div class="lg:col-span-8 space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed/30 text-secondary font-label text-xs font-bold tracking-widest uppercase">
+                        Panel del Estudiante
+                    </div>
+<h1 class="text-4xl md:text-5xl font-headline font-extrabold text-primary tracking-tight">
+                        Bienvenido, <span class="text-secondary">Mateo Silva</span>
+</h1>
+<p class="text-lg text-on-surface-variant max-w-xl leading-relaxed">
+                        Tu camino de formación teológica continúa hoy. Tienes 3 lecciones pendientes para completar esta semana.
+                    </p>
+</div>
+<div class="lg:col-span-4 flex justify-end">
+<div class="relative w-24 h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-white">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="portrait of a young adult man with a friendly expression in soft natural lighting, professional student profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8hHJukJFxNNc-n5ZxiH9aQBmcCo363lpJ8iVFuiqs9j5_YfnMX91GsOnLAbQAxq132rr07x5OpDmnLcEzlMisovam9GlhvyP3bZC_Pk6kceUy3dVg42-UNoW5sFxq7-jwghT3Lf7XyA_uv_S7qfuAEqvEcDi_vUQv8TtSnaCfrLlAD_ZKwA0LXDhlxZoOVDSzfksMhlvK9wmGlllVerOwXtwJkhfyzAbMSgdVm4QVaz93IN_vnot1D5JHSR7qs49tQ3iaA_JF1WvM"/>
+</div>
+</div>
+</section>
+<!-- Scripture Highlight (Design System Special Component) -->
+<section class="bg-surface-container-highest rounded-xl p-8 border-l-4 border-secondary-fixed-dim shadow-sm">
+<div class="flex flex-col md:flex-row gap-6 items-start">
+<div class="flex-1 space-y-2">
+<p class="font-body text-xl italic text-on-surface leading-relaxed">
+                            "Lámpara es a mis pies tu palabra, y lumbrera a mi camino."
+                        </p>
+<p class="font-label font-bold text-secondary text-sm">Salmos 119:105</p>
+</div>
+<button class="px-6 py-3 bg-white text-primary font-bold rounded-lg border border-outline-variant/20 hover:bg-surface transition-colors text-sm whitespace-nowrap">
+                        Ver Reflexión del Día
+                    </button>
+</div>
+</section>
+<!-- Mis Cursos Section -->
+<section class="space-y-8">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-headline font-bold text-primary">Mis Cursos</h2>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="list">list</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid Layout for Courses -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Course Card 1: Active -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] transition-all duration-300">
+<div class="relative h-48">
+<img alt="Course" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="ancient scrolls and biblical manuscripts in a dimly lit library with soft glowing candle light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7uoCOV89UdkqQ8nXYd-CEsEvc0NIRFBNhisOlb7ldrDTDYzOD6rHPQ9YHpLDBJM4cOGD8sdravz-864WJ0WtHr8J7fMDWRoUzYI4TDHJA6eq6Tul9Mcf8u3K4thWD2gUsBiTXD0kpER75liubcRnobnmEczNAnEb9E6RW5vTogznjh20IXYIxoivseM_VNEeceEIi1BueVu5pRh6ZKG-R1NKhRlpqJNgN9ryG-wSGdfzB0xkg9hVLt6zxTteRNkhUGgzODGeKMgSA"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">En Curso</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h3 class="text-xl font-headline font-bold text-primary leading-tight">Introducción al Antiguo Testamento</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label text-on-surface-variant">
+<span>Progreso</span>
+<span>65%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed-dim rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<button class="w-full py-3 bg-[#1B365D] text-white rounded-lg font-bold text-sm hover:bg-primary transition-colors">
+                                Continuar
+                            </button>
+</div>
+</div>
+<!-- Course Card 2: New -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] transition-all duration-300">
+<div class="relative h-48">
+<img alt="Course" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="overhead view of a workspace with a bible, notebook, and coffee cup on a light wood desk at dawn" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3yA36-ua3hw89qVRSKEl8tgzjAaPSTkt6kprt8NlfhgtekF__xYm0d87MNQKbgEUZiqyPvhmNgjpemECh8QfuxrAUIGty-R0tOlNR_hoVqzqu0clmzsGU9GQKdyD6aqkyb0uWu_sTjSoKu42l7R0bfhhf2s57XhftlfTEzozFEeAdJc4gno_xtc7RGm8YUgFKDzU3YIZgxKbaZxOtDlVF6bJyrtsZ0KQVKYAoymxq30O2sSv0lVsynob908niNVFM_vNAZwHZe565"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Nuevo</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h3 class="text-xl font-headline font-bold text-primary leading-tight">Hermenéutica Bíblica Avanzada</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label text-on-surface-variant">
+<span>Progreso</span>
+<span>0%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed-dim rounded-full" style="width: 0%"></div>
+</div>
+</div>
+<button class="w-full py-3 border-2 border-primary text-primary rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">
+                                Empezar Curso
+                            </button>
+</div>
+</div>
+<!-- Course Card 3: Skeleton State -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden animate-pulse">
+<div class="h-48 bg-surface-container-highest"></div>
+<div class="p-6 space-y-4">
+<div class="h-6 w-3/4 bg-surface-container-highest rounded"></div>
+<div class="space-y-2 pt-2">
+<div class="h-2 w-full bg-surface-container rounded-full"></div>
+<div class="h-10 w-full bg-surface-container rounded-lg"></div>
+</div>
+</div>
+</div>
+<!-- Course Card 4: Skeleton State -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden animate-pulse">
+<div class="h-48 bg-surface-container-highest"></div>
+<div class="p-6 space-y-4">
+<div class="h-6 w-1/2 bg-surface-container-highest rounded"></div>
+<div class="space-y-2 pt-2">
+<div class="h-2 w-full bg-surface-container rounded-full"></div>
+<div class="h-10 w-full bg-surface-container rounded-lg"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#1B365D] mt-24 text-[#FAF9F6] font-body text-sm leading-relaxed">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-white font-bold text-lg">Instituto de Formación Bíblica</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Privacidad</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Términos de Uso</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Contacto</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Soporte Académico</a>
+</div>
+<div class="text-slate-400 text-xs">
+                    © 2024 Instituto de Formación Bíblica. El Archivo Sagrado.
+                </div>
+</div>
+</footer>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-md md:hidden z-50 border-t border-[#F4F3F1] shadow-[0_-4px_16px_rgba(0,0,0,0.04)] rounded-t-2xl">
+<div class="flex justify-around items-center px-4 py-3 pb-safe">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Inicio</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#1B365D] text-white rounded-xl p-2 px-4 shadow-lg" href="#">
+<span class="material-symbols-outlined" data-icon="book" style="font-variation-settings: 'FILL' 1;">book</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Cursos</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Tareas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

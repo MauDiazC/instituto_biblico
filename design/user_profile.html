@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Perfil de Usuario - Instituto de Formación Bíblica</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&amp;family=Lexend:wght@300;400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#fed488",
+                    "tertiary-container": "#1b365d",
+                    "secondary-fixed-dim": "#e9c176",
+                    "secondary-fixed": "#ffdea5",
+                    "background": "#faf9f6",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#002046",
+                    "on-secondary-container": "#785a1a",
+                    "surface-tint": "#465f88",
+                    "outline": "#74777f",
+                    "on-tertiary-container": "#87a0cd",
+                    "on-tertiary-fixed": "#001b3d",
+                    "inverse-surface": "#2f312f",
+                    "secondary": "#775a19",
+                    "primary-fixed": "#d6e3ff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#aec7f7",
+                    "surface-container-low": "#f4f3f1",
+                    "tertiary-fixed-dim": "#aec7f7",
+                    "on-tertiary-fixed-variant": "#2e476f",
+                    "surface-container": "#efeeeb",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f2f1ee",
+                    "primary-fixed-dim": "#aec7f7",
+                    "surface-bright": "#faf9f6",
+                    "on-primary-fixed-variant": "#2e476f",
+                    "on-secondary-fixed-variant": "#5d4201",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#001b3d",
+                    "surface-container-highest": "#e3e2e0",
+                    "surface-container-high": "#e9e8e5",
+                    "on-primary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "primary-container": "#1b365d",
+                    "primary": "#002046",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#faf9f6",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#dbdad7",
+                    "surface-variant": "#e3e2e0",
+                    "on-secondary-fixed": "#261900",
+                    "on-surface-variant": "#44474e",
+                    "on-primary-container": "#87a0cd",
+                    "on-surface": "#1a1c1a",
+                    "on-background": "#1a1c1a",
+                    "tertiary-fixed": "#d6e3ff",
+                    "outline-variant": "#c4c6cf"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Lexend"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .click-feedback-ripple:active {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 hidden md:flex flex-col border-r-0 bg-surface-container-low text-primary font-label font-medium text-sm p-4 space-y-2 sticky top-0">
+<div class="px-2 py-6 mb-4">
+<h1 class="text-lg font-bold text-primary">Sacred Archive</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Formación Teológica</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Inicio</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Mis Cursos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span>Biblioteca</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Comunidad</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Administración</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant/10 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-primary rounded-lg shadow-sm font-bold" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Ajustes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 hover:translate-x-1 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Cerrar Sesión</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 max-w-[1440px] mx-auto shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] md:relative md:bg-transparent md:shadow-none md:backdrop-blur-none">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-primary">menu</span>
+<h2 class="text-xl font-black text-primary font-headline tracking-tight">Instituto de Formación Bíblica</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant/20">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm ml-2 w-48" placeholder="Buscar..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-full">account_circle</button>
+<button class="hidden md:block bg-primary text-white px-6 py-2 rounded-full font-label font-bold text-sm scale-95 active:scale-90 transition-transform">
+                        Continuar Lección
+                    </button>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="flex-1 px-6 py-12 mt-16 md:mt-0 max-w-4xl mx-auto w-full">
+<div class="mb-12">
+<h1 class="text-4xl font-extrabold font-headline text-primary tracking-tight mb-2">Ajustes de Perfil</h1>
+<p class="text-on-surface-variant text-lg max-w-2xl">Administra tu identidad digital y personaliza tu experiencia en el Instituto.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+<!-- Avatar Preview Column -->
+<div class="md:col-span-4 flex flex-col items-center">
+<div class="relative group">
+<div class="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-xl bg-surface-container-high">
+<img alt="Profile Avatar" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional man with a kind expression, soft cinematic lighting in a library setting with blurred books" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9EhdEkxxrnUtPOS9HT5B02drQwxBhLECNn7dEUvWBF7WlecUszNYA8EQS6zQPI9W3E6pum3Zl-fUMWPUihTovFgpCj4Wauk5xc-ApG7peKHptfaYsy-3MeKX_BttskOPd9l8Wrel1v8HjlvhT1wHOzgN301i9SbVmmyQqGj4QqJOXBx5GFPV7LDpNGCpmygvlWpFQL8EFNST4jKbapfSvEVr0nd1Jv5P5DQXaGt63WSXW7oGzY_SMCB1Wpy8DOXtGQpZgil9q_fAI"/>
+</div>
+<button class="absolute bottom-2 right-2 bg-secondary-fixed-dim text-on-secondary-fixed p-3 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">photo_camera</span>
+</button>
+</div>
+<div class="mt-6 text-center">
+<h3 class="font-headline font-bold text-primary">Previsualización</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest mt-1">Tamaño recomendado: 512x512px</p>
+</div>
+</div>
+<!-- Form Column -->
+<div class="md:col-span-8">
+<form class="space-y-8 bg-surface-container-low/50 p-8 rounded-xl">
+<div class="space-y-6">
+<div>
+<label class="block font-headline font-bold text-primary text-sm mb-2" for="full_name">Nombre Completo</label>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant/30 focus:border-secondary focus:ring-0 py-3 px-0 text-lg font-body transition-all" id="full_name" name="full_name" placeholder="Ej. Juan Pérez" type="text" value="Mateo Fernández de Córdoba"/>
+</div>
+<div>
+<label class="block font-headline font-bold text-primary text-sm mb-2" for="avatar_url">URL del Avatar</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-surface-container-lowest border-0 border-b-2 border-outline-variant/30 focus:border-secondary focus:ring-0 py-3 px-0 text-sm font-body transition-all" id="avatar_url" name="avatar_url" placeholder="https://ejemplo.com/mi-foto.jpg" type="url"/>
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-colors" type="button">
+<span class="material-symbols-outlined">link</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant mt-2 italic">Puedes vincular una imagen desde un servidor externo o Gravatar.</p>
+</div>
+</div>
+<!-- Scripture Block -->
+<div class="bg-surface-container-highest p-6 rounded-lg border-l-4 border-secondary-fixed-dim">
+<span class="material-symbols-outlined text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="text-sm font-body italic text-primary leading-relaxed">
+                                    "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
+                                </p>
+<p class="text-xs font-bold font-headline mt-3 text-secondary uppercase tracking-widest">— 2 Timoteo 2:15</p>
+</div>
+<div class="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant/10">
+<button class="px-6 py-2 text-primary font-label font-bold hover:bg-surface-container transition-colors rounded-lg" type="button">
+                                    Cancelar
+                                </button>
+<button class="bg-primary text-white px-8 py-3 rounded-full font-label font-bold shadow-[0_8px_24px_-4px_rgba(26,28,26,0.12)] hover:translate-y-[-2px] transition-all active:translate-y-0" type="submit">
+                                    Guardar Cambios
+                                </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-primary dark:bg-black text-background font-body text-sm leading-relaxed mt-auto">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-center md:text-left">
+<div class="text-white font-bold text-lg mb-2">Sacred Archive</div>
+<p class="text-slate-300 opacity-80">© 2024 Instituto de Formación Bíblica. El Archivo Sagrado.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-slate-300 hover:text-secondary-fixed-dim transition-colors" href="#">Privacidad</a>
+<a class="text-slate-300 hover:text-secondary-fixed-dim transition-colors" href="#">Términos de Uso</a>
+<a class="text-slate-300 hover:text-secondary-fixed-dim transition-colors" href="#">Contacto</a>
+<a class="text-slate-300 hover:text-secondary-fixed-dim transition-colors" href="#">Soporte Académico</a>
+</div>
+</div>
+</footer>
+</main>
+</div>
+<!-- BottomNavBar (Mobile only) -->
+<nav class="fixed bottom-0 w-full rounded-t-2xl md:hidden z-50 bg-white/90 backdrop-blur-md border-t border-surface-container-low flex justify-around items-center px-4 py-3 pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 active:bg-slate-100" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Inicio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 active:bg-slate-100" href="#">
+<span class="material-symbols-outlined">book</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Cursos</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 active:bg-slate-100" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Tareas</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-white rounded-xl p-2 active:bg-slate-100" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Perfil</span>
+</a>
+</nav>
+</body></html>

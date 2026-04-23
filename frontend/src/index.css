@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-secondary-container: #fed488;
+  --color-tertiary-container: #1b365d;
+  --color-secondary-fixed-dim: #e9c176;
+  --color-secondary-fixed: #ffdea5;
+  --color-background: #faf9f6;
+  --color-on-error-container: #93000a;
+  --color-tertiary: #002046;
+  --color-on-secondary-container: #785a1a;
+  --color-surface-tint: #465f88;
+  --color-outline: #74777f;
+  --color-on-tertiary-container: #87a0cd;
+  --color-on-tertiary-fixed: #001b3d;
+  --color-inverse-surface: #2f312f;
+  --color-secondary: #775a19;
+  --color-primary-fixed: #d6e3ff;
+  --color-on-tertiary: #ffffff;
+  --color-inverse-primary: #aec7f7;
+  --color-surface-container-low: #f4f3f1;
+  --color-tertiary-fixed-dim: #aec7f7;
+  --color-on-tertiary-fixed-variant: #2e476f;
+  --color-surface-container: #efeeeb;
+  --color-on-secondary: #ffffff;
+  --color-inverse-on-surface: #f2f1ee;
+  --color-primary-fixed-dim: #aec7f7;
+  --color-surface-bright: #faf9f6;
+  --color-on-primary-fixed-variant: #2e476f;
+  --color-on-secondary-fixed-variant: #5d4201;
+  --color-on-error: #ffffff;
+  --color-on-primary-fixed: #001b3d;
+  --color-surface-container-highest: #e3e2e0;
+  --color-surface-container-high: #e9e8e5;
+  --color-on-primary: #ffffff;
+  --color-error: #ba1a1a;
+  --color-primary-container: #1b365d;
+  --color-primary: #002046;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface: #faf9f6;
+  --color-error-container: #ffdad6;
+  --color-surface-dim: #dbdad7;
+  --color-surface-variant: #e3e2e0;
+  --color-on-secondary-fixed: #261900;
+  --color-on-surface-variant: #44474e;
+  --color-on-primary-container: #87a0cd;
+  --color-on-surface: #1a1c1a;
+  --color-on-background: #1a1c1a;
+  --color-tertiary-fixed: #d6e3ff;
+  --color-outline-variant: #c4c6cf;
+
+  --font-headline: "Inter", sans-serif;
+  --font-body: "Lexend", sans-serif;
+  --font-label: "Inter", sans-serif;
+
+  --shadow-ambient: 0 8px 24px -4px rgba(26, 28, 26, 0.06);
+  --shadow-premium: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-background font-body text-on-surface;
+  }
+}
+
+@layer components {
+  .scripture-border {
+    @apply border-l-4 border-secondary;
+  }
+}

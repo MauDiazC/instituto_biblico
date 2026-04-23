@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sacred Archive - Registro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;family=Lexend:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#44474e",
+                        "inverse-surface": "#2f312f",
+                        "tertiary-fixed": "#d6e3ff",
+                        "on-tertiary-fixed-variant": "#2e476f",
+                        "on-surface": "#1a1c1a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1b365d",
+                        "surface-container": "#efeeeb",
+                        "secondary-fixed": "#ffdea5",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf9f6",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f4f3f1",
+                        "inverse-primary": "#aec7f7",
+                        "on-tertiary-fixed": "#001b3d",
+                        "surface-tint": "#465f88",
+                        "secondary-container": "#fed488",
+                        "outline-variant": "#c4c6cf",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#87a0cd",
+                        "secondary": "#775a19",
+                        "tertiary": "#002046",
+                        "tertiary-container": "#1b365d",
+                        "on-secondary-fixed": "#261900",
+                        "tertiary-fixed-dim": "#aec7f7",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e9e8e5",
+                        "outline": "#74777f",
+                        "on-secondary-container": "#785a1a",
+                        "on-primary-fixed": "#001b3d",
+                        "on-primary-container": "#87a0cd",
+                        "background": "#faf9f6",
+                        "surface-variant": "#e3e2e0",
+                        "surface": "#faf9f6",
+                        "primary-fixed-dim": "#aec7f7",
+                        "inverse-on-surface": "#f2f1ee",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d6e3ff",
+                        "surface-dim": "#dbdad7",
+                        "secondary-fixed-dim": "#e9c176",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e3e2e0",
+                        "primary": "#002046",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1a",
+                        "on-secondary-fixed-variant": "#5d4201"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Lexend", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sacred-gradient {
+            background: linear-gradient(135deg, #002046 0%, #1b365d 100%);
+        }
+        .gold-glow {
+            box-shadow: 0 0 15px -3px rgba(119, 90, 25, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#faf9f6]/90 dark:bg-slate-950/90 backdrop-blur-md">
+<div class="flex justify-between items-center px-8 py-4 w-full">
+<div class="text-2xl font-black tracking-tight text-[#1B365D] dark:text-blue-100 font-headline">
+                Sacred Archive
+            </div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<a class="text-[#1B365D] font-bold border-b-2 border-[#1B365D] transition-colors duration-300" href="#">Inicio</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#1B365D] dark:hover:text-gold-200 transition-colors duration-300" href="#">Cursos</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#1B365D] dark:hover:text-gold-200 transition-colors duration-300" href="#">Biblioteca</a>
+</nav>
+<div class="flex items-center gap-4 text-[#1B365D]">
+<span class="material-symbols-outlined cursor-pointer hover:scale-95 transition-transform duration-200">help_outline</span>
+<span class="material-symbols-outlined cursor-pointer hover:scale-95 transition-transform duration-200">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 pb-12 flex items-center justify-center px-4 md:px-8">
+<div class="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm">
+<!-- Left Side: Visual Heritage -->
+<div class="w-full md:w-1/2 relative min-h-[300px] md:min-h-[700px] overflow-hidden">
+<img alt="Sacred Archive Heritage" class="absolute inset-0 w-full h-full object-cover" data-alt="Interior of an ancient mahogany library with dust motes dancing in warm sunlight beams and rows of leather-bound biblical manuscripts" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqIpyjxyvf75UhhZGcrEuCbfsSMsRr-Xwy4J6X26gWbkeiX9ppQ7t6bKSYQIFkQMpLyRKAIfgVzt-oy2PhqB-gKFAn79VMINfPdhJvSQY9q8GWT8MrqR6xxMe6tf9nTEUbHT5FmaAw2s4Q1np_hdMPh9isPHOVIpD4GyqF_6KXk_dNadTjGPOIncjmpJDkGsgBRpwJ8XXNqonDHz7aQmVoZhZieA-htIe4mKXXtOAWkBHa347Mpy5Pjd5T-X66uUv7awhr9OFBs68d"/>
+<div class="absolute inset-0 bg-primary/40 backdrop-blur-[2px] flex items-center justify-center p-12">
+<div class="relative z-10 text-center">
+<h1 class="text-4xl md:text-6xl font-black text-surface-container-lowest font-headline leading-tight tracking-tighter drop-shadow-lg">
+                            Únete al Legado <br/> de Sabiduría
+                        </h1>
+<p class="mt-4 text-surface-bright/90 text-lg font-light max-w-md mx-auto drop-shadow">
+                            Inicia tu camino en el estudio profundo de las escrituras dentro de nuestra comunidad académica.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Right Side: Registration Form -->
+<div class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center bg-surface-container-low">
+<div class="max-w-md mx-auto w-full">
+<h2 class="text-3xl font-black text-primary font-headline mb-2">Crear Cuenta</h2>
+<p class="text-on-surface-variant mb-10">Completa tus datos para comenzar tu formación.</p>
+<form class="space-y-6">
+<!-- Full Name -->
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-headline">Nombre Completo</label>
+<input class="w-full px-4 py-3 rounded-lg border-none bg-surface-container-lowest focus:ring-2 focus:ring-secondary/30 transition-all border-b-2 border-outline-variant focus:border-secondary" placeholder="Ej. Juan Pérez" type="text"/>
+</div>
+<!-- Email -->
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-headline">Correo Electrónico</label>
+<input class="w-full px-4 py-3 rounded-lg border-none bg-surface-container-lowest focus:ring-2 focus:ring-secondary/30 transition-all border-b-2 border-outline-variant focus:border-secondary" placeholder="nombre@ejemplo.com" type="email"/>
+</div>
+<!-- User Role Selector -->
+<div class="space-y-3">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-headline">Tipo de Usuario</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="relative flex flex-col items-center justify-center p-4 rounded-lg bg-surface-container-lowest cursor-pointer border-2 border-transparent hover:border-secondary/20 transition-all group">
+<input checked="" class="absolute opacity-0 peer" name="role" type="radio" value="estudiante"/>
+<div class="peer-checked:bg-secondary-container/20 absolute inset-0 rounded-lg transition-all border-2 border-transparent peer-checked:border-secondary"></div>
+<span class="material-symbols-outlined text-secondary mb-2 relative z-10">school</span>
+<span class="text-sm font-semibold text-primary relative z-10">Estudiante</span>
+</label>
+<label class="relative flex flex-col items-center justify-center p-4 rounded-lg bg-surface-container-lowest cursor-pointer border-2 border-transparent hover:border-secondary/20 transition-all group">
+<input class="absolute opacity-0 peer" name="role" type="radio" value="instructor"/>
+<div class="peer-checked:bg-secondary-container/20 absolute inset-0 rounded-lg transition-all border-2 border-transparent peer-checked:border-secondary"></div>
+<span class="material-symbols-outlined text-secondary mb-2 relative z-10">workspace_premium</span>
+<span class="text-sm font-semibold text-primary relative z-10">Instructor</span>
+</label>
+</div>
+</div>
+<!-- Passwords -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-headline">Contraseña</label>
+<input class="w-full px-4 py-3 rounded-lg border-none bg-surface-container-lowest focus:ring-2 focus:ring-secondary/30 transition-all border-b-2 border-outline-variant focus:border-secondary" placeholder="••••••••" type="password"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-headline">Confirmar</label>
+<input class="w-full px-4 py-3 rounded-lg border-none bg-surface-container-lowest focus:ring-2 focus:ring-secondary/30 transition-all border-b-2 border-outline-variant focus:border-secondary" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- CTA Button -->
+<button class="w-full sacred-gradient text-on-primary py-4 px-6 rounded-lg font-bold text-lg hover:scale-[0.98] transition-all duration-200 gold-glow flex items-center justify-center gap-2 mt-8" type="submit">
+                            Crear Cuenta
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</form>
+<!-- Alternate Footer Link -->
+<div class="mt-8 text-center">
+<p class="text-on-surface-variant text-sm">
+                            ¿Ya tienes una cuenta? 
+                            <a class="text-secondary font-bold hover:underline ml-1" href="#">Inicia Sesión</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-slate-200/15 bg-[#f4f3f1] dark:bg-slate-900 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 py-8 w-full">
+<div class="text-sm font-light Lexend tracking-wide text-[#1B365D] dark:text-blue-300 opacity-80">
+                © 2024 Sacred Archive Bible Institute. All rights reserved.
+            </div>
+<div class="flex gap-8 mt-4 md:mt-0">
+<a class="text-slate-500 dark:text-slate-400 text-sm font-light hover:text-[#1B365D] dark:hover:text-white transition-opacity" href="#">Privacy Policy</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-light hover:text-[#1B365D] dark:hover:text-white transition-opacity" href="#">Terms of Service</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-light hover:text-[#1B365D] dark:hover:text-white transition-opacity" href="#">Support</a>
+</div>
+</div>
+</footer>
+</body></html>

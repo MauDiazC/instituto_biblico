@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Panel de Administración - Instituto de Formación Bíblica</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&amp;family=Lexend:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fed488",
+                        "tertiary-container": "#1b365d",
+                        "secondary-fixed-dim": "#e9c176",
+                        "secondary-fixed": "#ffdea5",
+                        "background": "#faf9f6",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#002046",
+                        "on-secondary-container": "#785a1a",
+                        "surface-tint": "#465f88",
+                        "outline": "#74777f",
+                        "on-tertiary-container": "#87a0cd",
+                        "on-tertiary-fixed": "#001b3d",
+                        "inverse-surface": "#2f312f",
+                        "secondary": "#775a19",
+                        "primary-fixed": "#d6e3ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#aec7f7",
+                        "surface-container-low": "#f4f3f1",
+                        "tertiary-fixed-dim": "#aec7f7",
+                        "on-tertiary-fixed-variant": "#2e476f",
+                        "surface-container": "#efeeeb",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f1ee",
+                        "primary-fixed-dim": "#aec7f7",
+                        "surface-bright": "#faf9f6",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "on-secondary-fixed-variant": "#5d4201",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#001b3d",
+                        "surface-container-highest": "#e3e2e0",
+                        "surface-container-high": "#e9e8e5",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "primary-container": "#1b365d",
+                        "primary": "#002046",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#faf9f6",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dbdad7",
+                        "surface-variant": "#e3e2e0",
+                        "on-secondary-fixed": "#261900",
+                        "on-surface-variant": "#44474e",
+                        "on-primary-container": "#87a0cd",
+                        "on-surface": "#1a1c1a",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed": "#d6e3ff",
+                        "outline-variant": "#c4c6cf"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Lexend"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-layering { background-color: #f4f3f1; }
+        .click-feedback-ripple:active { opacity: 0.7; transform: scale(0.98); }
+        body { background-color: #faf9f6; color: #1a1c1a; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="font-body selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#FAF9F6]/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4">
+<span class="text-xl font-black text-[#1B365D] dark:text-blue-200 font-headline tracking-tight">Instituto de Formación Bíblica</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<div class="relative group">
+<input class="bg-surface-container-low border-none rounded-full px-5 py-2 text-sm focus:ring-2 focus:ring-secondary w-64 transition-all" placeholder="Buscar materias..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2 text-on-surface-variant">search</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-[#1B365D] text-white px-5 py-2 rounded-lg font-headline font-bold text-sm scale-95 active:scale-90 transition-transform hover:bg-primary">Continuar Lección</button>
+<div class="flex gap-2">
+<button class="p-2 text-slate-500 hover:text-[#1B365D] hover:bg-[#F4F3F1] rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-slate-500 hover:text-[#1B365D] hover:bg-[#F4F3F1] rounded-full transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<div class="flex pt-20 h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 hidden md:flex flex-col border-r-0 bg-[#F4F3F1] dark:bg-slate-900 p-4 space-y-2 sticky top-20">
+<div class="px-2 py-4 mb-4">
+<h2 class="text-lg font-bold text-[#1B365D] font-headline">Sacred Archive</h2>
+<p class="text-xs text-slate-500 uppercase tracking-widest font-medium">Formación Teológica</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all hover:translate-x-1 font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Inicio
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all hover:translate-x-1 font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+                    Mis Cursos
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all hover:translate-x-1 font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+                    Biblioteca
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all hover:translate-x-1 font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">groups</span>
+                    Comunidad
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white text-[#1B365D] rounded-lg shadow-sm font-bold font-headline text-sm translate-x-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+                    Administración
+                </a>
+</nav>
+<div class="pt-4 mt-auto border-t border-outline-variant/15 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Ajustes
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-all font-headline font-medium text-sm" href="#">
+<span class="material-symbols-outlined">logout</span>
+                    Cerrar Sesión
+                </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-surface p-6 md:p-10 no-scrollbar">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+<div>
+<h1 class="text-3xl font-black font-headline text-primary tracking-tight mb-2">Panel de Control de Materias</h1>
+<p class="text-on-surface-variant font-body">Gestión académica centralizada del Instituto.</p>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest text-primary font-bold rounded-lg hover:bg-white transition-all shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-sm">post_add</span>
+                        Añadir Bloque
+                    </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest text-primary font-bold rounded-lg hover:bg-white transition-all shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                        Programar Clase
+                    </button>
+<button class="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary font-bold rounded-lg hover:bg-[#5d4201] transition-all shadow-[0_8px_24px_-4px_rgba(119,90,25,0.2)]">
+<span class="material-symbols-outlined">add</span>
+                        Nueva Materia
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Stats (Optional but high-end) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Total Materias</p>
+<p class="text-4xl font-black font-headline text-primary">24</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Docentes Activos</p>
+<p class="text-4xl font-black font-headline text-primary">12</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)]">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Estudiantes</p>
+<p class="text-4xl font-black font-headline text-primary">850</p>
+</div>
+<div class="bg-secondary-container/30 p-6 rounded-xl border border-secondary/10">
+<p class="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Próxima Clase</p>
+<p class="text-lg font-bold text-primary truncate">Hermenéutica II</p>
+<p class="text-xs text-on-surface-variant">Hoy, 18:00 hrs</p>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_24px_-4px_rgba(26,28,26,0.06)] overflow-hidden">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
+<h3 class="font-headline font-bold text-primary">Registro de Materias</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant"><span class="material-symbols-outlined">filter_list</span></button>
+<button class="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant"><span class="material-symbols-outlined">download</span></button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-xs font-black text-on-surface-variant uppercase tracking-tighter">Nombre de Materia</th>
+<th class="px-6 py-4 text-xs font-black text-on-surface-variant uppercase tracking-tighter">Código</th>
+<th class="px-6 py-4 text-xs font-black text-on-surface-variant uppercase tracking-tighter">Docente Responsable</th>
+<th class="px-6 py-4 text-xs font-black text-on-surface-variant uppercase tracking-tighter">Estado</th>
+<th class="px-6 py-4 text-xs font-black text-on-surface-variant uppercase tracking-tighter text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">menu_book</span>
+</div>
+<div>
+<p class="font-bold text-primary font-headline">Teología Sistemática I</p>
+<p class="text-xs text-on-surface-variant">4 Unidades de Crédito</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 font-mono text-sm text-on-surface-variant">TEO-101</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a male professor in a library setting with academic background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6tyr6TmDptJB0S76ZmVQbBaPi-RzLxONtmJaYJgaSv-Mo9snzIhgx3XYCos_yo4ZI-8ZwLCiHLBJoBmzEeVgPTSxiano_3Uj4JjJ_PRdKzvjfDE_dCT2S93lpM3V6nCltyarwh95hkQE3eRZepK4Q4HLiGDvWaDlhWn2qKmXGJXs8786Qp_CLyxcgb3ok9hKywAQnjVlwkFiPy3n6a7dUs7T-mo5JxRrqnThHqRskQXaxbXXt685Z0qb6R7_B1ag4lXo9V9uMERtv"/>
+</div>
+<span class="text-sm font-medium">Dr. Miguel Sánchez</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-green-100 text-green-700">Activa</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">history_edu</span>
+</div>
+<div>
+<p class="font-bold text-primary font-headline">Historia Eclesiástica</p>
+<p class="text-xs text-on-surface-variant">3 Unidades de Crédito</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 font-mono text-sm text-on-surface-variant">HIS-202</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a female instructor with glasses and professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCK1TydKKj-t2YT2j8fvAuN1eVGZdwuxEcXqLxcQzWP_srvxNUkheT1aeuyFJ0nLBCi5sviV94Sy-JCaeyaqjUVC6WOSpiVWgQ6UrFtHGaZso_7L8o7sOt7BJ9b3tm2VfluGmCVSBrSphUwYhdJ7yR6ZjB2XeiewrIfh-3NCsS4M0yQNFVLtDeabiPRC32IA6Tk7W5AN_qETsHSKqAMqHRIjb5S2MF0NKRRVLpM0LsY3lxQrO_O5q9nuDfaMD_L2gtXaTkQjim7Z8aX"/>
+</div>
+<span class="text-sm font-medium">Dra. Elena Ruiz</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-green-100 text-green-700">Activa</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-on-tertiary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">translate</span>
+</div>
+<div>
+<p class="font-bold text-primary font-headline">Griego Bíblico I</p>
+<p class="text-xs text-on-surface-variant">5 Unidades de Crédito</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 font-mono text-sm text-on-surface-variant">LNG-105</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional portrait of an elderly male scholar with a kind smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhvZYOj9R9qsbMF8LVJ85JmLndzzR2Y8RaBVZVNzM2rQwaqgyRBjNn-Wsuc-RBO1oTs8T0kZMFxXMInU09FhiaMlr4qGmQ6X-jcM0bjxU0atLtzS1CPoqIIoXdQGrl_eUcEIHKiRQ1IixnnQ9MUA_SHSVdbly_Mao8sAAJkbiaGgokx50MECjP6NOWsBWKeBmh2DRk4FJ6op3rVr-RoDVfcTgMRINmSPjG2F36lsTjEXZp7Kv86c9Ya7SleNEZkaeCNtDSNwIfdznO"/>
+</div>
+<span class="text-sm font-medium">Prof. Juan Morales</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-secondary-container text-on-secondary-container">En Preparación</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface-container-low/30 border-t border-outline-variant/10 flex justify-between items-center">
+<p class="text-xs text-on-surface-variant font-medium">Mostrando 1 a 3 de 24 materias</p>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-white border border-outline-variant/20 hover:bg-surface-container text-on-surface-variant disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="p-2 rounded-lg bg-white border border-outline-variant/20 hover:bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Scripture Block for focus -->
+<div class="mt-12 max-w-3xl">
+<div class="bg-surface-container-highest p-8 rounded-xl border-l-4 border-secondary shadow-sm">
+<span class="material-symbols-outlined text-secondary mb-2">format_quote</span>
+<p class="text-lg italic font-body text-primary leading-relaxed">
+                        "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
+                    </p>
+<p class="mt-4 font-bold text-secondary text-sm">— 2 Timoteo 2:15</p>
+</div>
+</div>
+<div class="h-20 md:hidden"></div> <!-- Spacer for mobile nav -->
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 w-full rounded-t-2xl md:hidden z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.04)] border-t border-[#F4F3F1]">
+<div class="flex justify-around items-center px-4 py-3 pb-safe">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest mt-1">Inicio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">book</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest mt-1">Cursos</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest mt-1">Tareas</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#1B365D] text-white rounded-xl p-2 px-4" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest mt-1">Admin</span>
+</a>
+</div>
+</nav>
+<!-- Modal Overlay (New Subject Placeholder) -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl p-8 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-2xl font-black font-headline text-primary">Nueva Materia</h2>
+<button class="p-2 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined">close</span></button>
+</div>
+<form class="space-y-4">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Nombre de la Materia</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-secondary focus:ring-0 rounded-t-lg px-4 py-3 text-on-surface" placeholder="Ej. Escatología Bíblica" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Código</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-secondary focus:ring-0 rounded-t-lg px-4 py-3 text-on-surface" placeholder="TEO-304" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Créditos</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-secondary focus:ring-0 rounded-t-lg px-4 py-3 text-on-surface" placeholder="4" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Docente</label>
+<select class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-secondary focus:ring-0 rounded-t-lg px-4 py-3 text-on-surface appearance-none">
+<option>Seleccione un docente...</option>
+<option>Dr. Miguel Sánchez</option>
+<option>Dra. Elena Ruiz</option>
+</select>
+</div>
+<div class="pt-6 flex justify-end gap-3">
+<button class="px-6 py-2.5 font-bold text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors" type="button">Cancelar</button>
+<button class="px-8 py-2.5 bg-primary text-white font-bold rounded-lg hover:shadow-lg transition-all" type="submit">Crear Materia</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#1B365D] dark:bg-black text-[#FAF9F6] font-['Lexend'] text-sm leading-relaxed mt-auto">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-center md:text-left">
+<span class="text-white font-bold block mb-2 text-lg">Instituto de Formación Bíblica</span>
+<p class="text-slate-300">© 2024 Instituto de Formación Bíblica. El Archivo Sagrado.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Privacidad</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Términos de Uso</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Contacto</a>
+<a class="text-slate-300 hover:text-[#D4AF37] transition-colors" href="#">Soporte Académico</a>
+</div>
+</div>
+</footer>
+</body></html>

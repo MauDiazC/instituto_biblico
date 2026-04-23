@@ -35,7 +35,7 @@ const Sidebar: React.FC = () => {
         { name: 'Mis Cursos', path: '/dashboard/teacher/courses', icon: BookOpen },
         { name: 'Calificaciones', path: '/dashboard/teacher/gradebook', icon: ListTodo },
         { name: 'Biblioteca', path: '/dashboard/library', icon: Library },
-        { name: 'Control Admin', path: '/dashboard/admin', icon: ShieldCheck },
+        { name: 'Gestión Académica', path: '/dashboard/admin', icon: ShieldCheck },
       ];
     }
 

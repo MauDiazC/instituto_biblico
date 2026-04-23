@@ -116,22 +116,21 @@ const VirtualClassroomPage: React.FC = () => {
         .maybeSingle();
 
       setClase(prev => {
-        // Only update if status or metadata really changed to prevent jitter
         if (prev && JSON.stringify(prev) === JSON.stringify({ ...classData, is_completed: !!completion })) return prev;
         return { ...classData, is_completed: !!completion };
       });
 
+      // IMPROVED RECORDING LOGIC: Only fetch/set if we don't have a valid working link yet
       if (classData.video_url) {
-        setRecordingLink(prev => prev === classData.video_url ? prev : classData.video_url);
-      } else if (classData.status === 'RECORDED') {
+        setRecordingLink(classData.video_url);
+      } else if (classData.status === 'RECORDED' && !recordingLink) {
         try {
           const res = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/recording-link`, {
             headers: { 'Authorization': `Bearer ${session?.access_token}` }
           });
           if (res.ok) {
             const linkData = await res.json();
-            // Only update recordingLink if it's different to prevent video element reset
-            setRecordingLink(prev => prev === linkData.download_link ? prev : linkData.download_link);
+            setRecordingLink(linkData.download_link);
           }
         } catch (linkErr) {
           console.error('Error fetching recording link:', linkErr);
@@ -159,14 +158,14 @@ const VirtualClassroomPage: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [lessonId, userSubmission]);
+  }, [lessonId, userSubmission, recordingLink]);
 
   useEffect(() => {
     if (lessonId) {
       fetchClassData();
 
       const mainChannel = supabase
-        .channel(`vc-sync-v4-${lessonId}`)
+        .channel(`vc-sync-v5-${lessonId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
           if (payload.new && Number(payload.new.id) === Number(lessonId)) {
             fetchClassData(true);
@@ -179,7 +178,8 @@ const VirtualClassroomPage: React.FC = () => {
         })
         .subscribe();
 
-      const interval = setInterval(() => fetchClassData(true), 6000);
+      // Slightly slower polling when in RECORDED state to preserve player stability
+      const interval = setInterval(() => fetchClassData(true), 8000);
 
       return () => { 
         supabase.removeChannel(mainChannel);
@@ -318,13 +318,14 @@ const VirtualClassroomPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
       <div className="lg:col-span-8 space-y-6">
-        {/* KEY STABILIZED: Only re-mount if status truly flips, not on polling link refresh */}
+        {/* VIDEO CONTAINER: Stable across refreshes */}
         <div key={clase.status} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
           {clase.status === 'LIVE' && clase.room_url ? (
             <iframe src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=0&tbar=1`} allow="camera; microphone; fullscreen; display-capture" className="w-full h-full border-0" />
           ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && finalVideoUrl ? (
             <div className="w-full h-full bg-black flex items-center justify-center">
-              <video key={finalVideoUrl} src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />
+              {/* NO KEY ON VIDEO TAG: Allow source to persist without reset */}
+              <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />
             </div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/60 text-center p-8">

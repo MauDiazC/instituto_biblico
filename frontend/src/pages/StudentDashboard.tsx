@@ -12,7 +12,7 @@ interface Course {
   progress?: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const StudentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ const StudentDashboard: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch ALL courses with enrollment status and progress
-      const response = await fetch(`${API_URL}/courses/`, {
+      const response = await fetch(`${VITE_API_URL}/courses/`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -61,7 +61,7 @@ const StudentDashboard: React.FC = () => {
       setEnrollingId(materiaId);
       const { data: { session } } = await supabase.auth.getSession();
       
-      const response = await fetch(`${API_URL}/courses/enroll`, {
+      const response = await fetch(`${VITE_API_URL}/courses/enroll`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,

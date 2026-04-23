@@ -21,7 +21,7 @@ interface LiveClass {
   };
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const TeacherDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -148,7 +148,7 @@ const TeacherDashboardPage: React.FC = () => {
         throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
       }
 
-      const targetUrl = `${API_URL}/courses/classes/${nextClass.id}/room`;
+      const targetUrl = `${VITE_API_URL}/courses/classes/${nextClass.id}/room`;
       
       console.log('DEBUG: Attempting fetch to:', targetUrl);
       console.log('DEBUG: Auth Token exists:', !!session.access_token);

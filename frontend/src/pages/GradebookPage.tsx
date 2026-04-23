@@ -36,7 +36,7 @@ interface Consulta {
   };
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const GradebookPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'submissions' | 'questions'>('submissions');
@@ -58,7 +58,7 @@ const GradebookPage: React.FC = () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/courses/teacher/submissions`, {
+      const response = await fetch(`${VITE_API_URL}/courses/teacher/submissions`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -82,7 +82,7 @@ const GradebookPage: React.FC = () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/courses/teacher/questions`, {
+      const response = await fetch(`${VITE_API_URL}/courses/teacher/questions`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -129,7 +129,7 @@ const GradebookPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/courses/submissions/${sub.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
+      const response = await fetch(`${VITE_API_URL}/courses/submissions/${sub.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -155,7 +155,7 @@ const GradebookPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/courses/questions/${que.id}/answer`, {
+      const response = await fetch(`${VITE_API_URL}/courses/questions/${que.id}/answer`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,

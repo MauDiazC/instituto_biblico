@@ -24,7 +24,7 @@ interface Materia {
   bloques: Bloque[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const SubjectDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -38,7 +38,7 @@ const SubjectDetailPage: React.FC = () => {
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         
-        const response = await fetch(`${API_URL}/courses/${id}`, {
+        const response = await fetch(`${VITE_API_URL}/courses/${id}`, {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`
           }

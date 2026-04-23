@@ -12,7 +12,7 @@ interface Libro {
   description: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const VirtualLibraryPage: React.FC = () => {
   const [books, setBooks] = useState<Libro[]>([]);
@@ -70,7 +70,7 @@ const VirtualLibraryPage: React.FC = () => {
       setIsSubmitting(true);
       const { data: { session } } = await supabase.auth.getSession();
       
-      const response = await fetch(`${API_URL}/courses/books`, {
+      const response = await fetch(`${VITE_API_URL}/courses/books`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,

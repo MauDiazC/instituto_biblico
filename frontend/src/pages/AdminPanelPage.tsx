@@ -20,7 +20,7 @@ interface Student {
   created_at: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const VITE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 
 const AdminPanelPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -99,7 +99,7 @@ const AdminPanelPage: React.FC = () => {
     setLoadingStudents(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/courses/${materia.id}/students`, {
+      const response = await fetch(`${VITE_API_URL}/courses/${materia.id}/students`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }

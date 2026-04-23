@@ -65,10 +65,12 @@ const VirtualClassroomPage: React.FC = () => {
   // File Upload State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const fetchQuestions = async () => {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+const fetchQuestions = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/classes/${lessonId}/questions`, {
+      const response = await fetch(`${API_URL}/courses/classes/${lessonId}/questions`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
       });
       if (response.ok) {
@@ -105,7 +107,7 @@ const VirtualClassroomPage: React.FC = () => {
 
       // If recorded, fetch the temporary access link
       if (classData.status === 'RECORDED') {
-        const res = await fetch(`http://localhost:8000/api/v1/courses/classes/${lessonId}/recording-link`, {
+        const res = await fetch(`${API_URL}/courses/classes/${lessonId}/recording-link`, {
           headers: { 'Authorization': `Bearer ${session?.access_token}` }
         });
         if (res.ok) {

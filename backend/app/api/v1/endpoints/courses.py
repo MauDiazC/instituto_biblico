@@ -100,8 +100,13 @@ async def get_recording_link(
     if not clase:
         raise HTTPException(status_code=404, detail="Class not found")
     
+    # Priority 1: Direct video URL stored in DB
+    if clase.video_url:
+        return {"download_link": clase.video_url}
+
+    # Priority 2: Daily.co External ID
     if not clase.external_video_id:
-        raise HTTPException(status_code=400, detail="No recording ID found for this class")
+        raise HTTPException(status_code=400, detail="No recording found for this class")
 
     if not settings.DAILY_API_KEY:
         raise HTTPException(status_code=500, detail="Daily.co API Key not configured")

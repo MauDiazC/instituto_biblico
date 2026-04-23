@@ -32,6 +32,8 @@ const TeacherDashboardPage: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: '00', mins: '00', secs: '00' });
   const [isLive, setIsLive] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -70,13 +72,14 @@ const TeacherDashboardPage: React.FC = () => {
         
         setPendingSubmissions(submissionCount || 0);
 
-        // 3. Fetch Next Live Class (including those that started up to 4 hours ago to account for timezone shifts)
-        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+        // 3. Fetch Next Live Class (accounting for timezone differences)
+        // We look for classes scheduled from 12 hours ago until future
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
         
         const { data: clases, error: clasesError } = await supabase
           .from('clases')
           .select('id, title, scheduled_at, status, bloque:bloques(materia_id)')
-          .gt('scheduled_at', fourHoursAgo)
+          .gt('scheduled_at', twelveHoursAgo)
           .neq('status', 'RECORDED')
           .order('scheduled_at', { ascending: true })
           .limit(1);
@@ -86,7 +89,6 @@ const TeacherDashboardPage: React.FC = () => {
           const classData = clases[0] as any;
           setNextClass(classData);
           
-          // Use UTC string for reliable comparison
           const startTime = new Date(classData.scheduled_at).getTime();
           const now = Date.now();
           
@@ -140,9 +142,8 @@ const TeacherDashboardPage: React.FC = () => {
 
     try {
       setLoading(true);
-      // Call backend to create/get Daily room
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:8000/api/v1/courses/classes/${nextClass.id}/room`, {
+      const response = await fetch(`${API_URL}/courses/classes/${nextClass.id}/room`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -155,8 +156,6 @@ const TeacherDashboardPage: React.FC = () => {
         throw new Error(errorData.detail || 'Error creating classroom');
       }
       
-      // Redirect to Virtual Classroom
-      // nextClass.bloque is from the any cast in fetchDashboardData
       const materiaId = (nextClass as any).bloque?.materia_id || 1;
       navigate(`/dashboard/courses/${materiaId}/lessons/${nextClass.id}`);
     } catch (error) {

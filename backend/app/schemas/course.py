@@ -79,6 +79,7 @@ class ConsultaRead(ConsultaBase):
 class ClaseBase(BaseModel):
     title: str
     status: ClassStatus = ClassStatus.SCHEDULED
+    video_url: Optional[str] = None
     external_video_id: Optional[str] = None
 
 class ClaseCreate(ClaseBase):

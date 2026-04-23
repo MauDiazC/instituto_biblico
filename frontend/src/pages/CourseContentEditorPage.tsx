@@ -40,6 +40,7 @@ const CourseContentEditorPage: React.FC = () => {
   // Lesson / Class Data
   const [lessonTitle, setLessonTitle] = useState('');
   const [isLive, setIsLive] = useState(true);
+  const [videoUrl, setVideoUrl] = useState(''); // New for recorded classes
   const [scheduledAt, setScheduledAt] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
 
@@ -124,23 +125,32 @@ const CourseContentEditorPage: React.FC = () => {
       }
 
       // 4. Create Class
-      if (isLive) {
-        const { data: newClase, error: cError } = await supabase
-          .from('clases')
-          .insert([{ 
-            title: lessonTitle, 
-            scheduled_at: new Date(`${scheduledAt}T${scheduledTime}:00`).toISOString(),
-            bloque_id: targetBlockId,
-            status: 'SCHEDULED'
-          }])
-          .select().single();
-        if (cError) throw cError;
+      const classData: any = {
+        title: lessonTitle,
+        bloque_id: targetBlockId,
+      };
 
-        // 5. Create Tareas
-        if (tareas.length > 0) {
-          const tareasToSave = tareas.map(t => ({ ...t, clase_id: newClase.id }));
-          await supabase.from('tareas').insert(tareasToSave);
+      if (isLive) {
+        classData.status = 'SCHEDULED';
+        if (scheduledAt && scheduledTime) {
+          classData.scheduled_at = new Date(`${scheduledAt}T${scheduledTime}:00`).toISOString();
         }
+      } else {
+        classData.status = 'RECORDED';
+        classData.video_url = videoUrl;
+      }
+
+      const { data: newClase, error: cError } = await supabase
+        .from('clases')
+        .insert([classData])
+        .select().single();
+      
+      if (cError) throw cError;
+
+      // 5. Create Tareas
+      if (tareas.length > 0) {
+        const tareasToSave = tareas.map(t => ({ ...t, clase_id: newClase.id }));
+        await supabase.from('tareas').insert(tareasToSave);
       }
 
       alert('Contenido publicado exitosamente');
@@ -163,8 +173,8 @@ const CourseContentEditorPage: React.FC = () => {
           </div>
           <button 
             onClick={handleSaveAll}
-            disabled={saving}
-            className="bg-primary text-white px-8 py-3 rounded-xl font-black text-xs tracking-widest hover:bg-primary-container transition-all flex items-center gap-2 shadow-premium"
+            disabled={saving || !lessonTitle || !courseName}
+            className="bg-primary text-white px-8 py-3 rounded-xl font-black text-xs tracking-widest hover:bg-primary-container transition-all flex items-center gap-2 shadow-premium disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             PUBLICAR CONTENIDO
@@ -238,6 +248,22 @@ const CourseContentEditorPage: React.FC = () => {
                 <input value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-lg font-bold outline-none" placeholder="Ej: Clase 1: Fundamentos de la Fe" />
               </div>
 
+              {/* Toggle Live vs Recorded */}
+              <div className="flex gap-4 p-1 bg-surface-container-low rounded-xl w-fit">
+                <button 
+                  onClick={() => setIsLive(true)}
+                  className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isLive ? 'bg-primary text-white shadow-md' : 'text-primary/40'}`}
+                >
+                  Clase en Vivo
+                </button>
+                <button 
+                  onClick={() => setIsLive(false)}
+                  className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!isLive ? 'bg-secondary text-white shadow-md' : 'text-primary/40'}`}
+                >
+                  Pre-grabada
+                </button>
+              </div>
+
               {/* Module Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -261,16 +287,28 @@ const CourseContentEditorPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Calendar className="w-3 h-3" /> Fecha</label>
-                  <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+              {isLive ? (
+                <div className="grid grid-cols-2 gap-6 animate-in fade-in duration-500">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Calendar className="w-3 h-3" /> Fecha</label>
+                    <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> Hora</label>
+                    <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> Hora</label>
-                  <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+              ) : (
+                <div className="space-y-2 animate-in fade-in duration-500">
+                  <label className="text-[10px] font-black text-secondary uppercase tracking-widest ml-1 flex items-center gap-2"><PlayCircle className="w-3 h-3" /> URL del Video (YouTube, Vimeo, etc.)</label>
+                  <input 
+                    value={videoUrl} 
+                    onChange={(e) => setVideoUrl(e.target.value)} 
+                    className="w-full bg-surface-container-low border-0 border-b-2 border-secondary focus:border-primary p-4 rounded-t-xl text-sm outline-none font-bold text-primary" 
+                    placeholder="https://www.youtube.com/watch?v=..." 
+                  />
                 </div>
-              </div>
+              )}
             </div>
           </section>
         </div>

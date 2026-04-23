@@ -148,11 +148,16 @@ const TeacherDashboardPage: React.FC = () => {
         throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
       }
 
-      if (!API_URL || API_URL.includes('undefined')) {
-        throw new Error('La URL de la API no está configurada correctamente en las variables de entorno.');
-      }
+      // 1. Sanitize and normalize API URL
+      let baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+      
+      const targetUrl = `${baseUrl}/courses/classes/${nextClass.id}/room`;
+      
+      console.log('DEBUG: Attempting fetch to:', targetUrl);
+      console.log('DEBUG: Auth Token exists:', !!session.access_token);
 
-      const response = await fetch(`${API_URL}/courses/classes/${nextClass.id}/room`, {
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -161,15 +166,15 @@ const TeacherDashboardPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error creating classroom');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Error del servidor (${response.status})`);
       }
       
       const materiaId = (nextClass as any).bloque?.materia_id || 1;
       navigate(`/dashboard/courses/${materiaId}/lessons/${nextClass.id}`);
     } catch (error) {
-      console.error('Error starting class:', error);
-      alert(`Error al iniciar la clase: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      console.error('CRITICAL: handleStartClass failed:', error);
+      alert(`Error al iniciar la clase: ${error instanceof Error ? error.message : 'Error desconocido'}\n\nRevisa la consola (F12) para más detalles.`);
     } finally {
       setLoading(false);
     }

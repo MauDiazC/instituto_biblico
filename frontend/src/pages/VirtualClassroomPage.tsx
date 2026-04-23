@@ -164,7 +164,7 @@ const VirtualClassroomPage: React.FC = () => {
       fetchClassData();
 
       const questionsChannel = supabase
-        .channel('realtime_questions_vc')
+        .channel(`questions-${lessonId}`)
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public', 
@@ -176,23 +176,24 @@ const VirtualClassroomPage: React.FC = () => {
         .subscribe();
 
       const classChannel = supabase
-        .channel('realtime_class_status')
+        .channel(`class-status-${lessonId}`)
         .on('postgres_changes', { 
           event: 'UPDATE', 
           schema: 'public', 
           table: 'clases', 
           filter: `id=eq.${lessonId}` 
-        }, () => {
-          console.log('Class status update detected via realtime');
+        }, (payload) => {
+          console.log('REALTIME: Class update received', payload.new.status);
           fetchClassData(true);
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`REALTIME: Subscription status: ${status}`);
+        });
 
-      // Fallback Polling: Check every 15 seconds in case realtime is not enabled on table
+      // Fallback Polling: Check every 8 seconds for faster response if realtime fails
       const pollingInterval = setInterval(() => {
-        console.log('Performing background check for class updates...');
         fetchClassData(true);
-      }, 15000);
+      }, 8000);
 
       return () => { 
         supabase.removeChannel(questionsChannel);
@@ -233,6 +234,8 @@ const VirtualClassroomPage: React.FC = () => {
       });
 
       if (response.ok) {
+        // Local update to provide immediate feedback to teacher
+        setClase(prev => prev ? { ...prev, status: 'RECORDED', room_url: null } : null);
         alert('Transmisión finalizada con éxito.');
         navigate('/dashboard/teacher');
       } else {
@@ -338,22 +341,27 @@ const VirtualClassroomPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
       <div className="lg:col-span-8 space-y-6">
-        {/* Video Player */}
-        <div className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
+        {/* Video Player - Keyed by status to force fresh render when it changes */}
+        <div key={clase.status} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
           {clase.status === 'LIVE' && clase.room_url ? (
             <iframe 
               src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=0&tbar=1`} 
               allow="camera; microphone; fullscreen; display-capture" 
               className="w-full h-full border-0" 
             />
-          ) : clase.status === 'RECORDED' && recordingLink ? (
+          ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && (recordingLink || clase.video_url) ? (
             <div className="w-full h-full bg-black flex items-center justify-center">
-              <video src={recordingLink} controls className="w-full h-full object-contain" />
+              <video src={recordingLink || clase.video_url || ''} controls className="w-full h-full object-contain" />
             </div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/40">
               <Video className="w-16 h-16 mb-4 opacity-50" />
-              <h3 className="text-xl font-bold font-headline">La clase aún no ha comenzado</h3>
+              <h3 className="text-xl font-bold font-headline">
+                {clase.status === 'PLANNED' ? 'La clase aún no ha comenzado' : 'La transmisión ha finalizado'}
+              </h3>
+              <p className="text-sm opacity-70 mt-2">
+                {clase.status === 'PLANNED' ? 'Espera a que el tutor inicie la sesión.' : 'El video grabado estará disponible pronto.'}
+              </p>
             </div>
           )}
         </div>
@@ -367,7 +375,7 @@ const VirtualClassroomPage: React.FC = () => {
               <h1 className="text-3xl font-black font-headline text-primary mt-2">{clase.title}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
-              {isTeacher && clase.status === 'LIVE' && (
+              {isTeacher && (clase.status === 'LIVE' || clase.status === 'PLANNED') && (
                 <button 
                   onClick={handleEndClass}
                   disabled={isEnding}
@@ -394,7 +402,9 @@ const VirtualClassroomPage: React.FC = () => {
 
           <div className="p-6 bg-surface-container-lowest rounded-xl shadow-sm border-l-4 border-secondary">
             <p className="text-on-surface leading-relaxed text-lg font-body">
-              {clase.status === 'LIVE' ? "Clase en vivo. Participa y consulta tus dudas." : "Lección grabada disponible para estudio."}
+              {clase.status === 'LIVE' ? "Clase en vivo. Participa y consulta tus dudas." : 
+               clase.status === 'PLANNED' ? "Clase programada. La transmisión iniciará pronto." :
+               "Lección grabada disponible para estudio."}
             </p>
           </div>
 
@@ -458,7 +468,7 @@ const VirtualClassroomPage: React.FC = () => {
         <div className="bg-surface-container-low rounded-xl p-6 sticky top-28 shadow-sm">
           <h3 className="font-black text-primary font-headline uppercase tracking-tight text-xs mb-6">Contenido del Curso</h3>
           <div className="space-y-3">
-            <div className="p-3 bg-primary text-white rounded-lg shadow-md flex items-center gap-4">
+            <div className={`p-3 rounded-lg shadow-md flex items-center gap-4 ${clase.status === 'LIVE' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'}`}>
               <div className="flex-1">
                 <p className="text-sm font-bold font-headline">{clase.title}</p>
                 <p className="text-[10px] opacity-70 font-label uppercase">{clase.status}</p>

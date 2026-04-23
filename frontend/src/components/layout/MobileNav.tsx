@@ -19,8 +19,8 @@ const MobileNav: React.FC = () => {
     if (location.pathname.includes('/dashboard/teacher')) {
       return [
         { name: 'Inicio', path: '/dashboard/teacher', icon: DashboardIcon },
+        { name: 'Gestión', path: '/dashboard/admin', icon: AdminIcon },
         { name: 'Notas', path: '/dashboard/teacher/gradebook', icon: GradeIcon },
-        { name: 'Editor', path: '/dashboard/teacher/editor', icon: EditorIcon },
         { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
       ];
     }

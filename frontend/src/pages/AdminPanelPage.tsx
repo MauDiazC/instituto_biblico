@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Filter, Edit, Trash2, Book, Loader2, Quote, Users, X, UserCircle } from 'lucide-react';
+import { Plus, Filter, Edit, Trash2, Book, Loader2, Quote, Users, X, UserCircle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
@@ -53,12 +53,12 @@ const AdminPanelPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       // 2. Fetch Stats
-      const { count: teachersCount, error: tError } = await supabase
+      const { count: teachersCount } = await supabase
         .from('users')
         .select('*', { count: 'exact' })
         .eq('role', 'TEACHER');
 
-      const { count: studentsCount, error: sError } = await supabase
+      const { count: studentsCount } = await supabase
         .from('users')
         .select('*', { count: 'exact' })
         .eq('role', 'STUDENT');
@@ -123,7 +123,7 @@ const AdminPanelPage: React.FC = () => {
     try {
       const { error } = await supabase.from('materias').delete().eq('id', id);
       if (error) throw error;
-      fetchData(); // Refresh list
+      fetchData();
     } catch (error: any) {
       alert('Error al eliminar: ' + error.message);
     }
@@ -136,56 +136,90 @@ const AdminPanelPage: React.FC = () => {
   );
 
   return (
-    <div className="pb-12">
+    <div className="pb-24 md:pb-12 px-2 md:px-0">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
         <div>
-          <h1 className="text-3xl font-black font-headline text-primary tracking-tight mb-2">Control de Materias</h1>
-          <p className="text-on-surface-variant font-body">Gestión académica centralizada del Instituto Bíblico.</p>
+          <h1 className="text-3xl md:text-4xl font-black font-headline text-primary tracking-tight mb-2 uppercase">Gestión Académica</h1>
+          <p className="text-on-surface-variant font-body text-sm md:text-base">Administración centralizada del currículo.</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link 
-            to="/dashboard/teacher/editor"
-            className="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary font-bold rounded-lg hover:bg-[#5d4201] transition-all shadow-premium"
-          >
-            <Plus className="w-5 h-5" />
-            Nueva Materia
-          </Link>
-        </div>
+        <Link 
+          to="/dashboard/teacher/editor"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-secondary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#5d4201] transition-all shadow-lg active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          Nueva Materia
+        </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Total Materias</p>
-          <p className="text-4xl font-black font-headline text-primary">{stats.totalMaterias}</p>
-        </div>
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Docentes Activos</p>
-          <p className="text-4xl font-black font-headline text-primary">{stats.totalDocentes}</p>
-        </div>
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Estudiantes</p>
-          <p className="text-4xl font-black font-headline text-primary">{stats.totalEstudiantes}</p>
-        </div>
-        <div className="bg-secondary-container/30 p-6 rounded-xl border border-secondary/10">
-          <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Próxima Clase</p>
-          <p className="text-lg font-bold text-primary truncate">{stats.nextClass.title}</p>
-          <p className="text-xs text-on-surface-variant">{stats.nextClass.time}</p>
-        </div>
-      </div>
-
-      {/* Data Table Container */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-ambient overflow-hidden">
-        <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
-          <h3 className="font-headline font-bold text-primary tracking-tight">Materias Registradas</h3>
-          <div className="flex gap-2">
-            <button className="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant">
-              <Filter className="w-5 h-5" />
-            </button>
+      {/* Stats Grid - Responsive behavior */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+        {[
+          { label: 'Materias', value: stats.totalMaterias, color: 'text-primary' },
+          { label: 'Docentes', value: stats.totalDocentes, color: 'text-primary' },
+          { label: 'Estudiantes', value: stats.totalEstudiantes, color: 'text-primary' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-outline-variant/5">
+            <p className="text-[9px] md:text-xs font-black text-on-surface-variant uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className={`text-2xl md:text-4xl font-black font-headline ${stat.color}`}>{stat.value}</p>
           </div>
+        ))}
+        <div className="col-span-2 md:col-span-1 bg-secondary-fixed-dim/20 p-5 md:p-6 rounded-2xl border border-secondary/10 shadow-sm flex flex-col justify-center">
+          <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest mb-1">Próxima Clase</p>
+          <p className="text-sm md:text-base font-bold text-primary truncate leading-tight">{stats.nextClass.title}</p>
+          <p className="text-[10px] text-on-surface-variant font-medium mt-1 uppercase">{stats.nextClass.time}</p>
         </div>
-        <div className="overflow-x-auto">
+      </div>
+
+      {/* Main Container */}
+      <div className="bg-white rounded-2xl md:rounded-3xl shadow-ambient overflow-hidden border border-outline-variant/10">
+        <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/20">
+          <h3 className="font-headline font-bold text-primary tracking-tight uppercase text-sm">Materias Registradas</h3>
+          <button className="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant md:hidden">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile View: Cards (Hidden on MD+) */}
+        <div className="md:hidden divide-y divide-outline-variant/5">
+          {materias.length > 0 ? materias.map((m) => (
+            <div key={m.id} className="p-5 space-y-4 active:bg-primary/5 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-white shadow-sm">
+                    <Book className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-black text-primary font-headline text-base leading-tight">{m.name}</p>
+                    <p className="text-[10px] text-on-surface-variant font-label uppercase mt-1">Creado: {new Date(m.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <button 
+                  onClick={() => handleShowStudents(m)}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary/5 text-primary rounded-xl font-black text-[10px] uppercase tracking-widest"
+                >
+                  <Users className="w-3.5 h-3.5" /> Alumnos
+                </button>
+                <Link to={`/dashboard/teacher/editor?materiaId=${m.id}`} className="flex-1 flex items-center justify-center gap-2 py-3 bg-secondary-fixed text-on-secondary-fixed rounded-xl font-black text-[10px] uppercase tracking-widest">
+                  <Edit className="w-3.5 h-3.5" /> Editar
+                </Link>
+                <button 
+                  onClick={() => handleDelete(m.id)}
+                  className="p-3 bg-error/5 text-error rounded-xl"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )) : (
+            <div className="p-10 text-center text-on-surface-variant font-bold italic text-sm">No hay materias.</div>
+          )}
+        </div>
+
+        {/* Desktop View: Table (Hidden on Mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container-low/50">
@@ -213,8 +247,7 @@ const AdminPanelPage: React.FC = () => {
                       onClick={() => handleShowStudents(m)}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 text-primary rounded-lg font-bold text-[10px] uppercase hover:bg-primary/10 transition-colors"
                     >
-                      <Users className="w-3.5 h-3.5" />
-                      Alumnos
+                      <Users className="w-3.5 h-3.5" /> Alumnos
                     </button>
                     <Link to={`/dashboard/teacher/editor?materiaId=${m.id}`} className="inline-block p-2 text-on-surface-variant hover:text-primary transition-colors">
                       <Edit className="w-4 h-4" />
@@ -239,54 +272,51 @@ const AdminPanelPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Students Modal */}
+      {/* Students Modal - Improved for Mobile */}
       {showStudentsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowStudentsModal(false)}></div>
-          <div className="relative bg-surface-container-lowest w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low">
+          <div className="relative bg-white w-full max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
+            <div className="p-6 md:p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
               <div>
-                <h3 className="text-2xl font-black text-primary font-headline tracking-tight">Estudiantes Inscritos</h3>
-                <p className="text-xs font-bold text-secondary uppercase tracking-widest">{selectedMateria?.name}</p>
+                <h3 className="text-xl md:text-2xl font-black text-primary font-headline tracking-tight uppercase">Estudiantes Inscritos</h3>
+                <p className="text-[10px] md:text-xs font-black text-secondary uppercase tracking-widest">{selectedMateria?.name}</p>
               </div>
               <button onClick={() => setShowStudentsModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
                 <X className="w-6 h-6 text-primary" />
               </button>
             </div>
             
-            <div className="p-8 max-h-[60vh] overflow-y-auto">
+            <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto scrollbar-none">
               {loadingStudents ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 </div>
               ) : students.length > 0 ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3">
                   {students.map(student => (
-                    <div key={student.id} className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl border border-outline-variant/5">
+                    <div key={student.id} className="flex items-center justify-between p-4 bg-surface-container-low/40 rounded-2xl border border-outline-variant/5">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center overflow-hidden text-white font-bold shadow-sm">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary flex items-center justify-center overflow-hidden text-white font-bold shadow-sm flex-shrink-0">
                           {student.user.avatar_url ? (
                             <img src={student.user.avatar_url} className="w-full h-full object-cover" alt="" />
                           ) : (
-                            <span className="text-sm">{getInitials(student.user.full_name)}</span>
+                            <span className="text-xs md:text-sm">{getInitials(student.user.full_name)}</span>
                           )}
                         </div>
-                        <div className="text-left">
-                          <p className="font-bold text-primary font-headline">{student.user.full_name}</p>
-                          <p className="text-xs text-on-surface-variant font-body">{student.user.email}</p>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-primary font-headline text-sm truncate">{student.user.full_name}</p>
+                          <p className="text-[10px] text-on-surface-variant font-body truncate">{student.user.email}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-outline uppercase tracking-widest">Inscrito el</p>
-                        <p className="text-xs font-bold font-label">{new Date(student.created_at).toLocaleDateString()}</p>
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-outline opacity-20 md:hidden" />
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12 opacity-40">
                   <Users className="w-12 h-12 mx-auto mb-3" />
-                  <p className="font-bold font-headline uppercase tracking-widest">Sin alumnos inscritos</p>
+                  <p className="font-bold font-headline uppercase tracking-widest text-xs">Sin alumnos inscritos</p>
                 </div>
               )}
             </div>
@@ -294,14 +324,14 @@ const AdminPanelPage: React.FC = () => {
         </div>
       )}
 
-      {/* Scripture Block */}
+      {/* Scripture Block - Better spacing for mobile */}
       <div className="mt-12 max-w-3xl">
-        <div className="bg-surface-container-highest p-8 rounded-xl border-l-4 border-secondary shadow-sm relative">
-          <Quote className="absolute right-6 top-6 w-12 h-12 text-secondary/10" />
-          <p className="text-lg italic font-body text-primary leading-relaxed relative z-10">
+        <div className="bg-surface-container-highest/50 p-6 md:p-8 rounded-2xl border-l-4 border-secondary shadow-sm relative overflow-hidden">
+          <Quote className="absolute right-4 top-4 w-12 h-12 text-secondary/5" />
+          <p className="text-base md:text-lg italic font-body text-primary leading-relaxed relative z-10">
             "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
           </p>
-          <p className="mt-4 font-bold text-secondary text-sm relative z-10">— 2 Timoteo 2:15</p>
+          <p className="mt-4 font-black text-secondary text-[10px] md:text-xs uppercase tracking-widest relative z-10">— 2 Timoteo 2:15</p>
         </div>
       </div>
     </div>

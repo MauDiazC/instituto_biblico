@@ -17,9 +17,12 @@ interface LiveClass {
   id: number;
   title: string;
   scheduled_at: string;
+  status?: string;
   bloque?: {
     materia_id: number;
-  };
+  } | {
+    materia_id: number;
+  }[];
 }
 
 const getApiUrl = () => {

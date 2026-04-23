@@ -26,10 +26,13 @@
 *   **Backend:** FastAPI + SQLAlchemy + Alembic.
 *   **Servicios:** Supabase (Auth, DB, Storage) + Daily.co (Video).
 
-### 🚀 PRÓXIMA SESIÓN: DESPLIEGUE (DEPLOYMENT)
-*   **Objetivo:** Subir la plataforma a producción usando **Railway**.
-*   Configuración de variables de entorno en la nube.
-*   Dockerización y despliegue del Backend y Frontend.
+### 🚀 PRÓXIMA SESIÓN: DESPLIEGUE (DEPLOYMENT) - EN CURSO
+*   **Estado:** Configurando infraestructura en Railway.
+*   **Logros:**
+    *   Configuración de `railway.json` para servicios multi-proceso (API + Celery Worker).
+    *   Implementación de Worker real para procesamiento de videos asíncrono.
+    *   Corrección de errores de compilación TS en el Frontend (ajuste de `tsconfig.app.json`).
+*   **Pendiente:** Confirmar despliegue exitoso en producción.
 
 ---
 **Nota final:** ¡Fase de desarrollo local completada con éxito! El sistema es 100% funcional. ¡Nos vemos en la nube en la próxima sesión!

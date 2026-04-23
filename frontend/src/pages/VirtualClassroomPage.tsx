@@ -165,7 +165,7 @@ const VirtualClassroomPage: React.FC = () => {
 
       const mainChannel = supabase
         .channel(`vc-lesson-${lessonId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
           if (payload.new && payload.new.id === parseInt(lessonId)) {
             fetchClassData(true);
           }

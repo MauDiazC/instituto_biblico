@@ -136,7 +136,7 @@ const AdminPanelPage: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-3xl font-black font-headline text-primary tracking-tight mb-2">Control de Materias</h1>
+          <h1 className="text-3xl font-black font-headline text-primary tracking-tight mb-2">Gestión de Materias</h1>
           <p className="text-on-surface-variant font-body">Gestión académica centralizada del Instituto Bíblico.</p>
         </div>
         <div className="flex flex-wrap gap-3">

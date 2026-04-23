@@ -505,3 +505,4 @@ async def enroll_in_materia(
     db.add(enrollment)
     db.commit()
     return {"status": "success", "message": "Enrolled successfully"}
+# trigger redeploy

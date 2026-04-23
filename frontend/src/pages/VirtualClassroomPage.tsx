@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../utils/supabase';
@@ -99,7 +99,7 @@ const VirtualClassroomPage: React.FC = () => {
     }
   };
 
-  const fetchClassData = async (silent = false) => {
+  const fetchClassData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -122,20 +122,25 @@ const VirtualClassroomPage: React.FC = () => {
 
       setClase({ ...classData, is_completed: !!completion });
 
-      // Handle video/recording logic
+      // Handle video/recording logic with high reliability
       if (classData.video_url) {
         setRecordingLink(classData.video_url);
       } else if (classData.status === 'RECORDED') {
-        const res = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/recording-link`, {
-          headers: { 'Authorization': `Bearer ${session?.access_token}` }
-        });
-        if (res.ok) {
-          const linkData = await res.json();
-          setRecordingLink(linkData.download_link);
+        // Fetch temporary recording link from backend
+        try {
+          const res = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/recording-link`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          });
+          if (res.ok) {
+            const linkData = await res.json();
+            setRecordingLink(linkData.download_link);
+          }
+        } catch (linkErr) {
+          console.error('Error fetching recording link:', linkErr);
         }
       }
 
-      // Fetch user submission
+      // Fetch user submission if not yet loaded
       if (!userSubmission && classData.tareas && classData.tareas.length > 0) {
         const { data: submissionData } = await supabase
           .from('entregas')
@@ -157,18 +162,17 @@ const VirtualClassroomPage: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [lessonId, userSubmission]);
 
   useEffect(() => {
     if (lessonId) {
       fetchClassData();
 
-      // Realtime subscription (Broad schema for reliability)
+      // Realtime subscription
       const mainChannel = supabase
-        .channel(`vc-master-final-${lessonId}`)
+        .channel(`vc-sync-final-${lessonId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
           if (payload.new && Number(payload.new.id) === Number(lessonId)) {
-            console.log('MASTER-SYNC: State updated via realtime', payload.new.status);
             fetchClassData(true);
           }
         })
@@ -179,18 +183,15 @@ const VirtualClassroomPage: React.FC = () => {
         })
         .subscribe();
 
-      // AGGRESSIVE POLLING: 4 seconds. Fast enough to feel like realtime, 
-      // safe enough to work even if Supabase Realtime is disabled.
-      const interval = setInterval(() => {
-        fetchClassData(true);
-      }, 4000);
+      // Reliable Polling (Every 5 seconds)
+      const interval = setInterval(() => fetchClassData(true), 5000);
 
       return () => { 
         supabase.removeChannel(mainChannel);
         clearInterval(interval);
       };
     }
-  }, [lessonId]);
+  }, [lessonId, fetchClassData]);
 
   const handleToggleCompletion = async () => {
     try {
@@ -209,7 +210,7 @@ const VirtualClassroomPage: React.FC = () => {
   };
 
   const handleEndClass = async () => {
-    if (!window.confirm('¿Estás seguro de que deseas finalizar la transmisión?')) return;
+    if (!window.confirm('¿Deseas finalizar la transmisión?')) return;
     try {
       setIsEnding(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -317,21 +318,24 @@ const VirtualClassroomPage: React.FC = () => {
     );
   }
 
+  const finalVideoUrl = recordingLink || clase.video_url;
+
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
       <div className="lg:col-span-8 space-y-6">
-        <div key={`${clase.status}-${clase.room_url ? 'has-room' : 'no-room'}`} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
+        {/* Video Area - Optimized for Recordings */}
+        <div key={`${clase.status}-${finalVideoUrl ? 'video-ready' : 'no-video'}`} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
           {clase.status === 'LIVE' && clase.room_url ? (
             <iframe src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=0&tbar=1`} allow="camera; microphone; fullscreen; display-capture" className="w-full h-full border-0" />
-          ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && (recordingLink || clase.video_url) ? (
+          ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && finalVideoUrl ? (
             <div className="w-full h-full bg-black flex items-center justify-center">
-              <video src={recordingLink || clase.video_url || ''} controls className="w-full h-full object-contain" />
+              <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" />
             </div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/60 text-center p-8">
               <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 animate-pulse"><Video className="w-10 h-10 text-white/50" /></div>
-              <h3 className="text-2xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'La transmisión terminó'}</h3>
-              <p className="text-white/60 max-w-xs mx-auto font-body">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible pronto.'}</p>
+              <h3 className="text-2xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'Grabación en Proceso'}</h3>
+              <p className="text-white/60 max-w-xs mx-auto font-body">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible en unos minutos.'}</p>
             </div>
           )}
         </div>

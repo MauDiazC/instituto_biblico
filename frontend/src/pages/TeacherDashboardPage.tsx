@@ -143,10 +143,19 @@ const TeacherDashboardPage: React.FC = () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
+      }
+
+      if (!API_URL || API_URL.includes('undefined')) {
+        throw new Error('La URL de la API no está configurada correctamente en las variables de entorno.');
+      }
+
       const response = await fetch(`${API_URL}/courses/classes/${nextClass.id}/room`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         }
       });

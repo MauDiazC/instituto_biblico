@@ -37,7 +37,3 @@ app.include_router(health.router, tags=["monitoring"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(courses.router, prefix="/api/v1/courses", tags=["courses"])
 app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["webhooks"])
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Institute LMS API", "env": settings.ENV_STATE}

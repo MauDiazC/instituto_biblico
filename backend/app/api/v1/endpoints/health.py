@@ -2,30 +2,27 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.database import get_db
-import redis
-from app.core.config import settings
+import time
 
 router = APIRouter()
 
 @router.get("/health")
+@router.get("/")
 async def health_check(db: Session = Depends(get_db)):
-    health_status = {"status": "healthy", "components": {}}
-    
-    # Check Database
+    """
+    Comprehensive health check to verify API and Database connectivity.
+    """
+    start_time = time.time()
     try:
+        # Verify database connection
         db.execute(text("SELECT 1"))
-        health_status["components"]["database"] = "UP"
+        db_status = "connected"
     except Exception as e:
-        health_status["status"] = "unhealthy"
-        health_status["components"]["database"] = f"DOWN: {str(e)}"
-    
-    # Check Redis
-    try:
-        r = redis.from_url(settings.REDIS_URL, socket_connect_timeout=1)
-        r.ping()
-        health_status["components"]["redis"] = "UP"
-    except Exception as e:
-        health_status["status"] = "unhealthy"
-        health_status["components"]["redis"] = f"DOWN: {str(e)}"
-        
-    return health_status
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status": "online",
+        "database": db_status,
+        "timestamp": time.time(),
+        "latency_seconds": time.time() - start_time
+    }

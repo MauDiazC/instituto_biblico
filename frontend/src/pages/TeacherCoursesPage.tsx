@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock, Plus } from 'lucide-react';
+import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
@@ -42,6 +42,7 @@ const TeacherCoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [recordings, setRecordings] = useState<Clase[]>([]);
   const [nextSessions, setNextSessions] = useState<Clase[]>([]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   
   // Search & Pagination States
   const [courseSearch, setCourseSearch] = useState('');
@@ -49,61 +50,91 @@ const TeacherCoursesPage: React.FC = () => {
   const [coursePage, setCoursePage] = useState(1);
   const [recordingPage, setRecordingPage] = useState(1);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-           await fetch(`${VITE_API_URL}/courses/teacher/recordings/sync`, {
-             headers: { 'Authorization': `Bearer ${session.access_token}` }
-           }).catch(err => console.error('Silent sync failed:', err));
-        }
-
-        const { data: materias, error: materiasError } = await supabase
-          .from('materias')
-          .select('*, bloques(count), enrollments(count)');
-
-        if (materiasError) throw materiasError;
-
-        if (materias) {
-          const mappedCourses = materias.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            cover_image_url: m.cover_image_url || 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800',
-            description: m.description,
-            student_count: m.enrollments[0]?.count || 0,
-            module_count: m.bloques[0]?.count || 0
-          }));
-          setCourses(mappedCourses);
-        }
-
-        const { data: recordedClases, error: recordedError } = await supabase
-          .from('clases')
-          .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
-          .eq('status', 'RECORDED')
-          .order('scheduled_at', { ascending: false });
-
-        if (recordedError) throw recordedError;
-        if (recordedClases) setRecordings(recordedClases as any);
-
-        const { data: upcomingClases, error: upcomingError } = await supabase
-          .from('clases')
-          .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
-          .in('status', ['SCHEDULED', 'LIVE'])
-          .order('scheduled_at', { ascending: true });
-
-        if (upcomingError) throw upcomingError;
-        if (upcomingClases) setNextSessions(upcomingClases as any);
-
-      } catch (error) {
-        console.error('Error fetching teacher data:', error);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+         await fetch(`${VITE_API_URL}/courses/teacher/recordings/sync`, {
+           headers: { 'Authorization': `Bearer ${session.access_token}` }
+         }).catch(err => console.error('Silent sync failed:', err));
       }
-    };
+
+      const { data: materias, error: materiasError } = await supabase
+        .from('materias')
+        .select('*, bloques(count), enrollments(count)');
+
+      if (materiasError) throw materiasError;
+
+      if (materias) {
+        const mappedCourses = materias.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          cover_image_url: m.cover_image_url || 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800',
+          description: m.description,
+          student_count: m.enrollments[0]?.count || 0,
+          module_count: m.bloques[0]?.count || 0
+        }));
+        setCourses(mappedCourses);
+      }
+
+      const { data: recordedClases, error: recordedError } = await supabase
+        .from('clases')
+        .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
+        .eq('status', 'RECORDED')
+        .order('scheduled_at', { ascending: false });
+
+      if (recordedError) throw recordedError;
+      if (recordedClases) setRecordings(recordedClases as any);
+
+      const { data: upcomingClases, error: upcomingError } = await supabase
+        .from('clases')
+        .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
+        .in('status', ['SCHEDULED', 'LIVE'])
+        .order('scheduled_at', { ascending: true });
+
+      if (upcomingError) throw upcomingError;
+      if (upcomingClases) setNextSessions(upcomingClases as any);
+
+    } catch (error) {
+      console.error('Error fetching teacher data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const handleDeleteMateria = async (materiaId: number, name: string) => {
+    if (!window.confirm(`¿Estás COMPLETAMENTE seguro de eliminar "${name}"?\n\nEsta acción eliminará permanentemente:\n- Todos los módulos\n- Todas las clases y grabaciones\n- Todas las tareas y entregas de alumnos\n- Todas las inscripciones\n\nESTA ACCIÓN NO SE PUEDE DESHACER.`)) return;
+
+    try {
+      setDeletingId(materiaId);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${VITE_API_URL}/courses/${materiaId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+        throw new Error(errorData.detail || 'No se pudo eliminar la materia');
+      }
+
+      setCourses(courses.filter(c => c.id !== materiaId));
+      setRecordings(recordings.filter(r => r.bloque?.materia?.id !== materiaId));
+      setNextSessions(nextSessions.filter(s => s.bloque?.materia?.id !== materiaId));
+      
+      alert('Materia eliminada con éxito');
+    } catch (err: any) {
+      alert('Error al eliminar: ' + err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Filtered & Paginated Courses
   const filteredCourses = useMemo(() => 
@@ -133,7 +164,7 @@ const TeacherCoursesPage: React.FC = () => {
   const totalCoursePages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE_COURSES);
   const totalRecordingPages = Math.ceil(filteredRecordings.length / ITEMS_PER_PAGE_RECORDINGS);
 
-  if (loading) {
+  if (loading && courses.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -277,6 +308,13 @@ const TeacherCoursesPage: React.FC = () => {
                 >
                   <ClipboardCheck className="w-3.5 h-3.5" /> Calificar
                 </Link>
+                <button 
+                  onClick={() => handleDeleteMateria(course.id, course.name)}
+                  disabled={deletingId === course.id}
+                  className="px-4 py-3.5 bg-error/10 text-error rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-error/20 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {deletingId === course.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
           )) : (

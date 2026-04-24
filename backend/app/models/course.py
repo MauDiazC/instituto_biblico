@@ -36,7 +36,7 @@ class Materia(Base, TimestampMixin):
     cover_image_url: Mapped[Optional[str]] = mapped_column(String)
     
     bloques: Mapped[List["Bloque"]] = relationship("Bloque", back_populates="materia", cascade="all, delete-orphan")
-    enrollments: Mapped[List["Enrollment"]] = relationship("Enrollment", back_populates="materia")
+    enrollments: Mapped[List["Enrollment"]] = relationship("Enrollment", back_populates="materia", cascade="all, delete-orphan")
 
 class Bloque(Base, TimestampMixin):
     __tablename__ = "bloques"

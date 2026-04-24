@@ -154,6 +154,20 @@ async def create_materia(
     db.refresh(materia)
     return materia
 
+@router.delete("/{materia_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_materia(
+    materia_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
+):
+    materia = db.query(Materia).filter(Materia.id == materia_id).first()
+    if not materia:
+        raise HTTPException(status_code=404, detail="Materia not found")
+    
+    db.delete(materia)
+    db.commit()
+    return None
+
 @router.post("/blocks", response_model=BloqueRead, status_code=status.HTTP_201_CREATED)
 async def create_block(
     block_in: BloqueBase,

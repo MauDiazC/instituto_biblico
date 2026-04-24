@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck } from 'lucide-react';
+import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
@@ -13,11 +13,12 @@ interface Course {
   module_count: number;
 }
 
-interface Recording {
+interface Clase {
   id: number;
   title: string;
-  video_url: string;
+  video_url: string | null;
   scheduled_at: string;
+  status: string;
   bloque: {
     materia: {
       id: number;
@@ -39,7 +40,8 @@ const ITEMS_PER_PAGE_RECORDINGS = 10;
 const TeacherCoursesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [recordings, setRecordings] = useState<Clase[]>([]);
+  const [nextSessions, setNextSessions] = useState<Clase[]>([]);
   
   // Search & Pagination States
   const [courseSearch, setCourseSearch] = useState('');
@@ -78,12 +80,21 @@ const TeacherCoursesPage: React.FC = () => {
 
         const { data: recordedClases, error: recordedError } = await supabase
           .from('clases')
-          .select('id, title, video_url, scheduled_at, bloque:bloques(materia:materias(id, name))')
+          .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
           .eq('status', 'RECORDED')
           .order('scheduled_at', { ascending: false });
 
         if (recordedError) throw recordedError;
         if (recordedClases) setRecordings(recordedClases as any);
+
+        const { data: upcomingClases, error: upcomingError } = await supabase
+          .from('clases')
+          .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
+          .in('status', ['SCHEDULED', 'LIVE'])
+          .order('scheduled_at', { ascending: true });
+
+        if (upcomingError) throw upcomingError;
+        if (upcomingClases) setNextSessions(upcomingClases as any);
 
       } catch (error) {
         console.error('Error fetching teacher data:', error);
@@ -151,7 +162,65 @@ const TeacherCoursesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Assigned Courses Section - Thin Cards Design */}
+      {/* 2. Next Sessions Section */}
+      {nextSessions.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-outline-variant/10 pb-6">
+             <div className="w-10 h-10 bg-error rounded-2xl flex items-center justify-center shadow-lg shadow-error/20">
+                <Clock className="text-white w-5 h-5" />
+             </div>
+             <h2 className="text-2xl font-headline font-black text-primary tracking-tight">Próximas Sesiones</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {nextSessions.map(session => (
+              <div key={session.id} className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-1 min-w-0">
+                    <p className="font-black text-primary font-headline text-lg leading-tight uppercase truncate">{session.title}</p>
+                    <p className="text-[10px] text-secondary font-black uppercase tracking-widest">{session.bloque?.materia?.name}</p>
+                  </div>
+                  <div className={twMerge(
+                    "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest",
+                    session.status === 'LIVE' ? "bg-error text-white animate-pulse" : "bg-primary/10 text-primary"
+                  )}>
+                    {session.status === 'LIVE' ? 'En Vivo' : 'Programada'}
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-bold font-label uppercase">
+                      {new Date(session.scheduled_at).toLocaleString('es-ES', { 
+                        day: '2-digit', month: 'short', year: 'numeric', 
+                        hour: '2-digit', minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Link 
+                      to={`/dashboard/courses/${session.bloque?.materia?.id}/lessons/${session.id}`}
+                      className="flex-1 bg-primary text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-center shadow-sm hover:bg-primary-container transition-all"
+                    >
+                      INICIAR CLASE
+                    </Link>
+                    <Link 
+                      to={`/dashboard/teacher/editor?claseId=${session.id}`}
+                      className="px-4 bg-surface-container-highest text-primary py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-center hover:bg-outline-variant/20 transition-all flex items-center justify-center"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 3. Assigned Courses Section - Thin Cards Design */}
       <section className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/10 pb-6">
           <div className="flex items-center gap-3">
@@ -200,7 +269,7 @@ const TeacherCoursesPage: React.FC = () => {
                   to={`/dashboard/teacher/editor?materiaId=${course.id}`}
                   className="px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-primary-container transition-all shadow-md active:scale-95"
                 >
-                  <Edit3 className="w-3.5 h-3.5" /> Editar Contenido
+                  <Plus className="w-3.5 h-3.5" /> Nueva Sesión
                 </Link>
                 <Link 
                   to={`/dashboard/teacher/gradebook?materiaId=${course.id}`}
@@ -242,7 +311,7 @@ const TeacherCoursesPage: React.FC = () => {
         )}
       </section>
 
-      {/* 3. Recordings Library Section */}
+      {/* 4. Recordings Library Section */}
       <section className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/10 pb-6">
           <div className="flex items-center gap-3">
@@ -332,12 +401,21 @@ const TeacherCoursesPage: React.FC = () => {
                       {new Date(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <Link 
-                        to={`/dashboard/courses/${recording.bloque?.materia?.id}/lessons/${recording.id}`}
-                        className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-primary-container hover:shadow-lg transition-all"
-                      >
-                        Ver Repetición <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link 
+                          to={`/dashboard/teacher/editor?claseId=${recording.id}`}
+                          className="p-2.5 bg-surface-container-highest text-primary rounded-xl hover:bg-outline-variant/20 transition-all shadow-sm"
+                          title="Editar sesión"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Link>
+                        <Link 
+                          to={`/dashboard/courses/${recording.bloque?.materia?.id}/lessons/${recording.id}`}
+                          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-primary-container hover:shadow-lg transition-all"
+                        >
+                          Ver Repetición <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )) : (

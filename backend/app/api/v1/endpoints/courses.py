@@ -57,8 +57,10 @@ async def get_or_create_daily_room(
         )
 
     async with httpx.AsyncClient() as client:
-        # Create a room in Daily.co
-        room_name = f"class-{clase.id}-{clase.title.replace(' ', '-').lower()}"
+        # Create a room in Daily.co - Sanitize room name to allow only A-Z, a-z, 0-9, '-', and '_'
+        import re
+        sanitized_title = re.sub(r'[^A-Za-z0-9\-_]', '-', clase.title.lower())
+        room_name = f"class-{clase.id}-{sanitized_title}"
         
         response = await client.post(
             "https://api.daily.co/v1/rooms",

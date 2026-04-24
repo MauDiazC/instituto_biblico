@@ -20,8 +20,8 @@ class Enrollment(Base, TimestampMixin):
     __tablename__ = "enrollments"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
-    materia_id: Mapped[int] = mapped_column(ForeignKey("materias.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    materia_id: Mapped[int] = mapped_column(ForeignKey("materias.id", ondelete="CASCADE"))
     is_active: Mapped[bool] = mapped_column(default=True)
 
     user: Mapped["User"] = relationship("User")
@@ -43,7 +43,7 @@ class Bloque(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255))
-    materia_id: Mapped[int] = mapped_column(ForeignKey("materias.id"))
+    materia_id: Mapped[int] = mapped_column(ForeignKey("materias.id", ondelete="CASCADE"))
     
     materia: Mapped["Materia"] = relationship("Materia", back_populates="bloques")
     clases: Mapped[List["Clase"]] = relationship("Clase", back_populates="bloque", cascade="all, delete-orphan")
@@ -56,7 +56,7 @@ class Tarea(Base, TimestampMixin):
     description: Mapped[Optional[str]] = mapped_column(String)
     file_url: Mapped[Optional[str]] = mapped_column(String)
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id"))
+    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id", ondelete="CASCADE"))
 
     clase: Mapped["Clase"] = relationship("Clase", back_populates="tareas")
     entregas: Mapped[List["Entrega"]] = relationship("Entrega", back_populates="tarea", cascade="all, delete-orphan")
@@ -68,8 +68,8 @@ class Entrega(Base, TimestampMixin):
     content: Mapped[str] = mapped_column(String) # URL or text
     grade: Mapped[Optional[int]] = mapped_column()
     feedback: Mapped[Optional[str]] = mapped_column(String)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
-    tarea_id: Mapped[int] = mapped_column(ForeignKey("tareas.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    tarea_id: Mapped[int] = mapped_column(ForeignKey("tareas.id", ondelete="CASCADE"))
 
     user: Mapped["User"] = relationship("User")
     tarea: Mapped["Tarea"] = relationship("Tarea", back_populates="entregas")
@@ -95,7 +95,7 @@ class Clase(Base, TimestampMixin):
     room_url: Mapped[Optional[str]] = mapped_column(String)
     external_video_id: Mapped[Optional[str]] = mapped_column(String, index=True)
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    bloque_id: Mapped[int] = mapped_column(ForeignKey("bloques.id"))
+    bloque_id: Mapped[int] = mapped_column(ForeignKey("bloques.id", ondelete="CASCADE"))
     
     bloque: Mapped["Bloque"] = relationship("Bloque", back_populates="clases")
     tareas: Mapped[List["Tarea"]] = relationship("Tarea", back_populates="clase", cascade="all, delete-orphan")
@@ -106,8 +106,8 @@ class ClaseCompletada(Base, TimestampMixin):
     __tablename__ = "clases_completadas"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
-    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id", ondelete="CASCADE"))
 
     user: Mapped["User"] = relationship("User")
     clase: Mapped["Clase"] = relationship("Clase", back_populates="completions")
@@ -120,8 +120,8 @@ class Consulta(Base, TimestampMixin):
     answer: Mapped[Optional[str]] = mapped_column(String)
     status: Mapped[ConsultaStatus] = mapped_column(Enum(ConsultaStatus), default=ConsultaStatus.PENDING)
     
-    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id"))
-    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    clase_id: Mapped[int] = mapped_column(ForeignKey("clases.id", ondelete="CASCADE"))
+    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     clase: Mapped["Clase"] = relationship("Clase", back_populates="consultas")
     student: Mapped["User"] = relationship("User")

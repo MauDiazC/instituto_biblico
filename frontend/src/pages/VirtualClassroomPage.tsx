@@ -236,7 +236,14 @@ const VirtualClassroomPage: React.FC = () => {
         const fileName = `${session?.user.id}-${Date.now()}.${fileExt}`;
         const filePath = `submissions/${fileName}`;
         const { error: uploadError } = await supabase.storage.from('assignments').upload(filePath, selectedFile);
-        if (uploadError) throw uploadError;
+        
+        if (uploadError) {
+          if (uploadError.message.includes('Bucket not found')) {
+             throw new Error('El bucket "assignments" no existe en Supabase. Por favor, créalo en el panel de Storage para permitir entregas.');
+          }
+          throw uploadError;
+        }
+        
         const { data: { publicUrl } } = supabase.storage.from('assignments').getPublicUrl(filePath);
         finalContent = publicUrl;
       }

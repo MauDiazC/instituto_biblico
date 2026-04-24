@@ -11,6 +11,7 @@ interface Tarea {
   description: string;
   due_date: string;
   file_url?: string;
+  file?: File;
 }
 
 interface Bloque {
@@ -47,7 +48,7 @@ const CourseContentEditorPage: React.FC = () => {
   // Tareas Data
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [newTarea, setNewTarea] = useState<Tarea>({ title: '', description: '', due_date: '' });
-  const [uploadingTask, setUploadingTask] = useState(false);
+  const [taskFile, setTaskFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (materiaIdFromQuery) {
@@ -82,8 +83,9 @@ const CourseContentEditorPage: React.FC = () => {
 
   const handleAddTarea = () => {
     if (!newTarea.title) return;
-    setTareas([...tareas, newTarea]);
+    setTareas([...tareas, { ...newTarea, file: taskFile || undefined }]);
     setNewTarea({ title: '', description: '', due_date: '' });
+    setTaskFile(null);
   };
 
   const handleSaveAll = async () => {
@@ -92,12 +94,19 @@ const CourseContentEditorPage: React.FC = () => {
       let currentMateriaId = materiaIdFromQuery;
       let finalCoverUrl = coverPreview;
 
-      // 1. Upload Cover if changed
+      // 1. Upload Cover if changed (using 'covers' bucket)
       if (coverImage) {
         const fileName = `${Date.now()}-${coverImage.name}`;
-        const { error: uploadError } = await supabase.storage.from('courses').upload(fileName, coverImage);
-        if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('courses').getPublicUrl(fileName);
+        const { error: uploadError } = await supabase.storage.from('covers').upload(fileName, coverImage);
+        
+        if (uploadError) {
+          if (uploadError.message.includes('Bucket not found')) {
+            throw new Error('El bucket "covers" no existe en Supabase. Por favor, créalo en el panel de Storage.');
+          }
+          throw uploadError;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(fileName);
         finalCoverUrl = publicUrl;
       }
 
@@ -147,9 +156,33 @@ const CourseContentEditorPage: React.FC = () => {
       
       if (cError) throw cError;
 
-      // 5. Create Tareas
+      // 5. Create Tareas (using 'assignments' bucket for materials)
       if (tareas.length > 0) {
-        const tareasToSave = tareas.map(t => ({ ...t, clase_id: newClase.id }));
+        const tareasToSave = [];
+        
+        for (const t of tareas) {
+          let taskFileUrl = t.file_url;
+          
+          if (t.file) {
+            const fileName = `materials/${Date.now()}-${t.file.name}`;
+            const { error: uploadError } = await supabase.storage.from('assignments').upload(fileName, t.file);
+            if (!uploadError) {
+              const { data: { publicUrl } } = supabase.storage.from('assignments').getPublicUrl(fileName);
+              taskFileUrl = publicUrl;
+            } else if (uploadError.message.includes('Bucket not found')) {
+               throw new Error('El bucket "assignments" no existe en Supabase. Por favor, créalo en el panel de Storage.');
+            }
+          }
+          
+          tareasToSave.push({
+            title: t.title,
+            description: t.description,
+            due_date: t.due_date || null,
+            file_url: taskFileUrl,
+            clase_id: newClase.id
+          });
+        }
+        
         await supabase.from('tareas').insert(tareasToSave);
       }
 
@@ -325,15 +358,45 @@ const CourseContentEditorPage: React.FC = () => {
               <div className="bg-white p-6 rounded-2xl border border-outline-variant/10 space-y-4">
                 <input value={newTarea.title} onChange={(e) => setNewTarea({...newTarea, title: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-sm font-bold outline-none" placeholder="Título de la tarea..." />
                 <textarea value={newTarea.description} onChange={(e) => setNewTarea({...newTarea, description: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-xs outline-none" placeholder="Instrucciones para el alumno..." />
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <FileText className="w-3 h-3" /> Documento de apoyo (Opcional)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex-1 cursor-pointer bg-surface p-3 rounded-xl border border-dashed border-outline-variant flex items-center justify-center gap-2 hover:bg-secondary/5 transition-all">
+                      <Upload className="w-4 h-4 text-secondary" />
+                      <span className="text-[10px] font-bold text-primary truncate">
+                        {taskFile ? taskFile.name : 'Subir archivo'}
+                      </span>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        onChange={(e) => setTaskFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    {taskFile && (
+                      <button onClick={() => setTaskFile(null)} className="p-2 text-error hover:bg-error/5 rounded-lg">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <button onClick={handleAddTarea} className="w-full py-3 bg-secondary/10 text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-secondary/20 transition-all">Añadir Tarea</button>
               </div>
 
               <div className="space-y-3">
                 {tareas.map((t, i) => (
                   <div key={i} className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
-                    <div>
-                      <p className="text-sm font-bold text-primary">{t.title}</p>
-                      <p className="text-[10px] text-on-surface-variant uppercase">{t.due_date || 'Sin fecha'}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center">
+                        {t.file ? <FileText className="w-4 h-4 text-secondary" /> : <ClipboardList className="w-4 h-4 text-primary opacity-40" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-primary">{t.title}</p>
+                        {t.file && <p className="text-[9px] text-secondary font-bold truncate max-w-[150px]">{t.file.name}</p>}
+                      </div>
                     </div>
                     <button onClick={() => setTareas(tareas.filter((_, idx) => idx !== i))} className="p-2 text-error hover:bg-error/5 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                   </div>

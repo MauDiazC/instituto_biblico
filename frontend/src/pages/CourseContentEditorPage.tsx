@@ -172,90 +172,92 @@ const CourseContentEditorPage: React.FC = () => {
         await supabase.from('materias').update({ name: courseName, description: courseDescription, cover_image_url: finalCoverUrl }).eq('id', currentMateriaId);
       }
 
-      // 3. Handle Block (Module)
-      let targetBlockId = selectedBlockId;
-      if (selectedBlockId === 'new') {
-        const { data: newBloque, error: bError } = await supabase
-          .from('bloques')
-          .insert([{ name: newBlockName || `Módulo ${existingBlocks.length + 1}`, materia_id: currentMateriaId }])
-          .select().single();
-        if (bError) throw bError;
-        targetBlockId = newBloque.id.toString();
-      }
-
-      // 4. Create or Update Class
-      const classData: any = {
-        title: lessonTitle,
-        bloque_id: targetBlockId,
-      };
-
-      if (isLive) {
-        classData.status = 'SCHEDULED';
-        if (scheduledAt && scheduledTime) {
-          classData.scheduled_at = new Date(`${scheduledAt}T${scheduledTime}:00`).toISOString();
-        }
-      } else {
-        classData.status = 'RECORDED';
-        classData.video_url = videoUrl;
-      }
-
-      let targetClaseId = claseIdFromQuery;
-
-      if (!targetClaseId) {
-        const { data: newClase, error: cError } = await supabase
-          .from('clases')
-          .insert([classData])
-          .select().single();
-        if (cError) throw cError;
-        targetClaseId = newClase.id.toString();
-      } else {
-        const { error: cError } = await supabase
-          .from('clases')
-          .update(classData)
-          .eq('id', targetClaseId);
-        if (cError) throw cError;
-      }
-
-      // 5. Create or Sync Tareas
-      if (tareas.length > 0) {
-        const currentTaskIds = tareas.filter(t => t.id).map(t => t.id);
-        
-        // Delete tasks that were removed
-        if (claseIdFromQuery) {
-           await supabase.from('tareas').delete().eq('clase_id', targetClaseId).not('id', 'in', `(${currentTaskIds.join(',') || '0'})`);
+      // 3. Optional: Create/Handle Block and Class only if lessonTitle is provided
+      if (lessonTitle) {
+        let targetBlockId = selectedBlockId;
+        if (selectedBlockId === 'new') {
+          const { data: newBloque, error: bError } = await supabase
+            .from('bloques')
+            .insert([{ name: newBlockName || `Módulo ${existingBlocks.length + 1}`, materia_id: currentMateriaId }])
+            .select().single();
+          if (bError) throw bError;
+          targetBlockId = newBloque.id.toString();
         }
 
-        for (const t of tareas) {
-          let taskFileUrl = t.file_url;
+        // Create or Update Class
+        const classData: any = {
+          title: lessonTitle,
+          bloque_id: targetBlockId,
+        };
+
+        if (isLive) {
+          classData.status = 'SCHEDULED';
+          if (scheduledAt && scheduledTime) {
+            classData.scheduled_at = new Date(`${scheduledAt}T${scheduledTime}:00`).toISOString();
+          }
+        } else {
+          classData.status = 'RECORDED';
+          classData.video_url = videoUrl;
+        }
+
+        let targetClaseId = claseIdFromQuery;
+
+        if (!targetClaseId) {
+          const { data: newClase, error: cError } = await supabase
+            .from('clases')
+            .insert([classData])
+            .select().single();
+          if (cError) throw cError;
+          targetClaseId = newClase.id.toString();
+        } else {
+          const { error: cError } = await supabase
+            .from('clases')
+            .update(classData)
+            .eq('id', targetClaseId);
+          if (cError) throw cError;
+        }
+
+        // 5. Create or Sync Tareas
+        if (tareas.length > 0) {
+          const currentTaskIds = tareas.filter(t => t.id).map(t => t.id);
           
-          if (t.file) {
-            const fileName = `materials/${Date.now()}-${t.file.name}`;
-            const { error: uploadError } = await supabase.storage.from('assignments').upload(fileName, t.file);
-            if (!uploadError) {
-              const { data: { publicUrl } } = supabase.storage.from('assignments').getPublicUrl(fileName);
-              taskFileUrl = publicUrl;
-            } else if (uploadError.message.includes('Bucket not found')) {
-               throw new Error('El bucket "assignments" no existe en Supabase. Por favor, créalo en el panel de Storage.');
+          // Delete tasks that were removed
+          if (claseIdFromQuery) {
+             await supabase.from('tareas').delete().eq('clase_id', targetClaseId).not('id', 'in', `(${currentTaskIds.join(',') || '0'})`);
+          }
+
+          for (const t of tareas) {
+            let taskFileUrl = t.file_url;
+            
+            if (t.file) {
+              const fileName = `materials/${Date.now()}-${t.file.name}`;
+              const { error: uploadError } = await supabase.storage.from('assignments').upload(fileName, t.file);
+              if (!uploadError) {
+                const { data: { publicUrl } } = supabase.storage.from('assignments').getPublicUrl(fileName);
+                taskFileUrl = publicUrl;
+              } else if (uploadError.message.includes('Bucket not found')) {
+                 throw new Error('El bucket "assignments" no existe en Supabase. Por favor, créalo en el panel de Storage.');
+              }
+            }
+            
+            const taskData = {
+              title: t.title,
+              description: t.description,
+              due_date: t.due_date || null,
+              file_url: taskFileUrl,
+              clase_id: targetClaseId
+            };
+
+            if (t.id) {
+              await supabase.from('tareas').update(taskData).eq('id', t.id);
+            } else {
+              await supabase.from('tareas').insert([taskData]);
             }
           }
-          
-          const taskData = {
-            title: t.title,
-            description: t.description,
-            due_date: t.due_date || null,
-            file_url: taskFileUrl,
-            clase_id: targetClaseId
-          };
-
-          if (t.id) {
-            await supabase.from('tareas').update(taskData).eq('id', t.id);
-          } else {
-            await supabase.from('tareas').insert([taskData]);
-          }
+        } else if (claseIdFromQuery) {
+          // If no tasks left, delete all for this class
+          await supabase.from('tareas').delete().eq('clase_id', targetClaseId);
         }
-      } else if (claseIdFromQuery) {
-        // If no tasks left, delete all for this class
-        await supabase.from('tareas').delete().eq('clase_id', targetClaseId);
       }
 
       alert('Contenido guardado exitosamente');
@@ -291,11 +293,11 @@ const CourseContentEditorPage: React.FC = () => {
             )}
             <button 
               onClick={handleSaveAll}
-              disabled={saving || !lessonTitle || !courseName || deleting}
+              disabled={saving || !courseName || deleting}
               className="bg-primary text-white px-8 py-3 rounded-xl font-black text-xs tracking-widest hover:bg-primary-container transition-all flex items-center gap-2 shadow-premium disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {claseIdFromQuery ? 'GUARDAR CAMBIOS' : 'PUBLICAR CONTENIDO'}
+              {claseIdFromQuery ? 'GUARDAR CAMBIOS' : (lessonTitle ? 'PUBLICAR CONTENIDO' : 'GUARDAR MATERIA')}
             </button>
           </div>
         </div>
@@ -312,7 +314,7 @@ const CourseContentEditorPage: React.FC = () => {
             
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Nombre de la Materia</label>
+                <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Nombre de la Materia *</label>
                 <input value={courseName} onChange={(e) => setCourseName(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-lg font-bold outline-none" placeholder="Ej: Teología Sistemática I" />
               </div>
               <div className="space-y-2">
@@ -358,7 +360,10 @@ const CourseContentEditorPage: React.FC = () => {
           <section className="bg-white p-8 rounded-3xl border border-outline-variant/10 shadow-ambient space-y-8">
             <div className="flex items-center gap-4 mb-2">
               <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center"><Video className="w-6 h-6" /></div>
-              <h2 className="text-2xl font-black font-headline text-primary uppercase tracking-tighter">2. Detalles de la Sesión</h2>
+              <div className="flex-1">
+                 <h2 className="text-2xl font-black font-headline text-primary uppercase tracking-tighter">2. Detalles de la Sesión</h2>
+                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Opcional: puedes agendarla después</p>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -367,65 +372,69 @@ const CourseContentEditorPage: React.FC = () => {
                 <input value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-lg font-bold outline-none" placeholder="Ej: Clase 1: Fundamentos de la Fe" />
               </div>
 
-              {/* Toggle Live vs Recorded */}
-              <div className="flex gap-4 p-1 bg-surface-container-low rounded-xl w-fit">
-                <button 
-                  onClick={() => setIsLive(true)}
-                  className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isLive ? 'bg-primary text-white shadow-md' : 'text-primary/40'}`}
-                >
-                  Clase en Vivo
-                </button>
-                <button 
-                  onClick={() => setIsLive(false)}
-                  className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!isLive ? 'bg-secondary text-white shadow-md' : 'text-primary/40'}`}
-                >
-                  Pre-grabada
-                </button>
-              </div>
+              {lessonTitle && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+                  {/* Toggle Live vs Recorded */}
+                  <div className="flex gap-4 p-1 bg-surface-container-low rounded-xl w-fit">
+                    <button 
+                      onClick={() => setIsLive(true)}
+                      className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isLive ? 'bg-primary text-white shadow-md' : 'text-primary/40'}`}
+                    >
+                      Clase en Vivo
+                    </button>
+                    <button 
+                      onClick={() => setIsLive(false)}
+                      className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!isLive ? 'bg-secondary text-white shadow-md' : 'text-primary/40'}`}
+                    >
+                      Pre-grabada
+                    </button>
+                  </div>
 
-              {/* Module Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Módulo / Bloque</label>
-                  <select 
-                    value={selectedBlockId} 
-                    onChange={(e) => setSelectedBlockId(e.target.value)}
-                    className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none"
-                  >
-                    <option value="new">+ Crear Nuevo Módulo</option>
-                    {existingBlocks.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
-                </div>
-                {selectedBlockId === 'new' && (
-                  <div className="space-y-2 animate-in slide-in-from-left-2">
-                    <label className="text-[10px] font-black text-secondary uppercase tracking-widest ml-1">Nombre del Nuevo Módulo</label>
-                    <input value={newBlockName} onChange={(e) => setNewBlockName(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-secondary focus:border-primary p-4 rounded-t-xl text-sm outline-none" placeholder="Ej: Módulo 2: Historia" />
+                  {/* Module Selection */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Módulo / Bloque</label>
+                      <select 
+                        value={selectedBlockId} 
+                        onChange={(e) => setSelectedBlockId(e.target.value)}
+                        className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none"
+                      >
+                        <option value="new">+ Crear Nuevo Módulo</option>
+                        {existingBlocks.map(b => (
+                          <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedBlockId === 'new' && (
+                      <div className="space-y-2 animate-in slide-in-from-left-2">
+                        <label className="text-[10px] font-black text-secondary uppercase tracking-widest ml-1">Nombre del Nuevo Módulo</label>
+                        <input value={newBlockName} onChange={(e) => setNewBlockName(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-secondary focus:border-primary p-4 rounded-t-xl text-sm outline-none" placeholder="Ej: Módulo 2: Historia" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {isLive ? (
-                <div className="grid grid-cols-2 gap-6 animate-in fade-in duration-500">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Calendar className="w-3 h-3" /> Fecha</label>
-                    <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> Hora</label>
-                    <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 animate-in fade-in duration-500">
-                  <label className="text-[10px] font-black text-secondary uppercase tracking-widest ml-1 flex items-center gap-2"><PlayCircle className="w-3 h-3" /> URL del Video (YouTube, Vimeo, etc.)</label>
-                  <input 
-                    value={videoUrl} 
-                    onChange={(e) => setVideoUrl(e.target.value)} 
-                    className="w-full bg-surface-container-low border-0 border-b-2 border-secondary focus:border-primary p-4 rounded-t-xl text-sm outline-none font-bold text-primary" 
-                    placeholder="https://www.youtube.com/watch?v=..." 
-                  />
+                  {isLive ? (
+                    <div className="grid grid-cols-2 gap-6 animate-in fade-in duration-500">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Calendar className="w-3 h-3" /> Fecha</label>
+                        <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> Hora</label>
+                        <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-secondary p-4 rounded-t-xl text-sm outline-none" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 animate-in fade-in duration-500">
+                      <label className="text-[10px] font-black text-secondary uppercase tracking-widest ml-1 flex items-center gap-2"><PlayCircle className="w-3 h-3" /> URL del Video (YouTube, Vimeo, etc.)</label>
+                      <input 
+                        value={videoUrl} 
+                        onChange={(e) => setVideoUrl(e.target.value)} 
+                        className="w-full bg-surface-container-low border-0 border-b-2 border-secondary focus:border-primary p-4 rounded-t-xl text-sm outline-none font-bold text-primary" 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -441,36 +450,42 @@ const CourseContentEditorPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white p-6 rounded-2xl border border-outline-variant/10 space-y-4">
-                <input value={newTarea.title} onChange={(e) => setNewTarea({...newTarea, title: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-sm font-bold outline-none" placeholder="Título de la tarea..." />
-                <textarea value={newTarea.description} onChange={(e) => setNewTarea({...newTarea, description: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-xs outline-none" placeholder="Instrucciones para el alumno..." />
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <FileText className="w-3 h-3" /> Documento de apoyo (Opcional)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 cursor-pointer bg-surface p-3 rounded-xl border border-dashed border-outline-variant flex items-center justify-center gap-2 hover:bg-secondary/5 transition-all">
-                      <Upload className="w-4 h-4 text-secondary" />
-                      <span className="text-[10px] font-bold text-primary truncate">
-                        {taskFile ? taskFile.name : 'Subir archivo'}
-                      </span>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(e) => setTaskFile(e.target.files?.[0] || null)}
-                      />
-                    </label>
-                    {taskFile && (
-                      <button onClick={() => setTaskFile(null)} className="p-2 text-error hover:bg-error/5 rounded-lg">
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+              {!lessonTitle ? (
+                <div className="p-6 bg-white/50 rounded-2xl border border-dashed border-outline-variant/30 text-center">
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Asigna un título a la lección para añadir tareas</p>
                 </div>
+              ) : (
+                <div className="bg-white p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                  <input value={newTarea.title} onChange={(e) => setNewTarea({...newTarea, title: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-sm font-bold outline-none" placeholder="Título de la tarea..." />
+                  <textarea value={newTarea.description} onChange={(e) => setNewTarea({...newTarea, description: e.target.value})} className="w-full border-0 border-b border-outline-variant focus:border-secondary p-2 text-xs outline-none" placeholder="Instrucciones para el alumno..." />
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <FileText className="w-3 h-3" /> Documento de apoyo (Opcional)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 cursor-pointer bg-surface p-3 rounded-xl border border-dashed border-outline-variant flex items-center justify-center gap-2 hover:bg-secondary/5 transition-all">
+                        <Upload className="w-4 h-4 text-secondary" />
+                        <span className="text-[10px] font-bold text-primary truncate">
+                          {taskFile ? taskFile.name : 'Subir archivo'}
+                        </span>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={(e) => setTaskFile(e.target.files?.[0] || null)}
+                        />
+                      </label>
+                      {taskFile && (
+                        <button onClick={() => setTaskFile(null)} className="p-2 text-error hover:bg-error/5 rounded-lg">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                <button onClick={handleAddTarea} className="w-full py-3 bg-secondary/10 text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-secondary/20 transition-all">Añadir Tarea</button>
-              </div>
+                  <button onClick={handleAddTarea} className="w-full py-3 bg-secondary/10 text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-secondary/20 transition-all">Añadir Tarea</button>
+                </div>
+              )}
 
               <div className="space-y-3">
                 {tareas.map((t, i) => (

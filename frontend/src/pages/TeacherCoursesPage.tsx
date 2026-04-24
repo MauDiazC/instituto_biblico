@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock } from 'lucide-react';
+import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';

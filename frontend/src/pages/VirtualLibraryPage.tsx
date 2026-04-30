@@ -1,6 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Search, Download, Quote, Loader2, BookOpen, Plus, X } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { 
+  Search, 
+  Download, 
+  Quote, 
+  Loader2, 
+  BookOpen, 
+  Plus, 
+  X, 
+  ChevronLeft, 
+  ChevronRight,
+  FileText,
+  Book,
+  ExternalLink,
+  Filter
+} from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { twMerge } from 'tailwind-merge';
 
 interface Libro {
   id: number;
@@ -19,6 +34,8 @@ const getApiUrl = () => {
 };
 const VITE_API_URL = getApiUrl();
 
+const ITEMS_PER_PAGE = 8;
+
 const VirtualLibraryPage: React.FC = () => {
   const [books, setBooks] = useState<Libro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +44,7 @@ const VirtualLibraryPage: React.FC = () => {
   const [isTeacher, setIsTeacher] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Form State
   const [newBook, setNewBook] = useState({
@@ -43,7 +61,8 @@ const VirtualLibraryPage: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('libros')
-        .select('*');
+        .select('*')
+        .order('title', { ascending: true });
       
       if (error) throw error;
       setBooks(data || []);
@@ -108,14 +127,27 @@ const VirtualLibraryPage: React.FC = () => {
     }
   };
 
-  const categories = ['Todos', ...Array.from(new Set(books.map(b => b.category)))];
+  const categories = useMemo(() => ['Todos', ...Array.from(new Set(books.map(b => b.category)))], [books]);
 
-  const filteredBooks = books.filter(book => {
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         book.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'Todos' || book.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredBooks = useMemo(() => {
+    return books.filter(book => {
+      const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           book.author.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === 'Todos' || book.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [books, searchQuery, activeCategory]);
+
+  const paginatedBooks = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBooks.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredBooks, currentPage]);
+
+  const totalPages = Math.ceil(filteredBooks.length / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeCategory]);
 
   if (loading && books.length === 0) {
     return (
@@ -126,38 +158,44 @@ const VirtualLibraryPage: React.FC = () => {
   }
 
   return (
-    <div className="-mt-12 pb-24 relative">
-      {/* Hero Search Section - Simplified and Compact */}
-      <section className="relative py-16 flex flex-col items-center justify-center overflow-hidden rounded-3xl mb-8 bg-surface-container-low/50">
-        <div className="relative z-10 w-full max-w-3xl px-6 text-center space-y-6">
-          <h1 className="font-headline text-4xl font-black text-primary tracking-tight">Explore el Saber Eterno</h1>
-          <div className="relative group">
-            <div className="relative flex items-center bg-white border border-outline-variant/20 rounded-full p-2 shadow-ambient focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
-              <Search className="ml-4 text-primary opacity-60 w-6 h-6" />
-              <input 
-                className="w-full bg-transparent border-none focus:ring-0 text-lg font-body px-4 text-primary placeholder-primary/30 outline-none" 
-                placeholder="Buscar por obra o autor..." 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+    <div className="pb-28 md:pb-12 space-y-10 max-w-full overflow-x-hidden">
+      {/* 1. Enhanced Header Section */}
+      <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-black font-headline text-primary tracking-tighter uppercase leading-none">Acervo Bibliográfico</h1>
+          <p className="text-on-surface-variant font-body text-sm md:text-base mt-2">Explore el saber eterno y la profundidad académica.</p>
         </div>
+        {isTeacher && (
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-secondary text-white font-black text-xs uppercase tracking-widest rounded-[1.5rem] hover:bg-[#5d4201] transition-all shadow-lg active:scale-95"
+          >
+            <Plus className="w-5 h-5" /> Añadir Obra
+          </button>
+        )}
       </section>
 
-      {/* Categories Filters - Reduced margin */}
-      <section className="bg-surface-container-lowest border border-outline-variant/10 py-6 px-6 rounded-2xl mb-8 overflow-x-auto shadow-sm">
-        <div className="flex justify-start md:justify-center gap-3 min-w-max">
+      {/* 2. Search and Filter Bar */}
+      <section className="flex flex-col lg:flex-row gap-4 items-center bg-white p-4 rounded-[2.5rem] border border-outline-variant/10 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-outline opacity-60" />
+          <input 
+            type="text" 
+            placeholder="Buscar por obra o autor..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-surface-container-low/30 border-none rounded-[1.5rem] text-sm font-body outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
+          />
+        </div>
+        <div className="flex gap-2 w-full lg:w-auto overflow-x-auto no-scrollbar pb-1 lg:pb-0">
           {categories.map((cat) => (
             <button 
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-full font-headline font-bold text-xs uppercase tracking-widest transition-all ${
-                activeCategory === cat 
-                ? 'bg-primary text-white shadow-md' 
-                : 'bg-surface-container-low text-slate-500 hover:text-primary hover:bg-white'
-              }`}
+              className={twMerge(
+                "px-6 py-3 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                activeCategory === cat ? "bg-primary text-white shadow-md" : "bg-surface-container-low/50 text-primary/60 hover:bg-white border border-transparent hover:border-outline-variant/10"
+              )}
             >
               {cat}
             </button>
@@ -165,115 +203,157 @@ const VirtualLibraryPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Book Grid */}
-      <section className="px-4">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="font-headline text-2xl font-black text-primary tracking-tight">Acervo Bibliográfico</h2>
-            <span className="text-[10px] font-black text-on-surface-variant font-label uppercase tracking-widest opacity-60">{filteredBooks.length} Obras Disponibles</span>
+      {/* 3. Paginated List View */}
+      <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-white rounded-[2.5rem] shadow-ambient overflow-hidden border border-outline-variant/10">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-surface-container-low/50">
+                <tr>
+                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em]">Obra / Autor</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] hidden md:table-cell">Categoría</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/5">
+                {paginatedBooks.length > 0 ? paginatedBooks.map((book) => (
+                  <tr key={book.id} className="hover:bg-primary/5 transition-all group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-5">
+                        <div className="w-14 h-18 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-outline-variant/10 group-hover:scale-105 transition-transform duration-500">
+                          <img 
+                            src={book.cover_url || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'} 
+                            alt={book.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-primary font-headline text-base uppercase tracking-tight truncate leading-tight mb-1">{book.title}</p>
+                          <p className="text-[11px] text-on-surface-variant font-medium opacity-60 uppercase tracking-widest">{book.author}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 hidden md:table-cell">
+                      <span className="px-4 py-1.5 bg-secondary/10 text-secondary text-[9px] font-black rounded-full uppercase tracking-widest border border-secondary/5">
+                        {book.category}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <a 
+                          href={book.file_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="p-3 bg-primary/5 text-primary rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
+                          title="Leer Obra"
+                        >
+                          <BookOpen className="w-5 h-5" />
+                        </a>
+                        <a 
+                          href={book.file_url} 
+                          download
+                          className="p-3 bg-surface-container-high text-primary rounded-2xl hover:bg-outline-variant/20 transition-all shadow-sm active:scale-90"
+                          title="Descargar PDF"
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={3} className="px-8 py-24 text-center">
+                      <div className="flex flex-col items-center gap-4 opacity-20">
+                         <Book className="w-20 h-20" />
+                         <p className="font-black font-headline uppercase tracking-[0.2em] text-sm">Sin resultados en la biblioteca</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          {isTeacher && (
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="bg-secondary text-white px-5 py-2.5 rounded-xl font-headline font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4" /> Añadir Obra
-            </button>
+
+          {/* List Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="p-8 border-t border-outline-variant/10 flex flex-col sm:flex-row justify-between items-center gap-6 bg-surface-container-low/10">
+              <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest opacity-60">
+                Mostrando {paginatedBooks.length} de {filteredBooks.length} obras
+              </span>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
+                >
+                  <ChevronLeft className="w-5 h-5 text-primary" />
+                </button>
+                <div className="bg-white px-6 py-3 rounded-2xl border border-outline-variant/10 shadow-inner">
+                   <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest">
+                     Página {currentPage} de {totalPages}
+                   </span>
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
+                >
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </button>
+              </div>
+            </div>
           )}
         </div>
-        
-        {filteredBooks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredBooks.map((book) => (
-              <div key={book.id} className="group flex flex-col h-full bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-500 hover:shadow-premium border border-outline-variant/10">
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <img 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    src={book.cover_url || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'} 
-                    alt={book.title} 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                    <span className="text-white text-xs font-headline uppercase tracking-widest font-bold">Biblioteca Institucional</span>
-                  </div>
-                </div>
-                <div className="p-8 flex flex-col flex-1">
-                  <span className="text-secondary font-headline font-bold text-xs uppercase tracking-widest mb-2">{book.category}</span>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-2 leading-tight">{book.title}</h3>
-                  <p className="text-slate-500 font-body text-sm mb-6">{book.author}</p>
-                  <div className="mt-auto flex gap-3">
-                    <a 
-                      href={book.file_url} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex-1 bg-primary text-on-primary py-3 rounded font-headline font-bold text-xs uppercase tracking-widest transition-all hover:bg-primary-container text-center flex items-center justify-center gap-2"
-                    >
-                      <BookOpen className="w-4 h-4" /> Leer
-                    </a>
-                    <a 
-                      href={book.file_url} 
-                      download
-                      className="p-3 border-2 border-primary/10 rounded text-primary hover:bg-primary/5 transition-all"
-                    >
-                      <Download className="w-5 h-5" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-surface-container-low rounded-3xl border-2 border-dashed border-outline-variant/30">
-            <Search className="w-12 h-12 text-on-surface-variant/30 mx-auto mb-4" />
-            <p className="text-on-surface-variant font-bold font-headline">No se encontraron obras con ese criterio.</p>
-          </div>
-        )}
       </section>
 
       {/* Add Book Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-          <div className="relative bg-surface-container-lowest w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low">
-              <h3 className="text-2xl font-black text-primary font-headline tracking-tight">Nueva Obra para la Biblioteca</h3>
+          <div className="relative bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
+              <div>
+                <h3 className="text-2xl font-black text-primary font-headline tracking-tighter uppercase">Nueva Obra</h3>
+                <p className="text-[10px] font-black text-secondary uppercase tracking-widest mt-1">Carga de material bibliográfico</p>
+              </div>
               <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
                 <X className="w-6 h-6 text-primary" />
               </button>
             </div>
             
-            <form onSubmit={handleAddBook} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+            <form onSubmit={handleAddBook} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-primary font-headline uppercase ml-1">Título</label>
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Título de la Obra</label>
                   <input 
                     required
                     type="text" 
                     value={newBook.title}
                     onChange={(e) => setNewBook({...newBook, title: e.target.value})}
                     placeholder="Ej: Teología Sistemática"
-                    className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+                    className="w-full p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary/30 focus:bg-white rounded-2xl font-body text-sm outline-none transition-all shadow-inner"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-primary font-headline uppercase ml-1">Autor</label>
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Autor / Institución</label>
                   <input 
                     required
                     type="text" 
                     value={newBook.author}
                     onChange={(e) => setNewBook({...newBook, author: e.target.value})}
                     placeholder="Ej: Wayne Grudem"
-                    className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+                    className="w-full p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary/30 focus:bg-white rounded-2xl font-body text-sm outline-none transition-all shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-primary font-headline uppercase ml-1">Categoría</label>
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Categoría</label>
                   <select 
                     value={newBook.category}
                     onChange={(e) => setNewBook({...newBook, category: e.target.value})}
-                    className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all appearance-none"
+                    className="w-full p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary/30 focus:bg-white rounded-2xl font-body text-sm outline-none transition-all shadow-inner appearance-none"
                   >
                     <option value="Theology">Teología</option>
                     <option value="History">Historia</option>
@@ -283,60 +363,52 @@ const VirtualLibraryPage: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-primary font-headline uppercase ml-1">Link del PDF (URL)</label>
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Enlace del Recurso (PDF)</label>
                   <input 
                     required
                     type="url" 
                     value={newBook.file_url}
                     onChange={(e) => setNewBook({...newBook, file_url: e.target.value})}
                     placeholder="https://..."
-                    className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
+                    className="w-full p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary/30 focus:bg-white rounded-2xl font-body text-sm outline-none transition-all shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-primary font-headline uppercase ml-1">URL de la Portada (Opcional)</label>
+                <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">URL de Portada (Opcional)</label>
                 <input 
                   type="url" 
                   value={newBook.cover_url}
                   onChange={(e) => setNewBook({...newBook, cover_url: e.target.value})}
-                  placeholder="Link a la imagen de portada"
-                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-primary font-headline uppercase ml-1">Descripción corta</label>
-                <textarea 
-                  value={newBook.description}
-                  onChange={(e) => setNewBook({...newBook, description: e.target.value})}
-                  rows={3}
-                  className="w-full p-4 bg-surface-container-low border-0 rounded-2xl font-body text-sm focus:ring-2 focus:ring-secondary transition-all outline-none"
-                  placeholder="Resumen de la obra..."
+                  placeholder="https://link-a-la-imagen.jpg"
+                  className="w-full p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary/30 focus:bg-white rounded-2xl font-body text-sm outline-none transition-all shadow-inner"
                 />
               </div>
 
               <button 
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary text-white py-4 rounded-2xl font-headline font-black tracking-widest text-sm hover:bg-primary-container transition-all shadow-premium active:scale-[0.98] disabled:opacity-50"
+                className="w-full bg-primary text-white py-5 rounded-2xl font-black font-headline text-xs uppercase tracking-[0.3em] hover:bg-primary-container transition-all shadow-premium active:scale-[0.98] disabled:opacity-50"
               >
-                {isSubmitting ? 'GUARDANDO...' : 'PUBLICAR EN BIBLIOTECA'}
+                {isSubmitting ? 'PUBLICANDO...' : 'PUBLICAR EN BIBLIOTECA'}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Scripture Callout */}
-      <section className="max-w-4xl mx-auto mt-24">
-        <div className="bg-surface-container-highest rounded-xl p-10 border-l-4 border-secondary shadow-ambient relative">
-          <Quote className="absolute right-6 top-6 w-12 h-12 text-secondary/10" />
-          <blockquote className="font-body text-2xl text-primary leading-relaxed italic mb-4 relative z-10">
+      {/* 4. Scripture Block */}
+      <section className="max-w-4xl mx-auto pt-16">
+        <div className="bg-white p-10 md:p-14 rounded-[3rem] border-l-8 border-secondary shadow-premium relative overflow-hidden group">
+          <Quote className="absolute right-8 top-8 w-24 h-24 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
+          <p className="text-xl md:text-3xl italic font-body text-primary leading-relaxed relative z-10 selection:bg-secondary/20">
             "La exposición de tus palabras alumbra; hace entender a los simples."
-          </blockquote>
-          <cite className="font-headline font-bold text-primary not-italic relative z-10">— Salmos 119:130</cite>
+          </p>
+          <div className="flex items-center gap-4 mt-8 relative z-10">
+             <div className="w-12 h-px bg-secondary/40" />
+             <p className="font-black text-secondary text-sm uppercase tracking-[0.4em] leading-none">Salmos 119:130</p>
+          </div>
         </div>
       </section>
     </div>

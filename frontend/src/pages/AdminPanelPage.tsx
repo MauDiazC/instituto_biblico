@@ -163,89 +163,128 @@ const AdminPanelPage: React.FC = () => {
     </div>
   );
 
-  const UserTable = ({ title, data, icon: Icon }: { title: string, data: UserData[], icon: any }) => (
-    <div className="bg-white rounded-[2.5rem] shadow-ambient overflow-hidden border border-outline-variant/10 mb-10">
-      <div className="p-8 border-b border-outline-variant/5 bg-surface-container-low/20 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-            <Icon className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-headline font-black text-primary uppercase tracking-tight text-lg">{title}</h3>
-            <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{data.length} Registrados</p>
+  const UserTable = ({ title, data, icon: Icon }: { title: string, data: UserData[], icon: any }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    const totalPages = Math.ceil(data.length / itemsPerPage);
+    
+    const paginatedData = useMemo(() => {
+      const start = (currentPage - 1) * itemsPerPage;
+      return data.slice(start, start + itemsPerPage);
+    }, [data, currentPage]);
+
+    // Reset to page 1 if data length changes (search)
+    useEffect(() => {
+      setCurrentPage(1);
+    }, [data.length]);
+
+    return (
+      <div className="bg-white rounded-[2.5rem] shadow-ambient overflow-hidden border border-outline-variant/10 mb-10">
+        <div className="p-8 border-b border-outline-variant/5 bg-surface-container-low/20 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <Icon className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-headline font-black text-primary uppercase tracking-tight text-lg">{title}</h3>
+              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{data.length} Registrados</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-surface-container-low/40">
-              <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Usuario</th>
-              <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Estado</th>
-              <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-outline-variant/5">
-            {data.length > 0 ? data.map(user => (
-              <tr key={user.id} className="hover:bg-primary/5 transition-all group">
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center overflow-hidden text-white font-bold text-sm shadow-sm">
-                        {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : getInitials(user.full_name || user.email)}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-surface-container-low/40">
+                <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Usuario</th>
+                <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Estado</th>
+                <th className="px-8 py-5 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/5">
+              {paginatedData.length > 0 ? paginatedData.map(user => (
+                <tr key={user.id} className="hover:bg-primary/5 transition-all group">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center overflow-hidden text-white font-bold text-sm shadow-sm">
+                          {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : getInitials(user.full_name || user.email)}
+                      </div>
+                      <div className="min-w-0">
+                          <p className="font-bold text-primary font-headline uppercase truncate leading-none mb-1.5">{user.full_name || 'Sin nombre'}</p>
+                          <p className="text-[10px] text-on-surface-variant font-medium flex items-center gap-1.5"><Mail className="w-3 h-3 opacity-40" /> {user.email}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                        <p className="font-bold text-primary font-headline uppercase truncate leading-none mb-1.5">{user.full_name || 'Sin nombre'}</p>
-                        <p className="text-[10px] text-on-surface-variant font-medium flex items-center gap-1.5"><Mail className="w-3 h-3 opacity-40" /> {user.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-8 py-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className={twMerge("w-2.5 h-2.5 rounded-full", user.is_active ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]" : "bg-outline")} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{user.is_active ? 'Activo' : 'Inactivo'}</span>
-                    </div>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {user.role !== 'admin' && (
+                  </td>
+                  <td className="px-8 py-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className={twMerge("w-2.5 h-2.5 rounded-full", user.is_active ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]" : "bg-outline")} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{user.is_active ? 'Activo' : 'Inactivo'}</span>
+                      </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {user.role !== 'admin' && (
+                        <button 
+                          onClick={() => handlePromoteUser(user)}
+                          title="Promover a Admin"
+                          className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary/10 transition-all"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                        </button>
+                      )}
                       <button 
-                        onClick={() => handlePromoteUser(user)}
-                        title="Promover a Admin"
-                        className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary/10 transition-all"
+                        onClick={() => handleToggleStatus(user)}
+                        title={user.is_active ? 'Desactivar' : 'Activar'}
+                        className={twMerge("p-2.5 rounded-xl transition-all", user.is_active ? "bg-error/5 text-error hover:bg-error/10" : "bg-green-50 text-green-600 hover:bg-green-100")}
                       >
-                        <ShieldCheck className="w-4 h-4" />
+                        {user.is_active ? <UserMinus className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </button>
-                    )}
-                    <button 
-                      onClick={() => handleToggleStatus(user)}
-                      title={user.is_active ? 'Desactivar' : 'Activar'}
-                      className={twMerge("p-2.5 rounded-xl transition-all", user.is_active ? "bg-error/5 text-error hover:bg-error/10" : "bg-green-50 text-green-600 hover:bg-green-100")}
-                    >
-                      {user.is_active ? <UserMinus className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteUser(user)}
-                      title="Eliminar permanentemente"
-                      className="p-2.5 bg-error/5 text-error rounded-xl hover:bg-error/20 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={3} className="px-8 py-12 text-center text-on-surface-variant font-bold italic opacity-40 uppercase text-[10px] tracking-widest">
-                   Sin registros encontrados
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                      <button 
+                        onClick={() => handleDeleteUser(user)}
+                        title="Eliminar permanentemente"
+                        className="p-2.5 bg-error/5 text-error rounded-xl hover:bg-error/20 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={3} className="px-8 py-12 text-center text-on-surface-variant font-bold italic opacity-40 uppercase text-[10px] tracking-widest">
+                     Sin registros encontrados
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Local Table Pagination */}
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-outline-variant/10 flex justify-center items-center gap-4 bg-surface-container-low/10">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1}
+              className="p-2 rounded-xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all"
+            >
+              <ChevronLeft className="w-5 h-5 text-primary" />
+            </button>
+            <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all"
+            >
+              <ChevronRight className="w-5 h-5 text-primary" />
+            </button>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="pb-24 md:pb-12 px-2 md:px-0 max-w-full overflow-x-hidden">

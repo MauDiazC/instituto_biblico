@@ -12,7 +12,8 @@ import {
   Search,
   MessageSquare,
   Award,
-  X
+  X,
+  Send
 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';

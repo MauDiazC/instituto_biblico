@@ -25,14 +25,38 @@ const LoginPage: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Normalizar rol a minúsculas
-        const role = data.user.user_metadata?.role?.toLowerCase();
+        // 1. Fetch profile from Backend to get the REAL role and sync session
+        const getApiUrl = () => {
+          let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+          if (!url.startsWith('http')) { url = `https://${url}`; }
+          return url.replace(/\/$/, '');
+        };
         
-        if (role === 'teacher') {
-          navigate('/dashboard/teacher');
-        } else if (role === 'admin') {
-          navigate('/dashboard/admin');
-        } else {
+        try {
+          const profileRes = await fetch(`${getApiUrl()}/users/me`, {
+            headers: { 'Authorization': `Bearer ${data.session?.access_token}` }
+          });
+          
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            const realRole = profile.role?.toLowerCase();
+            
+            if (realRole === 'admin') {
+              navigate('/dashboard/admin');
+            } else if (realRole === 'teacher') {
+              navigate('/dashboard/teacher');
+            } else {
+              navigate('/dashboard');
+            }
+          } else {
+            // Fallback if backend profile fetch fails
+            const metaRole = data.user.user_metadata?.role?.toLowerCase();
+            if (metaRole === 'admin') navigate('/dashboard/admin');
+            else if (metaRole === 'teacher') navigate('/dashboard/teacher');
+            else navigate('/dashboard');
+          }
+        } catch (err) {
+          console.error("Profile sync error on login:", err);
           navigate('/dashboard');
         }
       }

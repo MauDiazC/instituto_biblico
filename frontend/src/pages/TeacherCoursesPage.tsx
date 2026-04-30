@@ -1,8 +1,30 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Video, ArrowRight, Users, PlayCircle, Calendar, Search, Filter, Loader2, ChevronRight, ChevronLeft, LayoutGrid, List as ListIcon, MoreVertical, Edit3, ClipboardCheck, Clock, Plus, Trash2 } from 'lucide-react';
+import { 
+  BookOpen, 
+  Video, 
+  ArrowRight, 
+  Users, 
+  PlayCircle, 
+  Calendar, 
+  Search, 
+  Filter, 
+  Loader2, 
+  ChevronRight, 
+  ChevronLeft, 
+  LayoutGrid, 
+  List as ListIcon, 
+  MoreVertical, 
+  Edit3, 
+  ClipboardCheck, 
+  Clock, 
+  Plus, 
+  Trash2,
+  X
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
+import { getInitials } from '../utils/avatars';
 
 interface Course {
   id: number;
@@ -11,6 +33,16 @@ interface Course {
   description: string;
   student_count: number;
   module_count: number;
+}
+
+interface StudentInMateria {
+  id: number;
+  user: {
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+  };
+  created_at: string;
 }
 
 interface Clase {
@@ -49,6 +81,12 @@ const TeacherCoursesPage: React.FC = () => {
   const [recordingSearch, setRecordingSearch] = useState('');
   const [coursePage, setCoursePage] = useState(1);
   const [recordingPage, setRecordingPage] = useState(1);
+
+  // Students Modal State
+  const [showStudentsModal, setShowStudentsModal] = useState(false);
+  const [selectedMateria, setSelectedMateria] = useState<Course | null>(null);
+  const [studentsInMateria, setStudentsInMateria] = useState<StudentInMateria[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -106,6 +144,26 @@ const TeacherCoursesPage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleShowStudents = async (materia: Course) => {
+    setSelectedMateria(materia);
+    setShowStudentsModal(true);
+    setLoadingStudents(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${VITE_API_URL}/courses/${materia.id}/students`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStudentsInMateria(data);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
 
   const handleDeleteMateria = async (materiaId: number, name: string) => {
     if (!window.confirm(`¿Estás COMPLETAMENTE seguro de eliminar "${name}"?\n\nEsta acción eliminará permanentemente:\n- Todos los módulos\n- Todas las clases y grabaciones\n- Todas las tareas y entregas de alumnos\n- Todas las inscripciones\n\nESTA ACCIÓN NO SE PUEDE DESHACER.`)) return;
@@ -296,6 +354,12 @@ const TeacherCoursesPage: React.FC = () => {
 
               {/* Actions */}
               <div className="flex flex-wrap justify-center gap-3 w-full lg:w-auto">
+                <button 
+                  onClick={() => handleShowStudents(course)}
+                  className="px-6 py-3.5 bg-surface-container-high text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-outline-variant/20 transition-all shadow-sm active:scale-95"
+                >
+                  <Users className="w-3.5 h-3.5" /> Alumnos
+                </button>
                 <Link 
                   to={`/dashboard/teacher/editor?materiaId=${course.id}`}
                   className="px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-primary-container transition-all shadow-md active:scale-95"
@@ -494,6 +558,61 @@ const TeacherCoursesPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Students Modal */}
+      {showStudentsModal && (
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
+          <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowStudentsModal(false)}></div>
+          <div className="relative bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
+            <div className="p-6 md:p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
+              <div>
+                <h3 className="text-xl md:text-2xl font-black text-primary font-headline tracking-tight uppercase">Estudiantes Inscritos</h3>
+                <p className="text-[10px] md:text-xs font-black text-secondary uppercase tracking-widest">{selectedMateria?.name}</p>
+              </div>
+              <button onClick={() => setShowStudentsModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
+                <X className="w-6 h-6 text-primary" />
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto scrollbar-none">
+              {loadingStudents ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              ) : studentsInMateria.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {studentsInMateria.map(student => (
+                    <div key={student.id} className="flex items-center justify-between p-4 bg-surface-container-low/40 rounded-2xl border border-outline-variant/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary flex items-center justify-center overflow-hidden text-white font-bold shadow-sm flex-shrink-0">
+                          {student.user.avatar_url ? (
+                            <img src={student.user.avatar_url} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <span className="text-xs md:text-sm">{getInitials(student.user.full_name)}</span>
+                          )}
+                        </div>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-primary font-headline text-sm truncate uppercase tracking-tight">{student.user.full_name}</p>
+                          <p className="text-[10px] text-on-surface-variant font-body truncate">{student.user.email}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[8px] font-black text-outline uppercase">Inscrito</p>
+                         <p className="text-[10px] font-bold text-primary">{new Date(student.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 opacity-40">
+                  <Users className="w-12 h-12 mx-auto mb-3" />
+                  <p className="font-bold font-headline uppercase tracking-widest text-xs">Sin alumnos inscritos</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

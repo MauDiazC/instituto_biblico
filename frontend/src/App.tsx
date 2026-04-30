@@ -92,7 +92,7 @@ function App() {
           
           {/* 4. Admin Specific */}
           <Route path="/dashboard/admin" element={
-            <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <DashboardLayout><AdminPanelPage /></DashboardLayout>
             </ProtectedRoute>
           } />

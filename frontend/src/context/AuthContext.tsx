@@ -18,6 +18,13 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {}
 });
 
+const getApiUrl = () => {
+  let url = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim();
+  if (!url.startsWith('http')) { url = `https://${url}`; }
+  return url.replace(/\/$/, '');
+};
+const VITE_API_URL = getApiUrl();
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -28,33 +35,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
+  const syncProfile = async (currentSession: Session | null) => {
+    if (currentSession?.user) {
+      try {
+        // Use the token to fetch the profile from our Backend
+        // This also triggers the backend logic to sync/create the user in the public schema
+        const response = await fetch(`${VITE_API_URL}/users/me`, {
+          headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+
+        if (response.ok) {
+          const profile = await response.json();
+          // Use the role from our local Database (the source of truth)
+          const normalizedRole = profile.role?.toLowerCase() as any;
+          setRole(normalizedRole);
+          console.log('DEBUG: Role synced from backend:', normalizedRole);
+        } else {
+          // Fallback to Supabase metadata if backend is unreachable
+          setRole(currentSession.user.user_metadata?.role || 'student');
+        }
+      } catch (err) {
+        console.error('DEBUG: Profile sync error:', err);
+        setRole(currentSession.user.user_metadata?.role || 'student');
+      }
+    } else {
+      setRole(null);
+    }
+  };
+
   useEffect(() => {
     console.log('DEBUG: AuthProvider initialized');
     
-    // 1. Get initial session
+    // 1. Get initial session and sync
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('DEBUG: Initial session retrieved:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setRole(session.user.user_metadata?.role || 'student');
-      }
-      setLoading(false);
+      syncProfile(session).finally(() => setLoading(false));
     }).catch(err => {
       console.error('DEBUG: Error getting session:', err);
       setLoading(false);
     });
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('DEBUG: Auth state changed:', event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setRole(session.user.user_metadata?.role || 'student');
-      } else {
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        await syncProfile(session);
+      } else if (event === 'SIGNED_OUT') {
         setRole(null);
       }
+      
       setLoading(false);
     });
 

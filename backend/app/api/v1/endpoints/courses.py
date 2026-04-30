@@ -12,7 +12,7 @@ from app.schemas.course import (
     MateriaRead, MateriaBase, MateriaDetail, EnrollmentCreate, EnrollmentRead,
     BloqueBase, BloqueRead, ClaseCreate, ClaseRead,
     LibroRead, LibroCreate, TareaRead, TareaBase, EntregaRead, EntregaCreate,
-    ConsultaRead, ConsultaCreate, ConsultaAnswer
+    ConsultaRead, ConsultaCreate, ConsultaAnswer, StudentAssignmentRead
 )
 from app.schemas.common import PaginatedResponse
 

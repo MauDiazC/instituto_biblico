@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.api.v1.endpoints.auth import get_current_user
-from app.models.user import User
+from app.api.v1.endpoints.auth import get_current_user, RoleChecker
+from app.models.user import User, Role
 from app.schemas.user import UserRead, UserUpdate
 from app.models.course import Clase, Enrollment
 from app.services.content import s3_service
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -29,6 +30,58 @@ async def update_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@router.get("/", response_model=List[UserRead])
+async def list_users(
+    skip: int = 0,
+    limit: int = 100,
+    role: Optional[Role] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN]))
+):
+    """Admin only: List all users with optional role filtering."""
+    query = db.query(User)
+    if role:
+        query = query.filter(User.role == role)
+    return query.offset(skip).limit(limit).all()
+
+@router.patch("/{user_id}", response_model=UserRead)
+async def admin_update_user(
+    user_id: uuid.UUID,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN]))
+):
+    """Admin only: Update any user (change role, deactivate, etc)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = user_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(user, field, value)
+    
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/{user_id}/promote", response_model=UserRead)
+async def promote_to_admin(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN]))
+):
+    """Admin only: Promote a user to Admin role."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.role = Role.ADMIN
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.get("/classes/{class_id}/access")
 async def get_class_access(

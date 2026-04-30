@@ -16,7 +16,8 @@ import {
   Calendar,
   MessageSquare,
   AlertCircle,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '../utils/supabase';

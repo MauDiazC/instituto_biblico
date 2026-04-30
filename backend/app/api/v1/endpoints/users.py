@@ -7,6 +7,7 @@ from app.schemas.user import UserRead, UserUpdate
 from app.models.course import Clase, Enrollment
 from app.services.content import s3_service
 from typing import List, Optional
+import uuid
 
 router = APIRouter()
 

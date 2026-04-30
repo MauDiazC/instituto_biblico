@@ -23,7 +23,6 @@ const Sidebar: React.FC = () => {
     if (role === 'admin') {
       return [
         { name: 'Panel Admin', path: '/dashboard/admin', icon: ShieldCheck },
-        { name: 'Gestión de Materias', path: '/dashboard/admin', icon: BookOpen },
         { name: 'Biblioteca', path: '/dashboard/library', icon: Library },
       ];
     }

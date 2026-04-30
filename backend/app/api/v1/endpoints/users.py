@@ -84,6 +84,21 @@ async def promote_to_admin(
     db.refresh(user)
     return user
 
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN]))
+):
+    """Admin only: Permanently delete a user from the database."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user)
+    db.commit()
+    return None
+
 @router.get("/classes/{class_id}/access")
 async def get_class_access(
     class_id: int,

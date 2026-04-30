@@ -238,15 +238,24 @@ const TeacherCoursesPage: React.FC = () => {
           <h1 className="text-4xl font-black text-primary font-headline tracking-tighter uppercase leading-none">Mi Academia</h1>
           <p className="text-on-surface-variant font-body text-sm md:text-base">Centro de control para tus clases y material grabado.</p>
         </div>
-        <div className="flex items-center gap-4 bg-primary/5 p-4 rounded-[2rem] border border-primary/10">
-          <div className="text-right">
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Total Materias</p>
-            <p className="text-2xl font-black font-headline text-primary mt-1">{courses.length}</p>
-          </div>
-          <div className="w-px h-8 bg-primary/20 mx-2"></div>
-          <div className="text-right pr-2">
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Grabaciones</p>
-            <p className="text-2xl font-black font-headline text-primary mt-1">{recordings.length}</p>
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <Link 
+            to="/dashboard/teacher/editor"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-secondary text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-[#5d4201] transition-all shadow-lg active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            Nueva Materia
+          </Link>
+          <div className="flex items-center gap-4 bg-primary/5 p-4 rounded-[2rem] border border-primary/10 w-full sm:w-auto">
+            <div className="text-right">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Total Materias</p>
+              <p className="text-2xl font-black font-headline text-primary mt-1">{courses.length}</p>
+            </div>
+            <div className="w-px h-8 bg-primary/20 mx-2"></div>
+            <div className="text-right pr-2">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Grabaciones</p>
+              <p className="text-2xl font-black font-headline text-primary mt-1">{recordings.length}</p>
+            </div>
           </div>
         </div>
       </section>

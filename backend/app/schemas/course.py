@@ -38,6 +38,18 @@ class TareaRead(TareaBase):
     class Config:
         from_attributes = True
 
+class StudentAssignmentRead(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    materia_name: str
+    clase_title: str
+    submission: Optional[EntregaRead] = None
+
+    class Config:
+        from_attributes = True
+
 class LibroBase(BaseModel):
     title: str
     author: str

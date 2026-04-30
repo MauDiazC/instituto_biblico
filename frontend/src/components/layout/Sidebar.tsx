@@ -42,6 +42,7 @@ const Sidebar: React.FC = () => {
     // 3. Student Items (Default)
     return [
       { name: 'Mi Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      { name: 'Mis Tareas', path: '/dashboard/assignments', icon: ListTodo },
       { name: 'Biblioteca', path: '/dashboard/library', icon: Library },
     ];
   };

@@ -39,6 +39,7 @@ const MobileNav: React.FC = () => {
 
     return [
       { name: 'Inicio', path: '/dashboard', icon: DashboardIcon },
+      { name: 'Tareas', path: '/dashboard/assignments', icon: GradeIcon },
       { name: 'Biblioteca', path: '/dashboard/library', icon: LibraryIcon },
       { name: 'Perfil', path: '/dashboard/profile', icon: ProfileIcon },
     ];

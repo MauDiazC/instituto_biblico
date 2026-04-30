@@ -404,6 +404,50 @@ async def answer_question(
     db.refresh(consulta)
     return consulta
 
+@router.get("/student/assignments", response_model=List[StudentAssignmentRead])
+async def list_student_assignments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns all assignments for courses the student is enrolled in.
+    """
+    # 1. Get enrolled materia IDs
+    enrollments = db.query(Enrollment).filter(Enrollment.user_id == current_user.id).all()
+    materia_ids = [e.materia_id for e in enrollments]
+    
+    if not materia_ids:
+        return []
+
+    # 2. Get all Tareas for these materias
+    # We join: Tarea -> Clase -> Bloque -> Materia
+    # And left join Entrega for the current user
+    results = db.query(
+        Tarea, 
+        Materia.name.label("materia_name"), 
+        Clase.title.label("clase_title"),
+        Entrega
+    ).join(Clase, Tarea.clase_id == Clase.id)\
+     .join(Bloque, Clase.bloque_id == Bloque.id)\
+     .join(Materia, Bloque.materia_id == Materia.id)\
+     .outerjoin(Entrega, (Entrega.tarea_id == Tarea.id) & (Entrega.user_id == current_user.id))\
+     .filter(Materia.id.in_(materia_ids))\
+     .all()
+    
+    assignments = []
+    for tarea, mat_name, cls_title, entrega in results:
+        assignments.append({
+            "id": tarea.id,
+            "title": tarea.title,
+            "description": tarea.description,
+            "due_date": tarea.due_date,
+            "materia_name": mat_name,
+            "clase_title": cls_title,
+            "submission": entrega
+        })
+        
+    return assignments
+
 @router.post("/classes/{class_id}/complete")
 async def toggle_class_completion(
     class_id: int,

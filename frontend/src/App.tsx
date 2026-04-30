@@ -15,6 +15,7 @@ import TeacherCoursesPage from './pages/TeacherCoursesPage';
 import VirtualLibraryPage from './pages/VirtualLibraryPage';
 import CourseContentEditorPage from './pages/CourseContentEditorPage';
 import GradebookPage from './pages/GradebookPage';
+import StudentAssignmentsPage from './pages/StudentAssignmentsPage';
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -47,6 +48,11 @@ function App() {
           <Route path="/dashboard/library" element={
             <ProtectedRoute>
               <DashboardLayout><VirtualLibraryPage /></DashboardLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/assignments" element={
+            <ProtectedRoute>
+              <DashboardLayout><StudentAssignmentsPage /></DashboardLayout>
             </ProtectedRoute>
           } />
           

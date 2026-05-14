@@ -1,4 +1,6 @@
 import httpx
+import jwt
+import time
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
@@ -54,11 +56,27 @@ async def get_or_create_videosdk_room(
         # Si es de Daily, la ignoramos y generamos una nueva de VideoSDK
         clase.room_url = None
 
-    if not settings.VIDEOSDK_API_KEY:
+    if not settings.VIDEOSDK_API_KEY or not settings.VIDEOSDK_SECRET:
         raise HTTPException(
             status_code=500, 
-            detail="VideoSDK API Key not configured. Please add VIDEOSDK_API_KEY to your .env file."
+            detail="VideoSDK configuration missing. Please add VIDEOSDK_API_KEY and VIDEOSDK_SECRET to your .env file."
         )
+
+    # Generamos el JWT Token requerido por VideoSDK
+    try:
+        iat = int(time.time())
+        exp = iat + 3600 # 1 hora de validez
+        payload = {
+            "apikey": settings.VIDEOSDK_API_KEY,
+            "permissions": ["allow_join", "allow_mod"],
+            "iat": iat,
+            "exp": exp,
+            "version": 2
+        }
+        token = jwt.encode(payload, settings.VIDEOSDK_SECRET, algorithm="HS256")
+    except Exception as e:
+        print(f"JWT Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating auth token")
 
     async with httpx.AsyncClient() as client:
         # Create a room in VideoSDK
@@ -66,7 +84,7 @@ async def get_or_create_videosdk_room(
         response = await client.post(
             "https://api.videosdk.live/v2/rooms",
             headers={
-                "Authorization": f"{settings.VIDEOSDK_SECRET}", 
+                "Authorization": token, 
                 "Content-Type": "application/json"
             },
             json={

@@ -72,3 +72,9 @@
     @apply border-l-4 border-secondary;
   }
 }
+
+@layer utilities {
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, #002046 0%, #1b365d 100%);
+  }
+}

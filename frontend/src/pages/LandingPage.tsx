@@ -8,11 +8,11 @@ const LandingPage: React.FC = () => {
       <section className="relative min-h-[870px] flex items-center overflow-hidden -mt-20">
         <div className="absolute inset-0 z-0">
           <img 
-            className="w-full h-full object-cover opacity-20 grayscale" 
+            className="w-full h-full object-cover opacity-60" 
             alt="dramatic wide shot of a classical library" 
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2TEjEOTwLTFgU7obxOiqraZ1ldR8zJzld_5tT_hz7toDtgnelntC65LfhHGYyCwIQ8K9TnS1hwpTvOtGwUxsxTNBqQBQsX-KMRwc4rlKNdfpyo3tU2scHYha9fXYr9xWQnETNzdRrwA5j1jcZOL8QBenfKUun6Paf_JAiSesjq88KLo4rIh0z6Dp3CWt8FKiywmvH-hvrGYRdYSWPKQZFT7qRJT6vqBYAkzjUV2RlDefuRayMgqqHfj9YAhVa1Ve38-iehKM40nBt" 
           />
-          <div className="absolute inset-0 bg-hero-gradient opacity-90"></div>
+          <div className="absolute inset-0 bg-hero-gradient opacity-50"></div>
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-6 py-24 grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-8">

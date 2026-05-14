@@ -37,17 +37,10 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-4">
           <Link
             to="/auth/login"
-            className="hidden lg:flex items-center gap-2 px-4 py-2 text-primary font-headline font-bold hover:bg-surface-container-low transition-all rounded-lg"
+            className="flex items-center gap-2 px-4 py-2 text-primary font-headline font-bold hover:bg-surface-container-low transition-all rounded-lg"
           >
             <LogIn className="w-5 h-5" />
             Iniciar Sesión
-          </Link>
-          <Link
-            to="/dashboard/courses/1"
-            className="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-headline font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center gap-2"
-          >
-            <BookOpen className="w-5 h-5" />
-            Explorar Cursos
           </Link>
         </div>
       </div>

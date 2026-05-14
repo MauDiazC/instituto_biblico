@@ -31,9 +31,6 @@ const LandingPage: React.FC = () => {
                 <Compass className="w-6 h-6" />
                 Explorar Cursos
               </a>
-              <button className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-lg font-headline font-bold text-lg hover:bg-white/20 transition-all flex items-center gap-3">
-                Continuar Lección
-              </button>
             </div>
           </div>
           <div className="lg:col-span-5 hidden lg:block">

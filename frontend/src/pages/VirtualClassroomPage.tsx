@@ -241,6 +241,14 @@ const VirtualClassroomPage: React.FC = () => {
               },
             },
             participantCanLeave: true,
+            joinScreen: {
+              visible: true, // Ayuda a inicializar correctamente los streams antes de entrar
+              title: clase.title,
+              meetingUrl: window.location.href,
+            },
+            mainArea: {
+              layout: "GRID", // Forzar grid para ver a todos
+            },
             brandingEnabled: true,
             brandName: "Sacred Archive",
             poweredBy: false,
@@ -250,13 +258,14 @@ const VirtualClassroomPage: React.FC = () => {
               visible: false,
             },
             permissions: {
-              askToJoin: false, // Permitir entrada directa
+              askToJoin: false, 
               toggleParticipantWebcam: isTeacher,
               toggleParticipantMic: isTeacher,
               dropParticipant: isTeacher,
               drawOnWhiteboard: true,
               toggleWhiteboard: isTeacher,
               toggleRecording: isTeacher,
+              pin: true, // Permitir que vean a otros
             },
             leftScreen: {
               actionButton: {

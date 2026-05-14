@@ -75,9 +75,7 @@ async def get_or_create_daily_room(
                     "enable_people_ui": True,
                     "enable_emoji_reactions": True,
                     "enable_hand_raising": True,
-                    "enable_whiteboard": True,
                     "enable_screenshare": True,
-                    "enable_noise_cancellation_ui": True,
                     "user_video_max_height": 1080,
                     "lang": "es"
                 }

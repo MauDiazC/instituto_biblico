@@ -2,12 +2,15 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import MobileNav from './MobileNav';
+import { useAuth } from '../../context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col bg-surface font-body text-on-surface">
       <Header />
@@ -15,7 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       <Footer />
-      <MobileNav />
+      {user && <MobileNav />}
     </div>
   );
 };

@@ -64,7 +64,7 @@ function App() {
           } />
           <Route path="/dashboard/courses/:id/lessons/:lessonId" element={
             <ProtectedRoute>
-              <DashboardLayout><VirtualClassroomPage /></DashboardLayout>
+              <DashboardLayout hideSidebar><VirtualClassroomPage /></DashboardLayout>
             </ProtectedRoute>
           } />
           

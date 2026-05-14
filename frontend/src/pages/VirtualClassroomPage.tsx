@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle, ArrowLeft, Info, ListChecks, HelpCircle as HelpIcon } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { formatToLocal } from '../utils/date';
@@ -42,6 +42,7 @@ interface Clase {
   is_completed?: boolean;
   bloque?: {
     name: string;
+    materia_id: number;
   };
   tareas?: Tarea[];
 }
@@ -77,6 +78,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [isAnswering, setIsAnswering] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState<'info' | 'tasks' | 'questions'>('info');
 
   const isTeacher = role === 'teacher' || role === 'admin';
 
@@ -102,7 +104,7 @@ const VirtualClassroomPage: React.FC = () => {
       
       const { data: classData, error } = await supabase
         .from('clases')
-        .select('*, bloque:bloques(name), tareas(*)')
+        .select('*, bloque:bloques(name, materia_id), tareas(*)')
         .eq('id', lessonId)
         .single();
 
@@ -120,7 +122,6 @@ const VirtualClassroomPage: React.FC = () => {
         return { ...classData, is_completed: !!completion };
       });
 
-      // IMPROVED RECORDING LOGIC: Only fetch/set if we don't have a valid working link yet
       if (classData.video_url) {
         setRecordingLink(classData.video_url);
       } else if (classData.status === 'RECORDED' && !recordingLink) {
@@ -165,7 +166,7 @@ const VirtualClassroomPage: React.FC = () => {
       fetchClassData();
 
       const mainChannel = supabase
-        .channel(`vc-sync-v5-${lessonId}`)
+        .channel(`vc-sync-v6-${lessonId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, (payload: any) => {
           if (payload.new && Number(payload.new.id) === Number(lessonId)) {
             fetchClassData(true);
@@ -178,8 +179,7 @@ const VirtualClassroomPage: React.FC = () => {
         })
         .subscribe();
 
-      // Slightly slower polling when in RECORDED state to preserve player stability
-      const interval = setInterval(() => fetchClassData(true), 8000);
+      const interval = setInterval(() => fetchClassData(true), 10000);
 
       return () => { 
         supabase.removeChannel(mainChannel);
@@ -215,7 +215,7 @@ const VirtualClassroomPage: React.FC = () => {
       });
       if (response.ok) {
         setClase(prev => prev ? { ...prev, status: 'RECORDED', room_url: null } : null);
-        navigate('/dashboard/teacher');
+        navigate(`/dashboard/courses/${clase?.bloque?.materia_id}`);
       }
     } catch (error) {
       console.error('Error ending class:', error);
@@ -237,12 +237,7 @@ const VirtualClassroomPage: React.FC = () => {
         const filePath = `submissions/${fileName}`;
         const { error: uploadError } = await supabase.storage.from('assignments').upload(filePath, selectedFile);
         
-        if (uploadError) {
-          if (uploadError.message.includes('Bucket not found')) {
-             throw new Error('El bucket "assignments" no existe en Supabase. Por favor, créalo en el panel de Storage para permitir entregas.');
-          }
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
         
         const { data: { publicUrl } } = supabase.storage.from('assignments').getPublicUrl(filePath);
         finalContent = publicUrl;
@@ -323,114 +318,251 @@ const VirtualClassroomPage: React.FC = () => {
   const finalVideoUrl = recordingLink || clase.video_url;
 
   return (
-    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
-      <div className="lg:col-span-8 space-y-6">
-        {/* VIDEO CONTAINER: Stable across refreshes */}
-        <div key={clase.status} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
-          {clase.status === 'LIVE' && clase.room_url ? (
-            <iframe 
-              src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=1&tbar=1`} 
-              allow="camera; microphone; fullscreen; display-capture; autoplay" 
-              className="w-full h-full border-0" 
-            />
-          ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && finalVideoUrl ? (
-            <div className="w-full h-full bg-black flex items-center justify-center">
-              {/* NO KEY ON VIDEO TAG: Allow source to persist without reset */}
-              <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/60 text-center p-8">
-              <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 animate-pulse"><Video className="w-10 h-10 text-white/50" /></div>
-              <h3 className="text-2xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'Grabación en Proceso'}</h3>
-              <p className="text-white/60 max-w-xs mx-auto font-body">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible en unos minutos.'}</p>
-            </div>
+    <div className="min-h-screen bg-background -mt-12 -mx-6 md:-mx-12">
+      {/* CLASSROOM HEADER / NAVBAR */}
+      <header className="bg-primary text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <div className="flex items-center gap-4">
+          <Link to={`/dashboard/courses/${clase.bloque?.materia_id}`} className="p-2 hover:bg-white/10 rounded-full transition-all active:scale-95">
+            <ArrowLeft className="w-6 h-6" />
+          </Link>
+          <div>
+            <h1 className="text-lg font-black font-headline leading-none uppercase tracking-tight">{clase.title}</h1>
+            <p className="text-[10px] opacity-60 font-label uppercase tracking-widest mt-1">{clase.bloque?.name || 'Clase Virtual'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isTeacher && (clase.status === 'LIVE' || clase.status === 'PLANNED') && (
+            <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
+              <Square className="w-4 h-4 fill-current" /> Finalizar
+            </button>
           )}
+          <button onClick={handleToggleCompletion} disabled={isCompleting} className={`px-4 py-2 rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 ${clase.is_completed ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
+            {clase.is_completed ? <CheckCircle2 className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+            {clase.is_completed ? 'Completada' : 'Marcar hecha'}
+          </button>
         </div>
+      </header>
 
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-            <div>
-              <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full font-label ${clase.status === 'LIVE' ? 'bg-error text-white animate-pulse' : 'bg-secondary-container text-on-secondary-container'}`}>
-                {clase.status === 'LIVE' ? '• En Vivo' : (clase.bloque?.name.replace(/Módulo\s+\d+:\s+/i, '') || 'General')}
-              </span>
-              <h1 className="text-3xl font-black font-headline text-primary mt-2">{clase.title}</h1>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {isTeacher && (clase.status === 'LIVE' || clase.status === 'PLANNED') && (
-                <button onClick={handleEndClass} disabled={isEnding} className="px-6 py-3 bg-error text-white rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"><Square className="w-5 h-5 fill-current" /> Finalizar</button>
-              )}
-              <button onClick={handleToggleCompletion} disabled={isCompleting} className={`px-6 py-3 rounded-lg font-headline font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 ${clase.is_completed ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-secondary-fixed-dim hover:bg-secondary-fixed text-on-secondary-fixed'}`}>{clase.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />} {clase.is_completed ? 'Hecha' : 'Completar'}</button>
-            </div>
-          </div>
-          <div className="p-6 bg-surface-container-lowest rounded-xl shadow-sm border-l-4 border-secondary font-body text-on-surface leading-relaxed text-lg">
-            {clase.status === 'LIVE' ? "Participa en la clase en vivo y haz tus preguntas." : clase.status === 'PLANNED' ? "La clase aún no ha comenzado. Prepárate." : "Lección finalizada. Puedes volver a ver el video."}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {clase.tareas && clase.tareas.length > 0 ? clase.tareas.map(tarea => (
-              <div key={tarea.id} className="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10 space-y-4">
-                <div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center"><FileText className="w-6 h-6" /></div><div className="flex-1"><h4 className="font-bold text-sm text-primary font-headline">{tarea.title}</h4><p className="text-[10px] text-on-surface-variant font-label uppercase">Vence: {tarea.due_date ? formatToLocal(tarea.due_date) : 'Sin fecha'}</p></div></div>
-                <div className="space-y-3"><p className="text-sm text-on-surface-variant font-body">{tarea.description}</p>{userSubmission ? (<div className="bg-green-50 p-4 rounded-xl border border-green-100"><p className="text-xs font-black text-green-700 uppercase flex items-center gap-2 mb-2"><CheckCircle2 className="w-4 h-4" /> Entregada</p></div>) : (<div className="space-y-3"><textarea value={submission} onChange={(e) => setSubmission(e.target.value)} placeholder="Tu respuesta..." className="w-full p-3 text-xs bg-white border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-secondary outline-none min-h-[80px]" /><button onClick={() => handleSubmitTarea(tarea.id)} disabled={isSubmitting} className="w-full bg-secondary text-white py-3 rounded-xl font-black text-xs uppercase hover:bg-on-secondary-container transition-all">{isSubmitting ? '...' : 'Entregar Tarea'}</button></div>)}</div>
+      <div className="max-w-full mx-auto">
+        {/* MAIN VIDEO AREA - CINEMA MODE */}
+        <section className="bg-black w-full flex justify-center">
+          <div className="w-full max-w-[1440px] aspect-video max-h-[75vh] relative shadow-2xl overflow-hidden ring-1 ring-white/10">
+            {clase.status === 'LIVE' && clase.room_url ? (
+              <iframe 
+                src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=1&tbar=1`} 
+                allow="camera; microphone; fullscreen; display-capture; autoplay" 
+                className="w-full h-full border-0" 
+              />
+            ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && finalVideoUrl ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />
               </div>
-            )) : null}
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-neutral-900/60 text-center p-8">
+                <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 animate-pulse"><Video className="w-10 h-10 text-white/50" /></div>
+                <h3 className="text-3xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'Grabación en Proceso'}</h3>
+                <p className="text-white/60 max-w-sm mx-auto font-body text-lg">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible para ver bajo demanda en unos minutos.'}</p>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="lg:col-span-4 space-y-6">
-        <div className="bg-surface-container-low rounded-xl p-6 sticky top-28 shadow-sm">
-          <h3 className="font-black text-primary font-headline uppercase tracking-tight text-xs mb-6">Estado de la Clase</h3>
-          <div className="space-y-3">
-            <div className={`p-4 rounded-xl shadow-md flex items-center gap-4 transition-all duration-500 ${clase.status === 'LIVE' ? 'bg-error text-white ring-4 ring-error/20' : 'bg-primary text-white opacity-80'}`}><div className="flex-1"><p className="text-sm font-bold font-headline">{clase.title}</p><p className="text-[10px] opacity-70 font-label uppercase font-black">{clase.status === 'LIVE' ? 'EN VIVO AHORA' : clase.status}</p></div>{clase.status === 'LIVE' ? (<div className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span></div>) : <PlayCircle className="w-5 h-5 text-white/50" />}</div>
+        {/* INTERACTIVE AREA BELOW VIDEO */}
+        <section className="max-w-[1440px] mx-auto px-6 md:px-12 py-8">
+          {/* TABS NAVIGATION */}
+          <div className="flex border-b border-outline-variant/10 mb-8 gap-8 overflow-x-auto">
+            <button onClick={() => setActiveTab('info')} className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all flex items-center gap-2 relative ${activeTab === 'info' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}>
+              <Info className="w-4 h-4" /> Información {activeTab === 'info' && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+            </button>
+            <button onClick={() => setActiveTab('tasks')} className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all flex items-center gap-2 relative ${activeTab === 'tasks' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}>
+              <ListChecks className="w-4 h-4" /> Tareas {clase.tareas && clase.tareas.length > 0 && <span className="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{clase.tareas.length}</span>} {activeTab === 'tasks' && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+            </button>
+            <button onClick={() => setActiveTab('questions')} className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all flex items-center gap-2 relative ${activeTab === 'questions' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}>
+              <HelpIcon className="w-4 h-4" /> Dudas {questions.length > 0 && <span className="bg-secondary text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{questions.length}</span>} {activeTab === 'questions' && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+            </button>
           </div>
 
-          <div className="mt-8 border-t border-outline-variant/10 pt-8 space-y-6">
-            <div className="flex items-center justify-between"><h3 className="font-black text-primary font-headline uppercase tracking-tight text-xs flex items-center gap-2"><HelpCircle className="w-4 h-4 text-secondary" /> Preguntas</h3><button onClick={fetchQuestions} className="p-1 hover:bg-primary/5 rounded-full transition-colors"><Loader2 className={`w-3 h-3 text-outline ${loading ? 'animate-spin' : ''}`} /></button></div>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
-              {questions.length > 0 ? [...questions].reverse().map(q => (
-                <div key={q.id} className="p-4 bg-white rounded-2xl shadow-sm border border-outline-variant/5 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-[7px] text-white font-bold">{getInitials(q.student?.full_name)}</div>
-                      <span className="text-[9px] font-bold text-primary">{q.student?.full_name}</span>
-                    </div>
-                    {q.status === 'PENDING' && <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container">Pendiente</span>}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-8">
+              {activeTab === 'info' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center gap-3">
+                     <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full font-label ${clase.status === 'LIVE' ? 'bg-error text-white animate-pulse' : 'bg-secondary-container text-on-secondary-container'}`}>
+                      {clase.status === 'LIVE' ? '• En Vivo Ahora' : 'Clase Finalizada'}
+                    </span>
+                    <span className="text-on-surface-variant text-sm font-medium">| {clase.bloque?.name}</span>
                   </div>
-                  <p className="text-[12px] font-medium text-on-surface leading-snug">{q.question}</p>
-                  
-                  {q.answer ? (
-                    <div className="bg-primary/5 p-3 rounded-lg border-l-2 border-secondary mt-1">
-                      <p className="text-[9px] font-black text-secondary uppercase mb-1">Tutor:</p>
-                      <p className="text-[11px] font-body text-primary leading-relaxed">{q.answer}</p>
-                    </div>
-                  ) : isTeacher && answeringId !== q.id && (
-                    <button onClick={() => setAnsweringId(q.id)} className="w-full py-2 bg-secondary/10 text-secondary text-[10px] font-black uppercase rounded-lg hover:bg-secondary hover:text-white transition-all flex items-center justify-center gap-2">
-                      <MessageCircle className="w-3 h-3" /> Responder
-                    </button>
-                  )}
+                  <h2 className="text-4xl font-black font-headline text-primary tracking-tight leading-tight">{clase.title}</h2>
+                  <div className="p-8 bg-surface-container-low rounded-[2.5rem] shadow-sm border border-outline-variant/5">
+                    <p className="font-body text-on-surface leading-relaxed text-xl italic">
+                      {clase.status === 'LIVE' ? "Participa activamente en esta sesión. Tu asistencia y preguntas enriquecen el aprendizaje de todos." : "Esta clase ha sido grabada. Puedes repasar los conceptos clave y completar las tareas asignadas."}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                  {isTeacher && answeringId === q.id && (
-                    <div className="space-y-2 pt-2 animate-in slide-in-from-top-2">
-                      <textarea value={answerText} onChange={(e) => setAnswerText(e.target.value)} placeholder="Escribe tu respuesta..." className="w-full p-2 text-xs bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-1 focus:ring-secondary outline-none min-h-[60px] resize-none" />
-                      <div className="flex gap-2">
-                        <button onClick={() => handleAnswerQuestion(q.id)} disabled={isAnswering} className="flex-1 py-1.5 bg-secondary text-white text-[9px] font-black uppercase rounded-lg shadow-sm">{isAnswering ? '...' : 'Enviar'}</button>
-                        <button onClick={() => setAnsweringId(null)} className="px-3 py-1.5 bg-surface-container-highest text-on-surface text-[9px] font-black uppercase rounded-lg">X</button>
-                      </div>
+              {activeTab === 'tasks' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <h3 className="text-2xl font-black font-headline text-primary mb-6">Tareas y Material de Clase</h3>
+                  {clase.tareas && clase.tareas.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6">
+                      {clase.tareas.map(tarea => (
+                        <div key={tarea.id} className="p-8 bg-white rounded-[2.5rem] shadow-premium border border-outline-variant/5 flex flex-col md:flex-row gap-8 items-start">
+                          <div className="w-16 h-16 rounded-3xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 shadow-lg">
+                            <FileText className="w-8 h-8" />
+                          </div>
+                          <div className="flex-1 space-y-6">
+                            <div>
+                              <h4 className="text-xl font-black font-headline text-primary mb-2">{tarea.title}</h4>
+                              <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest font-black">Límite: {tarea.due_date ? formatToLocal(tarea.due_date) : 'Flexible'}</p>
+                              <p className="mt-4 text-on-surface font-body leading-relaxed">{tarea.description}</p>
+                            </div>
+                            
+                            {userSubmission ? (
+                              <div className="bg-green-50 p-6 rounded-2xl border border-green-200 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md"><CheckCircle2 className="w-6 h-6" /></div>
+                                  <div>
+                                    <p className="text-sm font-black text-green-700 uppercase">Tarea Entregada</p>
+                                    <p className="text-xs text-green-600 font-medium">Revisa las calificaciones en tu perfil.</p>
+                                  </div>
+                                </div>
+                                {userSubmission.grade && (
+                                  <div className="text-center bg-white px-4 py-2 rounded-xl shadow-sm border border-green-200">
+                                    <p className="text-[10px] font-black text-green-700 uppercase">Nota</p>
+                                    <p className="text-xl font-black text-primary">{userSubmission.grade}/100</p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-4 pt-4 border-t border-outline-variant/10">
+                                <textarea value={submission} onChange={(e) => setSubmission(e.target.value)} placeholder="Escribe aquí tu entrega o pega un enlace..." className="w-full p-6 text-sm bg-surface-container-lowest border border-outline-variant/20 rounded-2xl focus:ring-2 focus:ring-primary outline-none min-h-[120px] transition-all" />
+                                <button onClick={() => handleSubmitTarea(tarea.id)} disabled={isSubmitting} className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:translate-y-[-2px] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3">
+                                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />} Enviar Entrega
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant opacity-40">
+                      <ListChecks className="w-16 h-16 mb-4" />
+                      <p className="font-headline font-black uppercase text-sm tracking-widest">No hay tareas pendientes</p>
                     </div>
                   )}
                 </div>
-              )) : <p className="text-[10px] text-on-surface-variant italic text-center py-4">No hay dudas aún.</p>}
+              )}
+
+              {activeTab === 'questions' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-black font-headline text-primary">Preguntas y Dudas</h3>
+                    <button onClick={fetchQuestions} className="p-2 hover:bg-primary/5 rounded-full transition-colors">
+                      <Loader2 className={`w-5 h-5 text-primary ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+
+                  {!isTeacher && (showQuestionForm ? (
+                    <div className="bg-primary p-8 rounded-[2.5rem] space-y-4 shadow-premium">
+                      <h4 className="text-white font-headline font-black uppercase text-xs tracking-widest">Nueva Consulta</h4>
+                      <textarea value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="¿Qué parte de la clase no quedó clara?" className="w-full p-6 text-sm bg-white/10 text-white placeholder-white/40 border border-white/20 rounded-2xl focus:ring-2 focus:ring-secondary outline-none min-h-[120px] resize-none" />
+                      <div className="flex gap-4">
+                        <button onClick={handleAskTutor} disabled={isAsking || !newQuestion.trim()} className="flex-1 bg-secondary text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                          {isAsking ? 'Enviando...' : 'Enviar al Tutor'}
+                        </button>
+                        <button onClick={() => setShowQuestionForm(false)} className="px-6 py-4 bg-white/10 text-white font-black text-xs uppercase rounded-xl">Cancelar</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowQuestionForm(true)} className="w-full py-6 bg-surface-container-low border-2 border-dashed border-primary/20 text-primary font-headline font-black uppercase tracking-widest rounded-[2.5rem] hover:bg-primary/5 transition-all flex items-center justify-center gap-3">
+                      <MessageSquare className="w-6 h-6" /> Hacer una pregunta al tutor
+                    </button>
+                  ))}
+
+                  <div className="space-y-6">
+                    {questions.length > 0 ? [...questions].reverse().map(q => (
+                      <div key={q.id} className="p-8 bg-white rounded-[2.5rem] shadow-sm border border-outline-variant/10 space-y-6 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-md">{getInitials(q.student?.full_name)}</div>
+                            <div>
+                              <p className="text-sm font-black text-primary leading-none uppercase">{q.student?.full_name}</p>
+                              <p className="text-[10px] text-on-surface-variant font-label uppercase mt-1">{formatToLocal(q.created_at)}</p>
+                            </div>
+                          </div>
+                          {q.status === 'PENDING' && <span className="text-[9px] font-black uppercase px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container tracking-widest">Pendiente</span>}
+                        </div>
+                        <p className="text-lg font-body text-on-surface leading-relaxed px-2">{q.question}</p>
+                        
+                        {q.answer ? (
+                          <div className="bg-primary/5 p-6 rounded-3xl border-l-4 border-secondary ml-4">
+                            <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-secondary" /> Respuesta del Tutor:</p>
+                            <p className="text-sm font-body text-primary leading-relaxed">{q.answer}</p>
+                          </div>
+                        ) : isTeacher && answeringId !== q.id && (
+                          <button onClick={() => setAnsweringId(q.id)} className="w-full py-4 bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest rounded-xl hover:bg-secondary hover:text-white transition-all flex items-center justify-center gap-2">
+                            <MessageCircle className="w-4 h-4" /> Responder ahora
+                          </button>
+                        )}
+
+                        {isTeacher && answeringId === q.id && (
+                          <div className="space-y-4 pt-4 border-t border-outline-variant/10 animate-in slide-in-from-top-2">
+                            <textarea value={answerText} onChange={(e) => setAnswerText(e.target.value)} placeholder="Escribe tu respuesta clara y detallada..." className="w-full p-6 text-sm bg-surface-container-low border border-outline-variant/20 rounded-2xl focus:ring-2 focus:ring-secondary outline-none min-h-[100px] resize-none" />
+                            <div className="flex gap-4">
+                              <button onClick={() => handleAnswerQuestion(q.id)} disabled={isAnswering} className="flex-1 py-4 bg-secondary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg active:scale-95 transition-all">{isAnswering ? '...' : 'Publicar Respuesta'}</button>
+                              <button onClick={() => setAnsweringId(null)} className="px-6 py-4 bg-surface-container-highest text-on-surface text-xs font-black uppercase rounded-xl">Cerrar</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )) : (
+                      <div className="text-center py-12 text-on-surface-variant/40 italic font-body">No hay dudas publicadas en esta clase todavía.</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            {!isTeacher && (showQuestionForm ? (
-              <div className="bg-primary p-5 rounded-2xl space-y-3 shadow-premium animate-in zoom-in-95 duration-200">
-                <textarea value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="Escribe tu duda..." className="w-full p-3 text-xs bg-white/10 text-white placeholder-white/40 border border-white/20 rounded-xl focus:ring-1 focus:ring-secondary outline-none min-h-[100px] resize-none" />
-                <button onClick={handleAskTutor} disabled={isAsking || !newQuestion.trim()} className="w-full bg-secondary text-white py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg disabled:opacity-50">{isAsking ? '...' : 'Enviar'}</button>
-                <button onClick={() => setShowQuestionForm(false)} className="w-full text-white/50 text-[10px] font-bold uppercase">Cancelar</button>
+
+            <div className="lg:col-span-4">
+              <div className="bg-surface-container-low rounded-[2.5rem] p-8 sticky top-28 shadow-sm border border-outline-variant/5">
+                <h3 className="font-black text-primary font-headline uppercase tracking-tight text-xs mb-8 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Estado Actual</h3>
+                <div className="space-y-6">
+                  <div className={`p-6 rounded-3xl shadow-lg flex items-center gap-4 transition-all duration-700 ${clase.status === 'LIVE' ? 'bg-error text-white ring-8 ring-error/10' : 'bg-primary text-white'}`}>
+                    <div className="flex-1">
+                      <p className="text-sm font-black font-headline uppercase tracking-tighter leading-none mb-1">Sesión {clase.status === 'LIVE' ? 'En Vivo' : 'Finalizada'}</p>
+                      <p className="text-[10px] opacity-70 font-label uppercase font-black tracking-widest">{clase.status === 'LIVE' ? 'Interactúa ahora' : 'Ver grabación'}</p>
+                    </div>
+                    {clase.status === 'LIVE' ? (
+                      <div className="relative flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-white"></span>
+                      </div>
+                    ) : <CheckCircle2 className="w-6 h-6 text-white/50" />}
+                  </div>
+
+                  <div className="pt-8 space-y-6 border-t border-outline-variant/10">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary"><Clock className="w-6 h-6" /></div>
+                      <div>
+                        <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest leading-none mb-1">Progreso</p>
+                        <p className="text-sm font-bold text-primary font-headline">{clase.is_completed ? 'Clase Completada' : 'Pendiente de realizar'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary"><ListChecks className="w-6 h-6" /></div>
+                      <div>
+                        <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest leading-none mb-1">Actividades</p>
+                        <p className="text-sm font-bold text-primary font-headline">{clase.tareas?.length || 0} tareas asignadas</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <button onClick={() => setShowQuestionForm(true)} className="w-full py-3.5 bg-primary text-white font-headline font-bold rounded-xl hover:bg-primary-container transition-all flex items-center justify-center gap-2 active:scale-95"><MessageSquare className="w-4 h-4" /> Preguntar al Tutor</button>
-            ))}
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

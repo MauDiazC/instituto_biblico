@@ -216,9 +216,13 @@ const VirtualClassroomPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setClase(data);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        alert(`Error al iniciar la clase: ${errData.detail || response.statusText}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting class:', error);
+      alert(`Error de red: ${error.message}`);
     } finally {
       setIsStarting(false);
     }

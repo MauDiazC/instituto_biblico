@@ -194,46 +194,74 @@ const VirtualClassroomPage: React.FC = () => {
   useEffect(() => {
     if (clase?.status === 'LIVE' && clase.room_url && !videoSdkInitialized.current) {
       const apiKey = import.meta.env.VITE_VIDEOSDK_API_KEY;
+      
       if (!apiKey) {
-        console.error("VIDEOSDK_API_KEY is not defined");
+        console.error("VIDEOSDK: VITE_VIDEOSDK_API_KEY is not defined in environment");
         return;
       }
 
-      const meeting = new VideoSDKMeeting();
-      const config: any = {
-        name: isTeacher ? "Docente" : "Estudiante",
-        meetingId: clase.room_url,
-        apiKey: apiKey,
-        containerId: "videosdk-container",
-        micEnabled: true,
-        webcamEnabled: true,
-        participantCanToggleSelfWebcam: true,
-        participantCanToggleSelfMic: true,
-        chatEnabled: true,
-        screenShareEnabled: true,
-        whiteboardEnabled: true,
-        raiseHandEnabled: true,
-        recordingEnabled: true,
-        recordingWebhookUrl: "", 
-        participantCanLeave: true,
-        brandingEnabled: true,
-        brandName: "Sacred Archive",
-        poweredBy: false,
-        primaryColor: "#0066cc",
-        realtimeTranscription: {
-          enabled: false,
-          visible: false,
-        },
-        leftScreen: {
-          actionButton: {
-            label: "Regresar",
-            href: `/dashboard/courses/${clase.bloque?.materia_id}`,
-          },
-        },
+      console.log("VIDEOSDK: Initializing meeting...", { meetingId: clase.room_url, isTeacher });
+
+      const initMeeting = () => {
+        const container = document.getElementById("videosdk-container");
+        if (!container) {
+          console.log("VIDEOSDK: Container not found, retrying in 100ms...");
+          setTimeout(initMeeting, 100);
+          return;
+        }
+
+        try {
+          const meeting = new VideoSDKMeeting();
+          const config: any = {
+            name: isTeacher ? "Docente" : "Estudiante",
+            meetingId: clase.room_url,
+            apiKey: apiKey,
+            containerId: "videosdk-container",
+            micEnabled: true,
+            webcamEnabled: true,
+            participantCanToggleSelfWebcam: true,
+            participantCanToggleSelfMic: true,
+            chatEnabled: true,
+            screenShareEnabled: true,
+            whiteboardEnabled: true,
+            raiseHandEnabled: true,
+            recordingEnabled: isTeacher,
+            recordingWebhookUrl: "", 
+            participantCanLeave: true,
+            brandingEnabled: true,
+            brandName: "Sacred Archive",
+            poweredBy: false,
+            primaryColor: "#0066cc",
+            realtimeTranscription: {
+              enabled: false,
+              visible: false,
+            },
+            permissions: {
+              askToJoin: false, // Permitir entrada directa
+              toggleParticipantWebcam: isTeacher,
+              toggleParticipantMic: isTeacher,
+              dropParticipant: isTeacher,
+              drawOnWhiteboard: true,
+              toggleWhiteboard: isTeacher,
+              toggleRecording: isTeacher,
+            },
+            leftScreen: {
+              actionButton: {
+                label: "Regresar",
+                href: `/dashboard/courses/${clase.bloque?.materia_id}`,
+              },
+            },
+          };
+
+          meeting.init(config);
+          videoSdkInitialized.current = true;
+          console.log("VIDEOSDK: Meeting initialized successfully");
+        } catch (err) {
+          console.error("VIDEOSDK: Error during initialization:", err);
+        }
       };
 
-      meeting.init(config);
-      videoSdkInitialized.current = true;
+      initMeeting();
     }
   }, [clase, isTeacher]);
 

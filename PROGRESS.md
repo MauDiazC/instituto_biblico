@@ -9,11 +9,11 @@
     *   Inclusión de botón de **Cierre de Sesión** directo en la barra de navegación móvil.
 2.  **Blindaje de Tiempo Real (Real-time):**
     *   Implementación de **Polling de Alta Frecuencia (3-4 segundos)** como respaldo infalible a las suscripciones de Supabase.
-    *   Sincronización maestra de estado: los alumnos ahora ven el paso a "En Vivo" y la desconexión al terminar la clase de forma automática y garantizada.
+    *   Sincronización maestra de estado: los alumnos ahora ven el paso a "En Vivo" y el acceso a "Ver Grabación" de forma automática y garantizada, con etiquetas de estado corregidas (Programada, En Vivo, Grabada).
     *   Corrección de errores de TypeScript en los payloads de eventos de base de datos.
 3.  **Rediseño Escalable de Dashboards (UX Superior):**
     *   **Panel del Estudiante:** Nueva cabecera "Hero", buscador global de materias y diseño de tarjetas delgadas (thin cards) con paginación integrada para soportar crecimiento ilimitado.
-    *   **Panel del Tutor:** Reestructuración de la lista de materias y biblioteca de grabaciones con buscadores específicos y paginación de 10 elementos.
+    *   **Panel del Tutor:** Reestructuración de la lista de materias con diseño de tarjetas delgadas (thin cards), buscadores específicos y acceso directo al contenido de cada materia para gestionar clases y grabaciones.
     *   **Centro de Calificaciones (Gradebook):** Rediseño total enfocado 100% en tareas, con panel de lectura profesional y sistema de feedback prominente.
 4.  **Flujo de Consultas Mejorado:**
     *   Funcionalidad para que el **Tutor responda dudas directamente desde la sala virtual**, sin salir del streaming.

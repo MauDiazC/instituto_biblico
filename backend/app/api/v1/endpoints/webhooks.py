@@ -18,9 +18,10 @@ async def video_webhook(
     db: Session = Depends(get_db)
 ):
     """
-    Processes 'recording.ready' or Daily.co 'recording.ready-to-download' events.
-    Sends them to background processing via Celery.
+    Processes VideoSDK (V1/V2) and Daily.co webhooks.
     """
+    print(f"WEBHOOK RECEIVED: {payload}")
+    
     # 1. Handle Daily.co Webhook
     if payload.get("action") == "recording.ready-to-download":
         data = payload.get("data", {})
@@ -30,27 +31,38 @@ async def video_webhook(
         if room_name and room_name.startswith("class-"):
             try:
                 class_id = int(room_name.split("-")[1])
-                # Trigger Celery Task instead of direct update
                 update_class_video_task.delay(class_id, download_link)
-                return {"status": "success", "message": f"Class {class_id} queued for background update"}
+                return {"status": "success", "message": f"Class {class_id} queued for update"}
             except (IndexError, ValueError):
                 pass
 
-    # 2. Handle generic video-sdk recording.ready
-    event_type = payload.get("event")
+    # 2. Handle VideoSDK Webhooks (Support V1 'event' and V2 'webhookType')
+    event_type = payload.get("event") or payload.get("webhookType")
     data = payload.get("data", {})
     
-    if event_type == "recording.ready":
-        external_id = data.get("video_id")
-        video_url = data.get("url")
-        meeting_id = data.get("meetingId") # VideoSDK sends meetingId
+    # Common VideoSDK recording events
+    recording_events = ["recording.ready", "recording-stopped", "RECORDING_STOPPED"]
+    
+    if event_type in recording_events:
+        # Try to extract fields from different possible locations
+        external_id = data.get("video_id") or data.get("recordingId") or data.get("id")
+        video_url = data.get("url") or data.get("fileUrl") or data.get("downloadUrl")
+        meeting_id = data.get("meetingId")
         
-        # Priority 1: Find by external_video_id
-        clase = db.query(Clase).filter(Clase.external_video_id == external_id).first()
-        
-        # Priority 2: Find by meetingId (room_url)
-        if not clase and meeting_id:
+        print(f"VIDEOSDK WEBHOOK: event={event_type}, meetingId={meeting_id}, url={video_url}")
+
+        if not video_url:
+            print("VIDEOSDK WEBHOOK: No video URL found in payload")
+            return {"status": "ignored", "reason": "no_url"}
+
+        clase = None
+        # Priority 1: Find by meetingId (room_url)
+        if meeting_id:
             clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+        
+        # Priority 2: Find by external_video_id
+        if not clase and external_id:
+            clase = db.query(Clase).filter(Clase.external_video_id == external_id).first()
             
         if clase:
             # Update external_id if missing
@@ -60,6 +72,8 @@ async def video_webhook(
                 
             # Trigger Celery Task
             update_class_video_task.delay(clase.id, video_url)
-            return {"status": "success", "message": f"Class {clase.id} queued for background update"}
+            return {"status": "success", "message": f"Class {clase.id} queued for update"}
+        else:
+            print(f"VIDEOSDK WEBHOOK: No class found for meetingId {meeting_id}")
     
     return {"status": "ignored"}

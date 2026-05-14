@@ -194,6 +194,9 @@ const SubjectDetailPage: React.FC = () => {
                             {clase.video_url ? 'GRABADA' : 'FINALIZADA'}
                           </span>
                         )}
+                        {clase.status === 'PROCESSING' && (
+                          <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">PROCESANDO</span>
+                        )}
                         {(clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
                           <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
                         )}
@@ -203,16 +206,28 @@ const SubjectDetailPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
-                      className={`px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all ${
-                        clase.status === 'LIVE' 
-                        ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95' 
-                        : 'text-primary hover:bg-primary/5'
-                      }`}
-                    >
-                      {clase.status === 'LIVE' ? 'UNIRSE' : 'VER'}
-                    </button>
+                    {clase.status === 'LIVE' ? (
+                      <button 
+                        onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
+                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
+                      >
+                        ENTRAR EN VIVO
+                      </button>
+                    ) : clase.status === 'RECORDED' && clase.video_url ? (
+                      <button 
+                        onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
+                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-primary hover:bg-primary/5"
+                      >
+                        VER GRABACIÓN
+                      </button>
+                    ) : (
+                      <button 
+                        disabled
+                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-outline opacity-40 cursor-not-allowed"
+                      >
+                        PRÓXIMAMENTE
+                      </button>
+                    )}
                   </div>
                 ))}
                 {bloque.clases.length === 0 && (

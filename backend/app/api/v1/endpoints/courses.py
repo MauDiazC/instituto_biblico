@@ -387,7 +387,6 @@ async def sync_recordings(
                                 if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
                                     clase.status = ClassStatus.RECORDED
                                     clase.external_video_id = rec.get("id")
-                                    # Daily records have access links via API, but we can store the ID
                                     db.commit()
                                     daily_count += 1
                             except (IndexError, ValueError): continue
@@ -404,25 +403,59 @@ async def sync_recordings(
             token = jwt.encode(payload, settings.VIDEOSDK_SECRET, algorithm="HS256")
             
             async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    "https://api.videosdk.live/v1/recordings",
-                    headers={"Authorization": token},
-                    timeout=10.0
-                )
-                if response.status_code == 200:
-                    recordings = response.json().get("data", [])
-                    for rec in recordings:
-                        meeting_id = rec.get("meetingId")
-                        if meeting_id:
-                            clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+                # VideoSDK: Try both V1 and V2 URLs to be safe
+                urls = [
+                    "https://api.videosdk.live/v2/recordings",
+                    "https://api.videosdk.live/v1/meeting-recordings"
+                ]
+                
+                for url in urls:
+                    print(f"VIDEOSDK SYNC: Checking {url}")
+                    response = await client.get(
+                        url,
+                        headers={"Authorization": token},
+                        timeout=15.0
+                    )
+                    
+                    if response.status_code == 200:
+                        recordings = response.json().get("data", [])
+                        print(f"VIDEOSDK SYNC: Found {len(recordings)} recordings in {url}")
+                        
+                        for rec in recordings:
+                            meeting_id = rec.get("meetingId")
+                            custom_room_id = rec.get("customRoomId")
+                            file_url = rec.get("fileUrl") or rec.get("url")
+                            
+                            if not file_url:
+                                continue
+
+                            clase = None
+                            # Priority 1: Match by meetingId
+                            if meeting_id:
+                                clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+                            
+                            # Priority 2: Match by customRoomId (class-ID)
+                            if not clase and custom_room_id and custom_room_id.startswith("class-"):
+                                try:
+                                    class_id = int(custom_room_id.split("-")[1])
+                                    clase = db.query(Clase).filter(Clase.id == class_id).first()
+                                except (IndexError, ValueError): pass
+
                             if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
+                                print(f"VIDEOSDK SYNC: Updating class {clase.id} with video {file_url}")
                                 clase.status = ClassStatus.RECORDED
-                                clase.video_url = rec.get("fileUrl")
-                                clase.external_video_id = rec.get("id")
+                                clase.video_url = file_url
+                                clase.external_video_id = rec.get("id") or rec.get("recordingId")
                                 db.commit()
                                 videosdk_count += 1
+                        
+                        # If we found data in one URL, we can stop (usually)
+                        if len(recordings) > 0:
+                            break
+                    else:
+                        print(f"VIDEOSDK SYNC ERROR ({url}): {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"VideoSDK Sync Error: {str(e)}")
+            print(f"VideoSDK Sync Exception: {str(e)}")
 
     return {
         "status": "success", 
@@ -627,4 +660,3 @@ async def enroll_in_materia(
     db.add(enrollment)
     db.commit()
     return {"status": "success", "message": "Enrolled successfully"}
-# trigger redeploy

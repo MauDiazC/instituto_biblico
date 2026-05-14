@@ -19,9 +19,10 @@ import {
   Clock, 
   Plus, 
   Trash2,
-  X
+  X,
+  Eye
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
 import { getInitials } from '../utils/avatars';
@@ -68,20 +69,17 @@ const getApiUrl = () => {
 const VITE_API_URL = getApiUrl();
 
 const ITEMS_PER_PAGE_COURSES = 5;
-const ITEMS_PER_PAGE_RECORDINGS = 10;
 
 const TeacherCoursesPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [recordings, setRecordings] = useState<Clase[]>([]);
   const [nextSessions, setNextSessions] = useState<Clase[]>([]);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   
   // Search & Pagination States
   const [courseSearch, setCourseSearch] = useState('');
-  const [recordingSearch, setRecordingSearch] = useState('');
   const [coursePage, setCoursePage] = useState(1);
-  const [recordingPage, setRecordingPage] = useState(1);
 
   // Students Modal State
   const [showStudentsModal, setShowStudentsModal] = useState(false);
@@ -116,16 +114,6 @@ const TeacherCoursesPage: React.FC = () => {
         }));
         setCourses(mappedCourses);
       }
-
-      const { data: recordedClases, error: recordedError } = await supabase
-        .from('clases')
-        .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
-        .eq('status', 'RECORDED')
-        .not('video_url', 'is', null)
-        .order('scheduled_at', { ascending: false });
-
-      if (recordedError) throw recordedError;
-      if (recordedClases) setRecordings(recordedClases as any);
 
       const { data: upcomingClases, error: upcomingError } = await supabase
         .from('clases')
@@ -185,7 +173,6 @@ const TeacherCoursesPage: React.FC = () => {
       }
 
       setCourses(courses.filter(c => c.id !== materiaId));
-      setRecordings(recordings.filter(r => r.bloque?.materia?.id !== materiaId));
       setNextSessions(nextSessions.filter(s => s.bloque?.materia?.id !== materiaId));
       
       alert('Materia eliminada con éxito');
@@ -207,22 +194,7 @@ const TeacherCoursesPage: React.FC = () => {
     return filteredCourses.slice(start, start + ITEMS_PER_PAGE_COURSES);
   }, [filteredCourses, coursePage]);
 
-  // Filtered & Paginated Recordings
-  const filteredRecordings = useMemo(() => 
-    recordings.filter(r => 
-      r.title.toLowerCase().includes(recordingSearch.toLowerCase()) || 
-      r.bloque?.materia?.name.toLowerCase().includes(recordingSearch.toLowerCase())
-    ),
-    [recordings, recordingSearch]
-  );
-
-  const paginatedRecordings = useMemo(() => {
-    const start = (recordingPage - 1) * ITEMS_PER_PAGE_RECORDINGS;
-    return filteredRecordings.slice(start, start + ITEMS_PER_PAGE_RECORDINGS);
-  }, [filteredRecordings, recordingPage]);
-
   const totalCoursePages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE_COURSES);
-  const totalRecordingPages = Math.ceil(filteredRecordings.length / ITEMS_PER_PAGE_RECORDINGS);
 
   if (loading && courses.length === 0) {
     return (
@@ -238,7 +210,7 @@ const TeacherCoursesPage: React.FC = () => {
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black text-primary font-headline tracking-tighter uppercase leading-none">Mi Academia</h1>
-          <p className="text-on-surface-variant font-body text-sm md:text-base">Centro de control para tus clases y material grabado.</p>
+          <p className="text-on-surface-variant font-body text-sm md:text-base">Gestione sus materias y el contenido de sus clases.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <Link 
@@ -248,15 +220,10 @@ const TeacherCoursesPage: React.FC = () => {
             <Plus className="w-5 h-5" />
             Nueva Materia
           </Link>
-          <div className="flex items-center gap-4 bg-primary/5 p-4 rounded-[2rem] border border-primary/10 w-full sm:w-auto">
+          <div className="flex items-center gap-4 bg-primary/5 p-4 rounded-[2rem] border border-primary/10 w-full sm:w-auto px-8">
             <div className="text-right">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Total Materias</p>
               <p className="text-2xl font-black font-headline text-primary mt-1">{courses.length}</p>
-            </div>
-            <div className="w-px h-8 bg-primary/20 mx-2"></div>
-            <div className="text-right pr-2">
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Grabaciones</p>
-              <p className="text-2xl font-black font-headline text-primary mt-1">{recordings.length}</p>
             </div>
           </div>
         </div>
@@ -304,7 +271,7 @@ const TeacherCoursesPage: React.FC = () => {
                       to={`/dashboard/courses/${session.bloque?.materia?.id}/lessons/${session.id}`}
                       className="flex-1 bg-primary text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-center shadow-sm hover:bg-primary-container transition-all"
                     >
-                      INICIAR CLASE
+                      {session.status === 'LIVE' ? 'ENTRAR A LA CLASE' : 'PREPARAR CLASE'}
                     </Link>
                     <Link 
                       to={`/dashboard/teacher/editor?claseId=${session.id}`}
@@ -366,6 +333,12 @@ const TeacherCoursesPage: React.FC = () => {
               {/* Actions */}
               <div className="flex flex-wrap justify-center gap-3 w-full lg:w-auto">
                 <button 
+                  onClick={() => navigate(`/dashboard/courses/${course.id}`)}
+                  className="px-6 py-3.5 bg-primary/10 text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Ver Contenido
+                </button>
+                <button 
                   onClick={() => handleShowStudents(course)}
                   className="px-6 py-3.5 bg-surface-container-high text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-outline-variant/20 transition-all shadow-sm active:scale-95"
                 >
@@ -416,152 +389,6 @@ const TeacherCoursesPage: React.FC = () => {
             <button 
               onClick={() => setCoursePage(p => Math.min(totalCoursePages, p + 1))}
               disabled={coursePage === totalCoursePages}
-              className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all"
-            >
-              <ChevronRight className="w-5 h-5 text-primary" />
-            </button>
-          </div>
-        )}
-      </section>
-
-      {/* 4. Recordings Library Section */}
-      <section className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/10 pb-6">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Video className="text-white w-5 h-5" />
-             </div>
-             <h2 className="text-2xl font-headline font-black text-primary tracking-tight">Biblioteca de Grabaciones</h2>
-          </div>
-          
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-            <input 
-              type="text" 
-              placeholder="Buscar grabaciones..." 
-              value={recordingSearch}
-              onChange={(e) => {setRecordingSearch(e.target.value); setRecordingPage(1);}}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant/10 rounded-2xl text-xs font-body focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            />
-          </div>
-        </div>
-        
-        {/* Mobile: Grid of Cards */}
-        <div className="grid grid-cols-1 gap-4 md:hidden">
-          {paginatedRecordings.length > 0 ? paginatedRecordings.map(recording => (
-            <div key={recording.id} className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm active:bg-primary/5 transition-all">
-              <div className="flex justify-between items-start mb-4">
-                <div className="space-y-1 min-w-0">
-                  <p className="font-black text-primary font-headline text-lg leading-tight uppercase truncate">{recording.title}</p>
-                  <p className="text-[10px] text-secondary font-black uppercase tracking-widest">{recording.bloque?.materia?.name}</p>
-                </div>
-                <div className="bg-primary/10 p-3 rounded-2xl flex-shrink-0">
-                  <PlayCircle className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-outline-variant/5">
-                <div className="flex items-center gap-2 text-on-surface-variant">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-[9px] font-bold font-label uppercase">
-                    {parseUTC(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
-                <Link 
-                  to={`/dashboard/courses/${recording.bloque?.materia?.id}/lessons/${recording.id}`}
-                  className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm"
-                >
-                  REPRODUCIR
-                </Link>
-              </div>
-            </div>
-          )) : (
-            <div className="p-16 text-center bg-surface-container-low/30 rounded-[2.5rem] border-2 border-dashed border-outline-variant/20 opacity-30">
-              <Video className="w-12 h-12 mx-auto mb-3" />
-              <p className="font-bold text-xs uppercase tracking-widest">Sin grabaciones encontradas</p>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop: Modern Table */}
-        <div className="hidden md:block bg-white rounded-[2.5rem] overflow-hidden border border-outline-variant/10 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-surface-container-low/40">
-                <tr>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em]">Clase / Título</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em]">Materia Relacionada</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em]">Fecha</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/5">
-                {paginatedRecordings.length > 0 ? paginatedRecordings.map(recording => (
-                  <tr key={recording.id} className="hover:bg-primary/5 transition-all group">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                           <PlayCircle className="w-5 h-5" />
-                        </div>
-                        <p className="font-bold text-primary font-headline text-sm uppercase tracking-tight">{recording.title}</p>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="px-4 py-1.5 bg-secondary/10 text-secondary text-[9px] font-black rounded-full uppercase tracking-widest">
-                        {recording.bloque?.materia?.name}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-sm text-on-surface-variant font-body">
-                      {parseUTC(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link 
-                          to={`/dashboard/teacher/editor?claseId=${recording.id}`}
-                          className="p-2.5 bg-surface-container-highest text-primary rounded-xl hover:bg-outline-variant/20 transition-all shadow-sm"
-                          title="Editar sesión"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </Link>
-                        <Link 
-                          to={`/dashboard/courses/${recording.bloque?.materia?.id}/lessons/${recording.id}`}
-                          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-primary-container hover:shadow-lg transition-all"
-                        >
-                          Ver Repetición <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center gap-3 opacity-30">
-                        <Video className="w-16 h-16" />
-                        <p className="font-black font-headline uppercase tracking-widest text-xs">No hay grabaciones disponibles.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Recording Pagination */}
-        {totalRecordingPages > 1 && (
-          <div className="flex justify-center items-center gap-4 pt-4">
-            <button 
-              onClick={() => setRecordingPage(p => Math.max(1, p - 1))}
-              disabled={recordingPage === 1}
-              className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all"
-            >
-              <ChevronLeft className="w-5 h-5 text-primary" />
-            </button>
-            <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest">
-              Página {recordingPage} de {totalRecordingPages}
-            </span>
-            <button 
-              onClick={() => setRecordingPage(p => Math.min(totalRecordingPages, p + 1))}
-              disabled={recordingPage === totalRecordingPages}
               className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all"
             >
               <ChevronRight className="w-5 h-5 text-primary" />

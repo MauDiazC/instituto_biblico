@@ -1,8 +1,25 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { LayoutGrid, List, Loader2, BookOpen, ArrowRight, CheckCircle, Plus, Search, ChevronLeft, ChevronRight, GraduationCap, TrendingUp } from 'lucide-react';
+import { 
+  LayoutGrid, 
+  List, 
+  Loader2, 
+  BookOpen, 
+  ArrowRight, 
+  CheckCircle, 
+  Plus, 
+  Search, 
+  ChevronLeft, 
+  ChevronRight, 
+  GraduationCap, 
+  TrendingUp,
+  Video,
+  Calendar,
+  Clock
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
+import { parseUTC, formatToLocal } from '../utils/date';
 
 interface Course {
   id: number;
@@ -11,6 +28,19 @@ interface Course {
   description: string;
   is_enrolled?: boolean;
   progress?: number;
+}
+
+interface UpcomingSession {
+  id: number;
+  title: string;
+  scheduled_at: string;
+  status: string;
+  bloque: {
+    materia: {
+      id: number;
+      name: string;
+    }
+  }
 }
 
 const getApiUrl = () => {
@@ -23,10 +53,12 @@ const VITE_API_URL = getApiUrl();
 const ITEMS_PER_PAGE = 6;
 
 const StudentDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [enrollingId, setEnrollingId] = useState<number | null>(null);
   
   // Search and Pagination States
@@ -44,6 +76,7 @@ const StudentDashboard: React.FC = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       
+      // 1. Fetch Courses
       const response = await fetch(`${VITE_API_URL}/courses/`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -54,8 +87,26 @@ const StudentDashboard: React.FC = () => {
         const data = await response.json();
         const allCourses = data.items as Course[];
         
-        setMyCourses(allCourses.filter(c => c.is_enrolled));
+        const enrolled = allCourses.filter(c => c.is_enrolled);
+        setMyCourses(enrolled);
         setAvailableCourses(allCourses.filter(c => !c.is_enrolled));
+
+        // 2. Fetch Upcoming Sessions for enrolled courses
+        if (enrolled.length > 0) {
+          const enrolledIds = enrolled.map(c => c.id);
+          const { data: sessions, error: sessionsError } = await supabase
+            .from('clases')
+            .select('id, title, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
+            .in('status', ['SCHEDULED', 'LIVE'])
+            .in('bloques.materia_id', enrolledIds)
+            .order('scheduled_at', { ascending: true })
+            .limit(5);
+
+          if (!sessionsError && sessions) {
+             // Filter sessions where bloque.materia is correctly joined
+             setUpcomingSessions(sessions.filter(s => s.bloque) as any);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard:', error);
@@ -150,7 +201,59 @@ const StudentDashboard: React.FC = () => {
         <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-secondary/5 rounded-full blur-3xl"></div>
       </section>
 
-      {/* 2. Global Search and Filters */}
+      {/* 2. Upcoming Sessions Section */}
+      {upcomingSessions.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
+            <h2 className="text-xl md:text-2xl font-headline font-bold text-primary flex items-center gap-3 tracking-tight">
+              <Video className="text-secondary w-6 h-6" />
+              Próximas Sesiones
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingSessions.map(session => (
+              <div key={session.id} className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm hover:shadow-md transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[9px] font-black text-secondary uppercase tracking-widest">{session.bloque?.materia?.name}</p>
+                    <h3 className="font-black text-primary font-headline text-lg leading-tight uppercase truncate">{session.title}</h3>
+                  </div>
+                  {session.status === 'LIVE' ? (
+                    <div className="bg-error/10 p-2 rounded-xl animate-pulse">
+                      <div className="w-2 h-2 bg-error rounded-full" />
+                    </div>
+                  ) : (
+                    <Calendar className="w-5 h-5 text-outline opacity-40" />
+                  )}
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-outline-variant/5">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 text-on-surface-variant">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold font-label uppercase">
+                        {formatToLocal(session.scheduled_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <Link 
+                    to={`/dashboard/courses/${session.bloque?.materia?.id}/lessons/${session.id}`}
+                    className={twMerge(
+                      "px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                      session.status === 'LIVE' 
+                        ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" 
+                        : "bg-surface-container-high text-primary hover:bg-primary hover:text-white"
+                    )}
+                  >
+                    {session.status === 'LIVE' ? 'EN VIVO' : 'DETALLES'}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 3. Global Search and Filters */}
       <section className="sticky top-0 z-30 py-4 bg-surface/80 backdrop-blur-lg -mx-4 px-4 md:mx-0 md:px-0">
         <div className="relative group max-w-4xl mx-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline group-focus-within:text-primary transition-colors" />
@@ -164,7 +267,7 @@ const StudentDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. My Active Courses - Thin/Compact Layout */}
+      {/* 4. My Active Courses - Thin/Compact Layout */}
       <section className="space-y-6">
         <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
           <h2 className="text-xl md:text-2xl font-headline font-bold text-primary flex items-center gap-3 tracking-tight">
@@ -227,7 +330,7 @@ const StudentDashboard: React.FC = () => {
         )}
       </section>
 
-      {/* 4. Discover New Subjects - Compact Grid */}
+      {/* 5. Discover New Subjects - Compact Grid */}
       <section className="space-y-6 pt-6">
         <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
           <h2 className="text-xl md:text-2xl font-headline font-bold text-primary flex items-center gap-3 tracking-tight">

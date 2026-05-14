@@ -284,17 +284,15 @@ const VirtualClassroomPage: React.FC = () => {
           console.log("VIDEOSDK: Meeting initialized successfully");
 
           if (isTeacher) {
-            (meeting as any).on("recording-state-changed", (data: any) => {
-              console.log("VIDEOSDK Recording State:", data.status);
-              if (data.status === "RECORDING_STARTING") {
-                setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");
-              } else if (data.status === "RECORDING_STARTED") {
-                setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
-                setTimeout(() => setRecordingToast(null), 8000);
-              } else if (data.status === "RECORDING_STOPPED") {
-                setRecordingToast("Grabación detenida.");
-                setTimeout(() => setRecordingToast(null), 5000);
-              }
+            (meeting as any).on("recording-started", () => {
+              console.log("VIDEOSDK: Recording started");
+              setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+              setTimeout(() => setRecordingToast(null), 8000);
+            });
+            (meeting as any).on("recording-stopped", () => {
+              console.log("VIDEOSDK: Recording stopped");
+              setRecordingToast("Grabación detenida.");
+              setTimeout(() => setRecordingToast(null), 5000);
             });
           }
         } catch (err) {
@@ -461,6 +459,16 @@ const VirtualClassroomPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background -mt-12 -mx-6 md:-mx-12">
+      {/* RECORDING TOAST - FIXED AND TOP LEVEL */}
+      {recordingToast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-primary/95 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-headline text-sm uppercase tracking-widest shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[9999] flex items-center gap-4 animate-in fade-in slide-in-from-top-8 duration-500">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            {recordingToast.includes('Preparando') ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Video className="w-4 h-4 text-white" />}
+          </div>
+          <p className="font-black">{recordingToast}</p>
+        </div>
+      )}
+
       {/* CLASSROOM HEADER / NAVBAR */}
       <header className="bg-primary text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <div className="flex items-center gap-4">
@@ -495,15 +503,7 @@ const VirtualClassroomPage: React.FC = () => {
         <section className="bg-black w-full flex justify-center border-b border-white/5 overflow-hidden">
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
-              <>
-                <div id="videosdk-container" className="w-full h-full" />
-                {recordingToast && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-secondary/50 text-white px-6 py-3 rounded-full font-headline text-sm uppercase tracking-widest shadow-2xl z-50 flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-                    {recordingToast.includes('Preparando') ? <Loader2 className="w-4 h-4 text-secondary animate-spin" /> : <Video className="w-4 h-4 text-secondary" />}
-                    {recordingToast}
-                  </div>
-                )}
-              </>
+              <div id="videosdk-container" className="w-full h-full" />
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">
                 <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />

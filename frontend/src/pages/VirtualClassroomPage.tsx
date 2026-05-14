@@ -242,7 +242,7 @@ const VirtualClassroomPage: React.FC = () => {
               },
             },
             layout: {
-              type: "GRID",
+              type: "SPOTLIGHT", // Regresar a Speaker View como estaba originalmente
               priority: "SPEAKER",
               gridSize: 4,
             },
@@ -284,15 +284,17 @@ const VirtualClassroomPage: React.FC = () => {
           console.log("VIDEOSDK: Meeting initialized successfully");
 
           if (isTeacher) {
-            (meeting as any).on("recording-started", () => {
-              console.log("VIDEOSDK: Recording started");
-              setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
-              setTimeout(() => setRecordingToast(null), 8000);
-            });
-            (meeting as any).on("recording-stopped", () => {
-              console.log("VIDEOSDK: Recording stopped");
-              setRecordingToast("Grabación detenida.");
-              setTimeout(() => setRecordingToast(null), 5000);
+            (meeting as any).on("recording-state-changed", (data: any) => {
+              console.log("VIDEOSDK Recording State:", data.status);
+              if (data.status === "RECORDING_STARTING") {
+                setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");
+              } else if (data.status === "RECORDING_STARTED") {
+                setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+                setTimeout(() => setRecordingToast(null), 8000);
+              } else if (data.status === "RECORDING_STOPPED") {
+                setRecordingToast("Grabación detenida.");
+                setTimeout(() => setRecordingToast(null), 5000);
+              }
             });
           }
         } catch (err) {

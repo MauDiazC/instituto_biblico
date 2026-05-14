@@ -426,9 +426,13 @@ async def sync_recordings(
                             meeting_id = rec.get("meetingId")
                             room_id = rec.get("roomId")
                             custom_room_id = rec.get("customRoomId")
-                            file_url = rec.get("fileUrl") or rec.get("url")
                             
-                            print(f"VIDEOSDK SYNC: Processing rec={recording_id}, meetingId={meeting_id}, roomId={room_id}, customId={custom_room_id}")
+                            # CORRECT EXTRACTION: VideoSDK V1 puts url inside 'file' object
+                            file_url = rec.get("fileUrl") or rec.get("url")
+                            if not file_url and rec.get("file"):
+                                file_url = rec.get("file", {}).get("fileUrl") or rec.get("file", {}).get("url")
+                            
+                            print(f"VIDEOSDK SYNC: Processing rec={recording_id}, meetingId={meeting_id}, roomId={room_id}, customId={custom_room_id}, has_url={bool(file_url)}")
 
                             if not file_url:
                                 print(f"VIDEOSDK SYNC: Skipping {recording_id} - No file URL")

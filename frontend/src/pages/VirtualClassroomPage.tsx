@@ -227,7 +227,7 @@ const VirtualClassroomPage: React.FC = () => {
             raiseHandEnabled: true,
             recording: {
               enabled: isTeacher,
-              webhookUrl: "",
+              webhookUrl: `${VITE_API_URL}/courses/video-webhook`,
             },
             participantCanLeave: true,
             brandingEnabled: true,

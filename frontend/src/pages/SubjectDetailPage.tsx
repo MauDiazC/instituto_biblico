@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2 } from 'lucide-react';
+import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { formatToLocal } from '../utils/date';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../context/AuthContext';
 
 interface Clase {
   id: number;
@@ -36,10 +37,30 @@ const VITE_API_URL = getApiUrl();
 
 const SubjectDetailPage: React.FC = () => {
   const { id } = useParams();
+  const { role } = useAuth();
   const navigate = useNavigate();
   const [materia, setMateria] = useState<Materia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string>(new Date().toLocaleTimeString());
+
+  const isTeacher = role === 'teacher' || role === 'admin';
+
+  const syncRecordings = async () => {
+    if (!isTeacher) return;
+    try {
+      setIsSyncing(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(`${VITE_API_URL}/courses/teacher/recordings/sync`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      console.log('SYNC-COMPLETE: Recordings synchronized');
+    } catch (err) {
+      console.error('SYNC-ERROR: Failed to sync recordings:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const fetchMateria = useCallback(async (silent = false) => {
     try {
@@ -74,7 +95,14 @@ const SubjectDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      fetchMateria();
+      const initFetch = async () => {
+        if (isTeacher) {
+          await syncRecordings();
+        }
+        await fetchMateria();
+      };
+      
+      initFetch();
 
       // Realtime subscription: More aggressive catch-all
       const channel = supabase
@@ -101,7 +129,7 @@ const SubjectDetailPage: React.FC = () => {
         clearInterval(interval);
       };
     }
-  }, [id, fetchMateria]);
+  }, [id, fetchMateria, isTeacher]);
 
   if (loading) {
     return (
@@ -119,11 +147,26 @@ const SubjectDetailPage: React.FC = () => {
     <>
       {/* Hero Header */}
       <div className="mb-12">
-        <nav className="flex items-center gap-2 text-on-surface-variant text-xs font-label mb-6 uppercase tracking-widest">
-          <span>Mis Cursos</span>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-primary font-bold">{materia.name}</span>
-        </nav>
+        <div className="flex justify-between items-start mb-6">
+          <nav className="flex items-center gap-2 text-on-surface-variant text-xs font-label uppercase tracking-widest">
+            <span>Mis Cursos</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-primary font-bold">{materia.name}</span>
+          </nav>
+          {isTeacher && (
+            <button 
+              onClick={async () => {
+                await syncRecordings();
+                await fetchMateria(true);
+              }}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isSyncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              {isSyncing ? 'Sincronizando...' : 'Sincronizar Grabaciones'}
+            </button>
+          )}
+        </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black font-headline text-primary mb-4 leading-none">{materia.name}</h1>
@@ -213,12 +256,20 @@ const SubjectDetailPage: React.FC = () => {
                       >
                         ENTRAR EN VIVO
                       </button>
-                    ) : clase.status === 'RECORDED' && clase.video_url ? (
+                    ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && clase.video_url ? (
                       <button 
                         onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
                         className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-primary hover:bg-primary/5"
                       >
                         VER GRABACIÓN
+                      </button>
+                    ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && !clase.video_url ? (
+                      <button 
+                        disabled
+                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-outline opacity-60 cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Clock className="w-3 h-3" />
+                        EN PROCESO
                       </button>
                     ) : (
                       <button 

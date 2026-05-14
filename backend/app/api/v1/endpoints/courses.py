@@ -422,32 +422,49 @@ async def sync_recordings(
                         print(f"VIDEOSDK SYNC: Found {len(recordings)} recordings in {url}")
                         
                         for rec in recordings:
+                            recording_id = rec.get("id") or rec.get("recordingId")
                             meeting_id = rec.get("meetingId")
+                            room_id = rec.get("roomId")
                             custom_room_id = rec.get("customRoomId")
                             file_url = rec.get("fileUrl") or rec.get("url")
                             
+                            print(f"VIDEOSDK SYNC: Processing rec={recording_id}, meetingId={meeting_id}, roomId={room_id}, customId={custom_room_id}")
+
                             if not file_url:
+                                print(f"VIDEOSDK SYNC: Skipping {recording_id} - No file URL")
                                 continue
 
                             clase = None
-                            # Priority 1: Match by meetingId
-                            if meeting_id:
-                                clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
-                            
-                            # Priority 2: Match by customRoomId (class-ID)
-                            if not clase and custom_room_id and custom_room_id.startswith("class-"):
+                            # Priority 1: Match by customRoomId (class-ID) - Most reliable
+                            if custom_room_id and custom_room_id.startswith("class-"):
                                 try:
                                     class_id = int(custom_room_id.split("-")[1])
                                     clase = db.query(Clase).filter(Clase.id == class_id).first()
+                                    if clase: print(f"VIDEOSDK SYNC: Matched by customRoomId: {custom_room_id} -> class {clase.id}")
                                 except (IndexError, ValueError): pass
+                            
+                            # Priority 2: Match by roomId (stored in room_url)
+                            if not clase and room_id:
+                                clase = db.query(Clase).filter(Clase.room_url == room_id).first()
+                                if clase: print(f"VIDEOSDK SYNC: Matched by roomId: {room_id} -> class {clase.id}")
 
-                            if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
-                                print(f"VIDEOSDK SYNC: Updating class {clase.id} with video {file_url}")
-                                clase.status = ClassStatus.RECORDED
-                                clase.video_url = file_url
-                                clase.external_video_id = rec.get("id") or rec.get("recordingId")
-                                db.commit()
-                                videosdk_count += 1
+                            # Priority 3: Match by meetingId (just in case room_url stores meetingId)
+                            if not clase and meeting_id:
+                                clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+                                if clase: print(f"VIDEOSDK SYNC: Matched by meetingId: {meeting_id} -> class {clase.id}")
+
+                            if clase:
+                                if clase.status != ClassStatus.RECORDED or not clase.video_url:
+                                    print(f"VIDEOSDK SYNC: Updating class {clase.id} with video {file_url}")
+                                    clase.status = ClassStatus.RECORDED
+                                    clase.video_url = file_url
+                                    clase.external_video_id = recording_id
+                                    db.commit()
+                                    videosdk_count += 1
+                                else:
+                                    print(f"VIDEOSDK SYNC: Class {clase.id} already has video, skipping update.")
+                            else:
+                                print(f"VIDEOSDK SYNC: No class found for recording {recording_id}")
                         
                         # If we found data in one URL, we can stop (usually)
                         if len(recordings) > 0:

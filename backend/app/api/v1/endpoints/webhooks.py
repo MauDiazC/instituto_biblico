@@ -10,8 +10,6 @@ import hashlib
 
 router = APIRouter()
 
-# ... (verify_signature logic remains the same)
-
 @router.post("/video-webhook")
 async def video_webhook(
     payload: dict,
@@ -48,21 +46,41 @@ async def video_webhook(
         external_id = data.get("video_id") or data.get("recordingId") or data.get("id")
         video_url = data.get("url") or data.get("fileUrl") or data.get("downloadUrl")
         meeting_id = data.get("meetingId")
+        room_id = data.get("roomId")
+        custom_room_id = data.get("customRoomId")
         
-        print(f"VIDEOSDK WEBHOOK: event={event_type}, meetingId={meeting_id}, url={video_url}")
+        print(f"VIDEOSDK WEBHOOK: event={event_type}, recId={external_id}, meetingId={meeting_id}, roomId={room_id}, customId={custom_room_id}")
 
         if not video_url:
             print("VIDEOSDK WEBHOOK: No video URL found in payload")
+            # If we don't have URL yet, we might still want to match and mark as processing
+            # But for now, we follow the current logic of ignoring
             return {"status": "ignored", "reason": "no_url"}
 
         clase = None
-        # Priority 1: Find by meetingId (room_url)
-        if meeting_id:
+        # Priority 1: Find by customRoomId (class-ID)
+        if custom_room_id and custom_room_id.startswith("class-"):
+            try:
+                class_id = int(custom_room_id.split("-")[1])
+                clase = db.query(Clase).filter(Clase.id == class_id).first()
+                if clase: print(f"VIDEOSDK WEBHOOK: Matched by customRoomId: {custom_room_id}")
+            except (IndexError, ValueError):
+                pass
+
+        # Priority 2: Find by roomId (stored in room_url)
+        if not clase and room_id:
+            clase = db.query(Clase).filter(Clase.room_url == room_id).first()
+            if clase: print(f"VIDEOSDK WEBHOOK: Matched by roomId: {room_id}")
+            
+        # Priority 3: Find by meetingId (just in case)
+        if not clase and meeting_id:
             clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+            if clase: print(f"VIDEOSDK WEBHOOK: Matched by meetingId: {meeting_id}")
         
-        # Priority 2: Find by external_video_id
+        # Priority 4: Find by external_video_id
         if not clase and external_id:
             clase = db.query(Clase).filter(Clase.external_video_id == external_id).first()
+            if clase: print(f"VIDEOSDK WEBHOOK: Matched by external_video_id: {external_id}")
             
         if clase:
             # Update external_id if missing
@@ -72,8 +90,9 @@ async def video_webhook(
                 
             # Trigger Celery Task
             update_class_video_task.delay(clase.id, video_url)
+            print(f"VIDEOSDK WEBHOOK: Class {clase.id} found and update task queued")
             return {"status": "success", "message": f"Class {clase.id} queued for update"}
         else:
-            print(f"VIDEOSDK WEBHOOK: No class found for meetingId {meeting_id}")
+            print(f"VIDEOSDK WEBHOOK: No class found for meetingId {meeting_id} or roomId {room_id}")
     
     return {"status": "ignored"}

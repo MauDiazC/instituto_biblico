@@ -67,6 +67,7 @@ const VirtualClassroomPage: React.FC = () => {
   
   const [isCompleting, setIsCompleting] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -204,6 +205,25 @@ const VirtualClassroomPage: React.FC = () => {
     }
   };
 
+  const handleStartClass = async () => {
+    try {
+      setIsStarting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/room`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setClase(data);
+      }
+    } catch (error) {
+      console.error('Error starting class:', error);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   const handleEndClass = async () => {
     if (!window.confirm('¿Deseas finalizar la transmisión?')) return;
     try {
@@ -331,7 +351,12 @@ const VirtualClassroomPage: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isTeacher && (clase.status === 'LIVE' || clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
+          {isTeacher && (clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
+            <button onClick={handleStartClass} disabled={isStarting} className="px-4 py-2 bg-secondary text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
+              {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />} Iniciar Clase
+            </button>
+          )}
+          {isTeacher && (clase.status === 'LIVE') && (
             <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
               <Square className="w-4 h-4 fill-current" /> Finalizar
             </button>
@@ -367,11 +392,22 @@ const VirtualClassroomPage: React.FC = () => {
                    'Video no disponible'}
                 </h3>
                 <p className="text-white/60 max-w-sm mx-auto font-body text-lg">
-                  {(clase.status === 'PLANNED' || clase.status === 'SCHEDULED') ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 
+                  {(clase.status === 'PLANNED' || clase.status === 'SCHEDULED') ? 
+                    (isTeacher ? 'Esta sesión aún no ha sido iniciada. Haz clic abajo para comenzar la transmisión.' : 'La clase iniciará automáticamente cuando el tutor se conecte.') : 
                    clase.status === 'LIVE' ? 'El tutor está preparando la sala, por favor espera un momento.' :
                    (clase.status === 'RECORDED' || clase.status === 'PROCESSING') ? 'El video estará disponible para ver bajo demanda en unos minutos.' : 
                    'El enlace del video no ha sido proporcionado o la clase no cuenta con grabación.'}
                 </p>
+                {isTeacher && (clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
+                  <button 
+                    onClick={handleStartClass} 
+                    disabled={isStarting}
+                    className="mt-8 px-8 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-premium hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                  >
+                    {isStarting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
+                    INICIAR TRANSMISIÓN AHORA
+                  </button>
+                )}
               </div>
             )}
           </div>

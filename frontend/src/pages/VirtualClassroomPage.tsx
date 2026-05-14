@@ -203,7 +203,7 @@ const VirtualClassroomPage: React.FC = () => {
       const config = {
         name: isTeacher ? "Docente" : "Estudiante",
         meetingId: clase.room_url,
-        apiKey: apiKey,
+        apiKey: apiKey as string,
         containerId: "videosdk-container",
         micEnabled: true,
         webcamEnabled: true,
@@ -220,6 +220,10 @@ const VirtualClassroomPage: React.FC = () => {
         brandName: "Sacred Archive",
         poweredBy: false,
         primaryColor: "#0066cc", // Adjust to match theme
+        realtimeTranscription: {
+          enabled: false,
+          visible: false,
+        },
         leftScreen: {
           actionButton: {
             label: "Regresar",

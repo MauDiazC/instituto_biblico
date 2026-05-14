@@ -22,6 +22,7 @@ import {
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
+import { formatToLocal, parseUTC } from '../utils/date';
 
 interface Submission {
   id: number;
@@ -227,7 +228,7 @@ const GradebookPage: React.FC = () => {
                     sub.grade === null ? 'bg-secondary animate-pulse shadow-[0_0_8px_rgba(var(--secondary),0.5)]' : 'bg-green-500'
                   )} />
                    <span className="text-[8px] text-on-surface-variant font-black uppercase tracking-tighter opacity-60">
-                     {new Date(sub.created_at).toLocaleDateString()}
+                     {formatToLocal(sub.created_at)}
                    </span>
                 </div>
               </div>
@@ -277,7 +278,7 @@ const GradebookPage: React.FC = () => {
               <div className="hidden xl:flex items-center gap-6 bg-white p-6 rounded-[2rem] border border-outline-variant/5 shadow-sm">
                 <div className="text-right">
                   <p className="text-[9px] text-outline font-black uppercase tracking-widest">Enviado el</p>
-                  <p className="text-sm font-headline font-black text-primary uppercase">{new Date(selectedSub.created_at).toLocaleString()}</p>
+                  <p className="text-sm font-headline font-black text-primary uppercase">{formatToLocal(selectedSub.created_at)}</p>
                 </div>
                 <div className="w-14 h-14 rounded-2xl bg-surface-container-low flex items-center justify-center">
                    <FileText className="w-7 h-7 text-primary" />

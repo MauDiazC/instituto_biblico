@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { twMerge } from 'tailwind-merge';
 import { getInitials } from '../utils/avatars';
+import { parseUTC } from '../utils/date';
 
 interface Course {
   id: number;
@@ -291,7 +292,7 @@ const TeacherCoursesPage: React.FC = () => {
                   <div className="flex items-center gap-2 text-on-surface-variant">
                     <Calendar className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-bold font-label uppercase">
-                      {new Date(session.scheduled_at).toLocaleString('es-ES', { 
+                      {parseUTC(session.scheduled_at).toLocaleString('es-ES', { 
                         day: '2-digit', month: 'short', year: 'numeric', 
                         hour: '2-digit', minute: '2-digit' 
                       })}
@@ -462,7 +463,7 @@ const TeacherCoursesPage: React.FC = () => {
                 <div className="flex items-center gap-2 text-on-surface-variant">
                   <Calendar className="w-3.5 h-3.5" />
                   <span className="text-[9px] font-bold font-label uppercase">
-                    {new Date(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {parseUTC(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
                 <Link 
@@ -510,7 +511,7 @@ const TeacherCoursesPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-6 text-sm text-on-surface-variant font-body">
-                      {new Date(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      {parseUTC(recording.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">

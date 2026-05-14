@@ -69,6 +69,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [recordingToast, setRecordingToast] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -281,6 +282,21 @@ const VirtualClassroomPage: React.FC = () => {
           meeting.init(config);
           videoSdkInitialized.current = true;
           console.log("VIDEOSDK: Meeting initialized successfully");
+
+          if (isTeacher) {
+            meeting.on("recording-state-changed", (data: any) => {
+              console.log("VIDEOSDK Recording State:", data.status);
+              if (data.status === "RECORDING_STARTING") {
+                setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");
+              } else if (data.status === "RECORDING_STARTED") {
+                setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+                setTimeout(() => setRecordingToast(null), 8000);
+              } else if (data.status === "RECORDING_STOPPED") {
+                setRecordingToast("Grabación detenida.");
+                setTimeout(() => setRecordingToast(null), 5000);
+              }
+            });
+          }
         } catch (err) {
           console.error("VIDEOSDK: Error during initialization:", err);
         }
@@ -479,7 +495,15 @@ const VirtualClassroomPage: React.FC = () => {
         <section className="bg-black w-full flex justify-center border-b border-white/5 overflow-hidden">
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
-              <div id="videosdk-container" className="w-full h-full" />
+              <>
+                <div id="videosdk-container" className="w-full h-full" />
+                {recordingToast && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-secondary/50 text-white px-6 py-3 rounded-full font-headline text-sm uppercase tracking-widest shadow-2xl z-50 flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+                    {recordingToast.includes('Preparando') ? <Loader2 className="w-4 h-4 text-secondary animate-spin" /> : <Video className="w-4 h-4 text-secondary" />}
+                    {recordingToast}
+                  </div>
+                )}
+              </>
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">
                 <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />

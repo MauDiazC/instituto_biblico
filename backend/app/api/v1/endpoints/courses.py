@@ -47,8 +47,12 @@ async def get_or_create_videosdk_room(
     if not clase:
         raise HTTPException(status_code=404, detail="Class not found")
     
+    # Si ya tiene una room_url, verificamos que no sea una URL vieja de Daily.co
     if clase.room_url:
-        return clase
+        if "daily.co" not in clase.room_url:
+            return clase
+        # Si es de Daily, la ignoramos y generamos una nueva de VideoSDK
+        clase.room_url = None
 
     if not settings.VIDEOSDK_API_KEY:
         raise HTTPException(

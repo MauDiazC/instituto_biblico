@@ -43,9 +43,21 @@ async def video_webhook(
     if event_type == "recording.ready":
         external_id = data.get("video_id")
         video_url = data.get("url")
+        meeting_id = data.get("meetingId") # VideoSDK sends meetingId
         
+        # Priority 1: Find by external_video_id
         clase = db.query(Clase).filter(Clase.external_video_id == external_id).first()
+        
+        # Priority 2: Find by meetingId (room_url)
+        if not clase and meeting_id:
+            clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+            
         if clase:
+            # Update external_id if missing
+            if not clase.external_video_id:
+                clase.external_video_id = external_id
+                db.commit()
+                
             # Trigger Celery Task
             update_class_video_task.delay(clase.id, video_url)
             return {"status": "success", "message": f"Class {clase.id} queued for background update"}

@@ -123,7 +123,6 @@ async def end_class(
         raise HTTPException(status_code=404, detail="Class not found")
     
     clase.status = ClassStatus.RECORDED
-    clase.room_url = None
     db.commit()
     return {"status": "success"}
 
@@ -358,51 +357,79 @@ async def list_all_questions_for_teacher(
     return result
 
 @router.get("/teacher/recordings/sync")
-async def sync_recordings_with_daily(
+async def sync_recordings(
     db: Session = Depends(get_db),
     current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
 ):
     """
-    Syncs local database with Daily.co recordings to ensure no recording is lost.
+    Unified sync endpoint that checks both Daily.co and VideoSDK.
     """
-    if not settings.DAILY_API_KEY:
-        raise HTTPException(status_code=500, detail="Daily.co API Key not configured")
+    daily_count = 0
+    videosdk_count = 0
+    
+    # 1. Sync Daily.co
+    if settings.DAILY_API_KEY:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.daily.co/v1/recordings",
+                    headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"},
+                    timeout=10.0
+                )
+                if response.status_code == 200:
+                    recordings = response.json().get("data", [])
+                    for rec in recordings:
+                        room_name = rec.get("room_name", "")
+                        if room_name.startswith("class-"):
+                            try:
+                                class_id = int(room_name.split("-")[1])
+                                clase = db.query(Clase).filter(Clase.id == class_id).first()
+                                if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
+                                    clase.status = ClassStatus.RECORDED
+                                    clase.external_video_id = rec.get("id")
+                                    # Daily records have access links via API, but we can store the ID
+                                    db.commit()
+                                    daily_count += 1
+                            except (IndexError, ValueError): continue
+        except Exception as e:
+            print(f"Daily Sync Error: {str(e)}")
 
-    sync_count = 0
-    async with httpx.AsyncClient() as client:
-        # 1. Fetch recent recordings from Daily.co
-        response = await client.get(
-            "https://api.daily.co/v1/recordings",
-            headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"}
-        )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Error from Daily API: {response.text}")
+    # 2. Sync VideoSDK
+    if settings.VIDEOSDK_API_KEY and settings.VIDEOSDK_SECRET:
+        try:
+            # Generate Token
+            iat = int(time.time())
+            exp = iat + 3600
+            payload = {"apikey": settings.VIDEOSDK_API_KEY, "permissions": ["allow_join"], "iat": iat, "exp": exp, "version": 2}
+            token = jwt.encode(payload, settings.VIDEOSDK_SECRET, algorithm="HS256")
             
-        recordings_data = response.json()
-        recordings = recordings_data.get("data", [])
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.videosdk.live/v1/recordings",
+                    headers={"Authorization": token},
+                    timeout=10.0
+                )
+                if response.status_code == 200:
+                    recordings = response.json().get("data", [])
+                    for rec in recordings:
+                        meeting_id = rec.get("meetingId")
+                        if meeting_id:
+                            clase = db.query(Clase).filter(Clase.room_url == meeting_id).first()
+                            if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
+                                clase.status = ClassStatus.RECORDED
+                                clase.video_url = rec.get("fileUrl")
+                                clase.external_video_id = rec.get("id")
+                                db.commit()
+                                videosdk_count += 1
+        except Exception as e:
+            print(f"VideoSDK Sync Error: {str(e)}")
 
-        for rec in recordings:
-            room_name = rec.get("room_name", "")
-            # We look for recordings that follow our naming convention: class-{id}-...
-            if room_name and room_name.startswith("class-"):
-                try:
-                    parts = room_name.split("-")
-                    class_id = int(parts[1])
-                    
-                    # 2. Find the class in our DB
-                    clase = db.query(Clase).filter(Clase.id == class_id).first()
-                    
-                    # 3. Update if local data is missing or status is not RECORDED
-                    if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
-                        clase.status = ClassStatus.RECORDED
-                        clase.external_video_id = rec.get("id")
-                        db.commit()
-                        sync_count += 1
-                except (IndexError, ValueError):
-                    continue
-
-    return {"status": "success", "synced_items": sync_count}
+    return {
+        "status": "success", 
+        "daily_synced": daily_count, 
+        "videosdk_synced": videosdk_count,
+        "total_synced": daily_count + videosdk_count
+    }
 
 @router.patch("/questions/{question_id}/answer", response_model=ConsultaRead)
 async def answer_question(

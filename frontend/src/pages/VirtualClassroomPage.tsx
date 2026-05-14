@@ -331,7 +331,7 @@ const VirtualClassroomPage: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isTeacher && (clase.status === 'LIVE' || clase.status === 'PLANNED') && (
+          {isTeacher && (clase.status === 'LIVE' || clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
             <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
               <Square className="w-4 h-4 fill-current" /> Finalizar
             </button>
@@ -360,8 +360,18 @@ const VirtualClassroomPage: React.FC = () => {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-neutral-900/60 text-center p-8">
                 <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 animate-pulse"><Video className="w-10 h-10 text-white/50" /></div>
-                <h3 className="text-3xl font-black font-headline mb-2">{clase.status === 'PLANNED' ? 'Sesión Programada' : 'Grabación en Proceso'}</h3>
-                <p className="text-white/60 max-w-sm mx-auto font-body text-lg">{clase.status === 'PLANNED' ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 'El video estará disponible para ver bajo demanda en unos minutos.'}</p>
+                <h3 className="text-3xl font-black font-headline mb-2">
+                  {(clase.status === 'PLANNED' || clase.status === 'SCHEDULED') ? 'Sesión Programada' : 
+                   clase.status === 'LIVE' ? 'Iniciando Sala...' :
+                   (clase.status === 'RECORDED' || clase.status === 'PROCESSING') ? 'Grabación en Proceso' : 
+                   'Video no disponible'}
+                </h3>
+                <p className="text-white/60 max-w-sm mx-auto font-body text-lg">
+                  {(clase.status === 'PLANNED' || clase.status === 'SCHEDULED') ? 'La clase iniciará automáticamente cuando el tutor se conecte.' : 
+                   clase.status === 'LIVE' ? 'El tutor está preparando la sala, por favor espera un momento.' :
+                   (clase.status === 'RECORDED' || clase.status === 'PROCESSING') ? 'El video estará disponible para ver bajo demanda en unos minutos.' : 
+                   'El enlace del video no ha sido proporcionado o la clase no cuenta con grabación.'}
+                </p>
               </div>
             )}
           </div>

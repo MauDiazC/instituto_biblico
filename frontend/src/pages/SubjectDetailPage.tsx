@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, PlayCircle, Video, Clock, Lock, FileText, Table, Library, Download, ExternalLink, Quote, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { formatToLocal } from '../utils/date';
+import { twMerge } from 'tailwind-merge';
 
 interface Clase {
   id: number;
   title: string;
   status: 'SCHEDULED' | 'LIVE' | 'RECORDED' | 'PROCESSING' | 'PLANNED';
   scheduled_at: string;
+  video_url?: string | null;
 }
 
 interface Bloque {
@@ -185,7 +187,12 @@ const SubjectDetailPage: React.FC = () => {
                           </div>
                         )}
                         {clase.status === 'RECORDED' && (
-                          <span className="text-[9px] font-black bg-secondary-fixed/50 text-secondary px-2 py-0.5 rounded-full uppercase tracking-widest">GRABADA</span>
+                          <span className={twMerge(
+                            "text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                            clase.video_url ? "bg-secondary-fixed/50 text-secondary" : "bg-surface-container-highest text-outline"
+                          )}>
+                            {clase.video_url ? 'GRABADA' : 'FINALIZADA'}
+                          </span>
                         )}
                         {(clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
                           <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>

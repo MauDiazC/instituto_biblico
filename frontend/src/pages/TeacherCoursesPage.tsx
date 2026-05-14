@@ -120,6 +120,7 @@ const TeacherCoursesPage: React.FC = () => {
         .from('clases')
         .select('id, title, video_url, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
         .eq('status', 'RECORDED')
+        .not('video_url', 'is', null)
         .order('scheduled_at', { ascending: false });
 
       if (recordedError) throw recordedError;

@@ -328,7 +328,11 @@ const VirtualClassroomPage: React.FC = () => {
         {/* VIDEO CONTAINER: Stable across refreshes */}
         <div key={clase.status} className="w-full aspect-video min-h-[400px] md:min-h-0 rounded-xl overflow-hidden bg-primary shadow-2xl relative group ring-1 ring-white/10">
           {clase.status === 'LIVE' && clase.room_url ? (
-            <iframe src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=0&tbar=1`} allow="camera; microphone; fullscreen; display-capture" className="w-full h-full border-0" />
+            <iframe 
+              src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=1&tbar=1`} 
+              allow="camera; microphone; fullscreen; display-capture; autoplay" 
+              className="w-full h-full border-0" 
+            />
           ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED') && finalVideoUrl ? (
             <div className="w-full h-full bg-black flex items-center justify-center">
               {/* NO KEY ON VIDEO TAG: Allow source to persist without reset */}

@@ -73,6 +73,8 @@ async def get_or_create_daily_room(
                     "start_audio_off": True,
                     "enable_chat": True,
                     "enable_people_ui": True,
+                    "enable_emoji_reactions": True,
+                    "enable_hand_raising": True,
                     "lang": "es"
                 }
             }

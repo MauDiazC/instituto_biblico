@@ -58,7 +58,7 @@ const VITE_API_URL = getApiUrl();
 const VirtualClassroomPage: React.FC = () => {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
   const [clase, setClase] = useState<Clase | null>(null);
   const [loading, setLoading] = useState(true);
   const [recordingLink, setRecordingLink] = useState<string | null>(null);
@@ -192,7 +192,8 @@ const VirtualClassroomPage: React.FC = () => {
   }, [lessonId, fetchClassData]);
 
   useEffect(() => {
-    if (clase?.status === 'LIVE' && clase.room_url && !videoSdkInitialized.current) {
+    // Wait for class and auth to be ready
+    if (!authLoading && clase?.status === 'LIVE' && clase.room_url && !videoSdkInitialized.current) {
       const apiKey = import.meta.env.VITE_VIDEOSDK_API_KEY;
       
       if (!apiKey) {
@@ -200,7 +201,7 @@ const VirtualClassroomPage: React.FC = () => {
         return;
       }
 
-      console.log("VIDEOSDK: Initializing meeting...", { meetingId: clase.room_url, isTeacher });
+      console.log("VIDEOSDK: Initializing meeting...", { meetingId: clase.room_url, isTeacher, role });
 
       const initMeeting = () => {
         const container = document.getElementById("videosdk-container");
@@ -228,6 +229,16 @@ const VirtualClassroomPage: React.FC = () => {
             recording: {
               enabled: isTeacher,
               webhookUrl: `${VITE_API_URL}/courses/video-webhook`,
+              autoStart: false, // Prevents "desfada empieza antes" bug
+              theme: "DARK",
+              config: {
+                layout: {
+                  type: "GRID",
+                  priority: "SPEAKER", // Priority on speaker for better audio capture
+                  gridSize: 4,
+                },
+                orientation: "landscape",
+              },
             },
             participantCanLeave: true,
             brandingEnabled: true,
@@ -265,7 +276,8 @@ const VirtualClassroomPage: React.FC = () => {
 
       initMeeting();
     }
-  }, [clase, isTeacher]);
+  }, [clase, isTeacher, authLoading, role]);
+
 
   const handleToggleCompletion = async () => {
     try {

@@ -284,7 +284,7 @@ const VirtualClassroomPage: React.FC = () => {
           console.log("VIDEOSDK: Meeting initialized successfully");
 
           if (isTeacher) {
-            meeting.on("recording-state-changed", (data: any) => {
+            (meeting as any).on("recording-state-changed", (data: any) => {
               console.log("VIDEOSDK Recording State:", data.status);
               if (data.status === "RECORDING_STARTING") {
                 setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Compass, LayoutGrid, List, Clock, ArrowRight, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const LandingPage: React.FC = () => {
   return (
@@ -187,9 +188,9 @@ const LandingPage: React.FC = () => {
               </li>
             </ul>
             <div className="pt-4">
-              <button className="bg-primary text-white px-10 py-4 rounded-lg font-headline font-bold text-lg hover:bg-tertiary transition-all shadow-xl">
+              <Link to="/auth/login" className="bg-primary text-white px-10 py-4 rounded-lg font-headline font-bold text-lg hover:bg-tertiary transition-all shadow-xl inline-block text-center">
                 Empieza hoy mismo
-              </button>
+              </Link>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { formatToLocal } from '../utils/date';
 import { useAuth } from '../context/AuthContext';
+import { VideoSDKMeeting } from "@videosdk.live/rtc-js-prebuilt";
 
 interface Tarea {
   id: number;
@@ -80,6 +81,7 @@ const VirtualClassroomPage: React.FC = () => {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'tasks' | 'questions'>('info');
+  const videoSdkInitialized = useRef(false);
 
   const isTeacher = role === 'teacher' || role === 'admin';
 
@@ -188,6 +190,48 @@ const VirtualClassroomPage: React.FC = () => {
       };
     }
   }, [lessonId, fetchClassData]);
+
+  useEffect(() => {
+    if (clase?.status === 'LIVE' && clase.room_url && !videoSdkInitialized.current) {
+      const apiKey = import.meta.env.VITE_VIDEOSDK_API_KEY;
+      if (!apiKey) {
+        console.error("VIDEOSDK_API_KEY is not defined");
+        return;
+      }
+
+      const meeting = new VideoSDKMeeting();
+      const config = {
+        name: isTeacher ? "Docente" : "Estudiante",
+        meetingId: clase.room_url,
+        apiKey: apiKey,
+        containerId: "videosdk-container",
+        micEnabled: true,
+        webcamEnabled: true,
+        participantCanToggleSelfWebcam: true,
+        participantCanToggleSelfMic: true,
+        chatEnabled: true,
+        screenShareEnabled: true,
+        whiteboardEnabled: true,
+        raiseHandEnabled: true,
+        recordingEnabled: true,
+        recordingWebhookUrl: "", // Optional
+        participantCanLeave: true,
+        brandingEnabled: true,
+        brandName: "Sacred Archive",
+        poweredBy: false,
+        primaryColor: "#0066cc", // Adjust to match theme
+        leftScreen: {
+          actionButton: {
+            label: "Regresar",
+            href: `/dashboard/courses/${clase.bloque?.materia_id}`,
+          },
+        },
+      };
+
+      meeting.init(config);
+      videoSdkInitialized.current = true;
+    }
+  }, [clase, isTeacher]);
 
   const handleToggleCompletion = async () => {
     try {
@@ -377,12 +421,7 @@ const VirtualClassroomPage: React.FC = () => {
         <section className="bg-black w-full flex justify-center border-b border-white/5 overflow-hidden">
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
-              <iframe 
-                src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=1&tbar=1`} 
-                allow="camera; microphone; fullscreen; display-capture; autoplay" 
-                className="absolute inset-0 w-full h-full border-0 m-0 p-0" 
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
+              <div id="videosdk-container" className="w-full h-full" />
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">
                 <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />

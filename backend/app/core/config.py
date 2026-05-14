@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Daily.co Config
     DAILY_API_KEY: str | None = None
 
+    # VideoSDK Config
+    VIDEOSDK_API_KEY: str | None = None
+    VIDEOSDK_SECRET: str | None = None
+
     # Supabase Auth Settings
     SUPABASE_URL: str | None = None
     SUPABASE_ANON_KEY: str | None = None

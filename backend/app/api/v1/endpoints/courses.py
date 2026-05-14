@@ -38,7 +38,7 @@ async def create_book(
     return libro
 
 @router.post("/classes/{class_id}/room", response_model=ClaseRead)
-async def get_or_create_daily_room(
+async def get_or_create_videosdk_room(
     class_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
@@ -50,48 +50,30 @@ async def get_or_create_daily_room(
     if clase.room_url:
         return clase
 
-    if not settings.DAILY_API_KEY:
+    if not settings.VIDEOSDK_API_KEY:
         raise HTTPException(
             status_code=500, 
-            detail="Daily.co API Key not configured. Please add DAILY_API_KEY to your .env file."
+            detail="VideoSDK API Key not configured. Please add VIDEOSDK_API_KEY to your .env file."
         )
 
     async with httpx.AsyncClient() as client:
-        # Create a room in Daily.co - Sanitize room name to allow only A-Z, a-z, 0-9, '-', and '_'
-        import re
-        sanitized_title = re.sub(r'[^A-Za-z0-9\-_]', '-', clase.title.lower())
-        room_name = f"class-{clase.id}-{sanitized_title}"
-        
+        # Create a room in VideoSDK
         response = await client.post(
-            "https://api.daily.co/v1/rooms",
-            headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"},
+            "https://api.videosdk.live/v2/rooms",
+            headers={
+                "Authorization": f"{settings.VIDEOSDK_SECRET}", 
+                "Content-Type": "application/json"
+            },
             json={
-                "name": room_name,
-                "properties": {
-                    "enable_recording": "cloud",
-                    "start_video_off": True,
-                    "start_audio_off": True,
-                    "enable_chat": True,
-                    "enable_people_ui": True,
-                    "enable_emoji_reactions": True,
-                    "enable_hand_raising": True,
-                    "enable_screenshare": True,
-                    "lang": "es"
-                }
+                "customRoomId": f"class-{clase.id}"
             }
         )
         
         if response.status_code != 200 and response.status_code != 201:
-            if response.status_code == 400 and "already exists" in response.text:
-                response = await client.get(
-                    f"https://api.daily.co/v1/rooms/{room_name}",
-                    headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"}
-                )
-            else:
-                raise HTTPException(status_code=500, detail=f"Error creating Daily room: {response.text}")
+            raise HTTPException(status_code=500, detail=f"Error creating VideoSDK room: {response.text}")
 
         room_data = response.json()
-        clase.room_url = room_data["url"]
+        clase.room_url = room_data["roomId"]
         clase.status = ClassStatus.LIVE
         db.commit()
         db.refresh(clase)

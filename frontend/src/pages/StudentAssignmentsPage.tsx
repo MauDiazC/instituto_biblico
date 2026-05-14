@@ -159,7 +159,7 @@ const StudentAssignmentsPage: React.FC = () => {
   }
 
   return (
-    <div className="pb-24 space-y-8 max-w-6xl mx-auto px-4 md:px-0 overflow-x-hidden">
+    <div className="pb-24 space-y-8 max-w-6xl mx-auto px-0 overflow-x-hidden">
       {/* Header */}
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-outline-variant/5">
         <div>

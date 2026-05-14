@@ -158,7 +158,7 @@ const VirtualLibraryPage: React.FC = () => {
   }
 
   return (
-    <div className="pb-28 md:pb-12 space-y-8 md:space-y-10 max-w-full overflow-x-hidden px-4 md:px-0">
+    <div className="pb-28 md:pb-12 space-y-8 md:space-y-10 max-w-full overflow-x-hidden px-0">
       {/* 1. Enhanced Header Section */}
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="min-w-0">

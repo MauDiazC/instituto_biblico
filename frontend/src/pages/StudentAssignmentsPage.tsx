@@ -159,20 +159,20 @@ const StudentAssignmentsPage: React.FC = () => {
   }
 
   return (
-    <div className="pb-20 space-y-8 max-w-6xl mx-auto px-4 md:px-0">
+    <div className="pb-24 space-y-8 max-w-6xl mx-auto px-4 md:px-0 overflow-x-hidden">
       {/* Header */}
-      <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-outline-variant/5">
+      <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-outline-variant/5">
         <div>
-          <h1 className="text-3xl font-black font-headline text-primary uppercase tracking-tight">Mis Actividades</h1>
-          <p className="text-on-surface-variant font-body text-sm mt-1">Sigue tu progreso académico y entregas.</p>
+          <h1 className="text-2xl md:text-3xl font-black font-headline text-primary uppercase tracking-tight">Mis Actividades</h1>
+          <p className="text-on-surface-variant font-body text-xs md:text-sm mt-1">Sigue tu progreso académico y entregas.</p>
         </div>
         
-        <div className="flex gap-4">
-          <div className="bg-primary/5 px-6 py-3 rounded-2xl border border-primary/10 text-center">
+        <div className="flex gap-4 w-full md:w-auto">
+          <div className="flex-1 md:flex-none bg-primary/5 px-4 md:px-6 py-3 rounded-2xl border border-primary/10 text-center">
             <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">Pendientes</p>
             <p className="text-xl font-black font-headline text-primary">{stats.pending}</p>
           </div>
-          <div className="bg-green-50 px-6 py-3 rounded-2xl border border-green-100 text-center">
+          <div className="flex-1 md:flex-none bg-green-50 px-4 md:px-6 py-3 rounded-2xl border border-green-100 text-center">
             <p className="text-[10px] font-black text-green-700 uppercase tracking-widest leading-none mb-1">Calificadas</p>
             <p className="text-xl font-black font-headline text-green-700">{stats.graded}</p>
           </div>
@@ -187,7 +187,7 @@ const StudentAssignmentsPage: React.FC = () => {
               key={f}
               onClick={() => setFilter(f)}
               className={twMerge(
-                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                "px-4 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                 filter === f ? "bg-primary text-white shadow-md" : "text-on-surface-variant hover:bg-white"
               )}
             >
@@ -208,21 +208,26 @@ const StudentAssignmentsPage: React.FC = () => {
       </section>
 
       {/* Grid of Tasks */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {filteredAssignments.length > 0 ? filteredAssignments.map(task => (
-          <div key={task.id} className="bg-white rounded-[2rem] border border-outline-variant/10 p-6 shadow-sm hover:shadow-premium transition-all duration-300 flex flex-col h-full group">
+          <div key={task.id} className="bg-white rounded-[2rem] border border-outline-variant/10 p-5 md:p-6 shadow-sm hover:shadow-premium transition-all duration-300 flex flex-col h-full group">
             <div className="flex justify-between items-start mb-4">
-              <div className="space-y-1">
-                <p className="text-[10px] text-secondary font-black uppercase tracking-widest">{task.materia_name}</p>
-                <h3 className="text-lg font-black font-headline text-primary leading-tight uppercase line-clamp-2">{task.title}</h3>
+              <div className="space-y-1 min-w-0">
+                <p className="text-[10px] text-secondary font-black uppercase tracking-widest truncate">{task.materia_name}</p>
+                <h3 className="text-base md:text-lg font-black font-headline text-primary leading-tight uppercase line-clamp-2">{task.title}</h3>
               </div>
               <div className={twMerge(
-                "px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5",
+                "px-2 py-1 md:px-3 md:py-1.5 rounded-xl text-[7px] md:text-[8px] font-black uppercase tracking-widest flex items-center gap-1 md:gap-1.5 shrink-0 ml-2",
                 task.submission?.grade !== null ? "bg-green-100 text-green-700" :
                 task.submission ? "bg-secondary/10 text-secondary" : "bg-primary/5 text-primary"
               )}>
-                {task.submission?.grade !== null ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                {task.submission?.grade !== null ? 'Calificada' : task.submission ? 'Enviada' : 'Pendiente'}
+                {task.submission?.grade !== null ? <CheckCircle2 className="w-2.5 h-2.5 md:w-3 h-3" /> : <Clock className="w-2.5 h-2.5 md:w-3 h-3" />}
+                <span className="hidden xs:inline">
+                  {task.submission?.grade !== null ? 'Calificada' : task.submission ? 'Enviada' : 'Pendiente'}
+                </span>
+                <span className="xs:hidden">
+                  {task.submission?.grade !== null ? 'OK' : task.submission ? 'ENV' : 'PEN'}
+                </span>
               </div>
             </div>
 
@@ -291,26 +296,26 @@ const StudentAssignmentsPage: React.FC = () => {
 
       {/* Submission Modal */}
       {submittingTask && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setSubmittingTask(null)}></div>
-          <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-secondary uppercase tracking-widest leading-none">{submittingTask.materia_name}</p>
-                <h3 className="text-xl font-black text-primary font-headline uppercase leading-tight">{submittingTask.title}</h3>
+          <div className="relative bg-white w-full max-w-xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
+            <div className="p-6 md:p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
+              <div className="space-y-1 min-w-0">
+                <p className="text-[10px] font-black text-secondary uppercase tracking-widest leading-none truncate">{submittingTask.materia_name}</p>
+                <h3 className="text-lg md:text-xl font-black text-primary font-headline uppercase leading-tight truncate">{submittingTask.title}</h3>
               </div>
-              <button onClick={() => setSubmittingTask(null)} className="p-2 hover:bg-white rounded-full transition-colors">
+              <button onClick={() => setSubmittingTask(null)} className="p-2 hover:bg-white rounded-full transition-colors shrink-0">
                 <X className="w-6 h-6 text-primary" />
               </button>
             </div>
             
-            <div className="p-8 space-y-6">
+            <div className="p-6 md:p-8 space-y-6 max-h-[80vh] overflow-y-auto no-scrollbar">
                <div className="space-y-4">
                   <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Escribe tu respuesta o sube un archivo</label>
                   <textarea 
                     value={submissionText}
                     onChange={(e) => setSubmissionText(e.target.value)}
-                    className="w-full min-h-[150px] p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary focus:bg-white rounded-2xl outline-none transition-all text-sm font-body"
+                    className="w-full min-h-[120px] md:min-h-[150px] p-4 bg-surface-container-low border-2 border-transparent focus:border-secondary focus:bg-white rounded-2xl outline-none transition-all text-sm font-body"
                     placeholder="Escribe aquí tu trabajo..."
                   />
                </div>

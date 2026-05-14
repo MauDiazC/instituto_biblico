@@ -158,12 +158,12 @@ const VirtualLibraryPage: React.FC = () => {
   }
 
   return (
-    <div className="pb-28 md:pb-12 space-y-10 max-w-full overflow-x-hidden">
+    <div className="pb-28 md:pb-12 space-y-8 md:space-y-10 max-w-full overflow-x-hidden px-4 md:px-0">
       {/* 1. Enhanced Header Section */}
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-black font-headline text-primary tracking-tighter uppercase leading-none">Acervo Bibliográfico</h1>
-          <p className="text-on-surface-variant font-body text-sm md:text-base mt-2">Explore el saber eterno y la profundidad académica.</p>
+        <div className="min-w-0">
+          <h1 className="text-3xl md:text-5xl font-black font-headline text-primary tracking-tighter uppercase leading-none truncate">Acervo Bibliográfico</h1>
+          <p className="text-on-surface-variant font-body text-xs md:text-base mt-2">Explore el saber eterno y la profundidad académica.</p>
         </div>
         {isTeacher && (
           <button 
@@ -193,7 +193,7 @@ const VirtualLibraryPage: React.FC = () => {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={twMerge(
-                "px-6 py-3 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                "px-5 py-3 rounded-[1.2rem] text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                 activeCategory === cat ? "bg-primary text-white shadow-md" : "bg-surface-container-low/50 text-primary/60 hover:bg-white border border-transparent hover:border-outline-variant/10"
               )}
             >
@@ -207,20 +207,20 @@ const VirtualLibraryPage: React.FC = () => {
       <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="bg-white rounded-[2.5rem] shadow-ambient overflow-hidden border border-outline-variant/10">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left table-fixed md:table-auto">
               <thead className="bg-surface-container-low/50">
                 <tr>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em]">Obra / Autor</th>
+                  <th className="px-6 md:px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] w-[70%] md:w-auto">Obra / Autor</th>
                   <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] hidden md:table-cell">Categoría</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] text-right">Acciones</th>
+                  <th className="px-6 md:px-8 py-6 text-[10px] font-black text-primary font-headline uppercase tracking-[0.2em] text-right w-[30%] md:w-auto">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/5">
                 {paginatedBooks.length > 0 ? paginatedBooks.map((book) => (
                   <tr key={book.id} className="hover:bg-primary/5 transition-all group">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-5">
-                        <div className="w-14 h-18 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-outline-variant/10 group-hover:scale-105 transition-transform duration-500">
+                    <td className="px-6 md:px-8 py-6 min-w-0">
+                      <div className="flex items-center gap-4 md:gap-5">
+                        <div className="w-10 h-14 md:w-14 md:h-18 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-outline-variant/10 group-hover:scale-105 transition-transform duration-500">
                           <img 
                             src={book.cover_url || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'} 
                             alt={book.title}
@@ -228,8 +228,8 @@ const VirtualLibraryPage: React.FC = () => {
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-primary font-headline text-base uppercase tracking-tight truncate leading-tight mb-1">{book.title}</p>
-                          <p className="text-[11px] text-on-surface-variant font-medium opacity-60 uppercase tracking-widest">{book.author}</p>
+                          <p className="font-bold text-primary font-headline text-sm md:text-base uppercase tracking-tight truncate leading-tight mb-1">{book.title}</p>
+                          <p className="text-[10px] md:text-[11px] text-on-surface-variant font-medium opacity-60 uppercase tracking-widest truncate">{book.author}</p>
                         </div>
                       </div>
                     </td>
@@ -238,24 +238,24 @@ const VirtualLibraryPage: React.FC = () => {
                         {book.category}
                       </span>
                     </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-3">
+                    <td className="px-6 md:px-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-2 md:gap-3">
                         <a 
                           href={book.file_url} 
                           target="_blank" 
                           rel="noreferrer"
-                          className="p-3 bg-primary/5 text-primary rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
+                          className="p-2.5 md:p-3 bg-primary/5 text-primary rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
                           title="Leer Obra"
                         >
-                          <BookOpen className="w-5 h-5" />
+                          <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
                         </a>
                         <a 
                           href={book.file_url} 
                           download
-                          className="p-3 bg-surface-container-high text-primary rounded-2xl hover:bg-outline-variant/20 transition-all shadow-sm active:scale-90"
+                          className="p-2.5 md:p-3 bg-surface-container-high text-primary rounded-2xl hover:bg-outline-variant/20 transition-all shadow-sm active:scale-90 hidden xs:flex"
                           title="Descargar PDF"
                         >
-                          <Download className="w-5 h-5" />
+                          <Download className="w-4 h-4 md:w-5 md:h-5" />
                         </a>
                       </div>
                     </td>
@@ -276,29 +276,29 @@ const VirtualLibraryPage: React.FC = () => {
 
           {/* List Pagination Footer */}
           {totalPages > 1 && (
-            <div className="p-8 border-t border-outline-variant/10 flex flex-col sm:flex-row justify-between items-center gap-6 bg-surface-container-low/10">
-              <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest opacity-60">
+            <div className="p-6 md:p-8 border-t border-outline-variant/10 flex flex-col sm:flex-row justify-between items-center gap-6 bg-surface-container-low/10">
+              <span className="text-[9px] md:text-[10px] font-black text-primary font-headline uppercase tracking-widest opacity-60">
                 Mostrando {paginatedBooks.length} de {filteredBooks.length} obras
               </span>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
+                  className="p-2.5 md:p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
                 >
-                  <ChevronLeft className="w-5 h-5 text-primary" />
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 </button>
-                <div className="bg-white px-6 py-3 rounded-2xl border border-outline-variant/10 shadow-inner">
-                   <span className="text-[10px] font-black text-primary font-headline uppercase tracking-widest">
-                     Página {currentPage} de {totalPages}
+                <div className="bg-white px-4 md:px-6 py-2.5 md:py-3 rounded-2xl border border-outline-variant/10 shadow-inner">
+                   <span className="text-[9px] md:text-[10px] font-black text-primary font-headline uppercase tracking-widest">
+                     {currentPage} / {totalPages}
                    </span>
                 </div>
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
+                  className="p-2.5 md:p-3 rounded-2xl bg-white border border-outline-variant/10 disabled:opacity-30 hover:bg-primary/5 transition-all shadow-sm"
                 >
-                  <ChevronRight className="w-5 h-5 text-primary" />
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 </button>
               </div>
             </div>
@@ -311,17 +311,17 @@ const VirtualLibraryPage: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
           <div className="relative bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
-            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
+            <div className="p-6 md:p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
               <div>
-                <h3 className="text-2xl font-black text-primary font-headline tracking-tighter uppercase">Nueva Obra</h3>
-                <p className="text-[10px] font-black text-secondary uppercase tracking-widest mt-1">Carga de material bibliográfico</p>
+                <h3 className="text-xl md:text-2xl font-black text-primary font-headline tracking-tighter uppercase">Nueva Obra</h3>
+                <p className="text-[9px] md:text-[10px] font-black text-secondary uppercase tracking-widest mt-1">Carga de material bibliográfico</p>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white rounded-full transition-colors">
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white rounded-full transition-colors shrink-0">
                 <X className="w-6 h-6 text-primary" />
               </button>
             </div>
             
-            <form onSubmit={handleAddBook} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar">
+            <form onSubmit={handleAddBook} className="p-6 md:p-8 space-y-6 max-h-[75vh] md:max-h-[70vh] overflow-y-auto no-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Título de la Obra</label>
@@ -399,15 +399,15 @@ const VirtualLibraryPage: React.FC = () => {
       )}
 
       {/* 4. Scripture Block */}
-      <section className="max-w-4xl mx-auto pt-16">
-        <div className="bg-white p-10 md:p-14 rounded-[3rem] border-l-8 border-secondary shadow-premium relative overflow-hidden group">
-          <Quote className="absolute right-8 top-8 w-24 h-24 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
-          <p className="text-xl md:text-3xl italic font-body text-primary leading-relaxed relative z-10 selection:bg-secondary/20">
+      <section className="max-w-4xl mx-auto pt-8 md:pt-16">
+        <div className="bg-white p-8 md:p-14 rounded-[2.5rem] md:rounded-[3rem] border-l-8 border-secondary shadow-premium relative overflow-hidden group">
+          <Quote className="absolute right-8 top-8 w-16 h-16 md:w-24 md:h-24 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
+          <p className="text-lg md:text-3xl italic font-body text-primary leading-relaxed relative z-10 selection:bg-secondary/20">
             "La exposición de tus palabras alumbra; hace entender a los simples."
           </p>
           <div className="flex items-center gap-4 mt-8 relative z-10">
-             <div className="w-12 h-px bg-secondary/40" />
-             <p className="font-black text-secondary text-sm uppercase tracking-[0.4em] leading-none">Salmos 119:130</p>
+             <div className="w-8 md:w-12 h-px bg-secondary/40" />
+             <p className="font-black text-secondary text-xs md:text-sm uppercase tracking-[0.4em] leading-none">Salmos 119:130</p>
           </div>
         </div>
       </section>

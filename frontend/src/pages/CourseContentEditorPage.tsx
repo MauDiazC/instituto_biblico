@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import { parseUTC } from '../utils/date';
 
 interface Tarea {
   id?: number;
@@ -75,7 +76,7 @@ const CourseContentEditorPage: React.FC = () => {
           setSelectedBlockId(clase.bloque_id.toString());
           
           if (clase.scheduled_at) {
-            const dateObj = new Date(clase.scheduled_at);
+            const dateObj = parseUTC(clase.scheduled_at);
             setScheduledAt(dateObj.toISOString().split('T')[0]);
             setScheduledTime(dateObj.toTimeString().split(' ')[0].substring(0, 5));
           }
@@ -193,7 +194,10 @@ const CourseContentEditorPage: React.FC = () => {
         if (isLive) {
           classData.status = 'SCHEDULED';
           if (scheduledAt && scheduledTime) {
-            classData.scheduled_at = new Date(`${scheduledAt}T${scheduledTime}:00`).toISOString();
+            // Reemplazamos el guion por barra para mejor compatibilidad de parseo local
+            // y concatenamos fecha + hora. Al no tener 'Z', el navegador lo trata como hora local.
+            const localDateTimeStr = `${scheduledAt.replace(/-/g, '/')} ${scheduledTime}`;
+            classData.scheduled_at = new Date(localDateTimeStr).toISOString();
           }
         } else {
           classData.status = 'RECORDED';

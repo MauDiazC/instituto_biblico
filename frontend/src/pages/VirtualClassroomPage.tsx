@@ -240,14 +240,17 @@ const VirtualClassroomPage: React.FC = () => {
                 orientation: "landscape",
               },
             },
+            layout: {
+              type: "GRID",
+              priority: "SPEAKER",
+              gridSize: 4,
+            },
+            changeLayout: true, // Permitir que los alumnos cambien de vista si lo desean
             participantCanLeave: true,
             joinScreen: {
               visible: true, // Ayuda a inicializar correctamente los streams antes de entrar
               title: clase.title,
               meetingUrl: window.location.href,
-            },
-            mainArea: {
-              layout: "GRID", // Forzar grid para ver a todos
             },
             brandingEnabled: true,
             brandName: "Sacred Archive",

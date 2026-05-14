@@ -225,8 +225,10 @@ const VirtualClassroomPage: React.FC = () => {
             screenShareEnabled: true,
             whiteboardEnabled: true,
             raiseHandEnabled: true,
-            recordingEnabled: isTeacher,
-            recordingWebhookUrl: "", 
+            recording: {
+              enabled: isTeacher,
+              webhookUrl: "",
+            },
             participantCanLeave: true,
             brandingEnabled: true,
             brandName: "Sacred Archive",

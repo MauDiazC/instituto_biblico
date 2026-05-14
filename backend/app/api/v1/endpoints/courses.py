@@ -68,7 +68,7 @@ async def get_or_create_videosdk_room(
         exp = iat + 3600 # 1 hora de validez
         payload = {
             "apikey": settings.VIDEOSDK_API_KEY,
-            "permissions": ["allow_join", "allow_mod"],
+            "permissions": ["allow_join", "allow_mod", "allow_recording"],
             "iat": iat,
             "exp": exp,
             "version": 2

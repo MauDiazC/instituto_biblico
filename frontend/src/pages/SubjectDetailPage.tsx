@@ -71,15 +71,12 @@ const SubjectDetailPage: React.FC = () => {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         },
-        // Force no-cache to ensure we get the latest DB state
         cache: 'no-store'
       });
 
       if (!response.ok) throw new Error('Error fetching materia');
       
       const data = await response.json();
-      
-      // Update state and timestamp to force React to consider it a fresh update
       setMateria(data);
       setLastUpdate(new Date().toLocaleTimeString());
       
@@ -104,7 +101,6 @@ const SubjectDetailPage: React.FC = () => {
       
       initFetch();
 
-      // Realtime subscription: More aggressive catch-all
       const channel = supabase
         .channel(`course-realtime-${id}`)
         .on('postgres_changes', { 
@@ -119,7 +115,6 @@ const SubjectDetailPage: React.FC = () => {
           console.log(`REALTIME-STATUS: ${status}`);
         });
 
-      // BLINDED POLLING: Every 3 seconds during testing to ensure state transitions are captured
       const interval = setInterval(() => {
         fetchMateria(true);
       }, 3000);
@@ -140,18 +135,18 @@ const SubjectDetailPage: React.FC = () => {
   }
 
   if (!materia) {
-    return <div className="text-center py-20">Materia no encontrada</div>;
+    return <div className="text-center py-20 font-headline font-bold text-primary uppercase tracking-widest">Materia no encontrada</div>;
   }
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       {/* Hero Header */}
-      <div className="mb-12">
-        <div className="flex justify-between items-start mb-6">
-          <nav className="flex items-center gap-2 text-on-surface-variant text-xs font-label uppercase tracking-widest">
+      <div className="mb-10 md:mb-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <nav className="flex items-center gap-2 text-on-surface-variant text-[10px] font-label uppercase tracking-widest">
             <span>Mis Cursos</span>
             <ChevronRight className="w-3 h-3" />
-            <span className="text-primary font-bold">{materia.name}</span>
+            <span className="text-primary font-black truncate max-w-[150px] md:max-w-none">{materia.name}</span>
           </nav>
           {isTeacher && (
             <button 
@@ -160,23 +155,23 @@ const SubjectDetailPage: React.FC = () => {
                 await fetchMateria(true);
               }}
               disabled={isSyncing}
-              className="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-container-high text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95 disabled:opacity-50"
             >
               {isSyncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-              {isSyncing ? 'Sincronizando...' : 'Sincronizar Grabaciones'}
+              {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
             </button>
           )}
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black font-headline text-primary mb-4 leading-none">{materia.name}</h1>
-            <p className="text-on-surface-variant text-lg max-w-xl leading-relaxed">{materia.description}</p>
-            <p className="text-[9px] text-outline mt-2 font-mono opacity-50 uppercase tracking-tighter italic">Sincronización activa: {lastUpdate}</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="max-w-2xl min-w-0">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black font-headline text-primary mb-4 leading-none uppercase tracking-tight break-words">{materia.name}</h1>
+            <p className="text-on-surface-variant text-sm md:text-lg max-w-xl leading-relaxed opacity-80">{materia.description}</p>
+            <p className="text-[8px] text-outline mt-3 font-mono opacity-40 uppercase tracking-tighter italic">Sincronización activa: {lastUpdate}</p>
           </div>
           {!isTeacher && (
-            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient w-full md:w-72 border border-outline-variant/10">
+            <div className="bg-white p-6 rounded-[2rem] shadow-ambient w-full md:w-72 border border-outline-variant/10">
               <div className="flex justify-between items-end mb-3">
-                <span className="text-xs font-label font-bold text-on-surface-variant uppercase tracking-tighter">Tu Progreso</span>
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Tu Progreso</span>
                 <span className="text-2xl font-black font-headline text-primary">{materia.progress || 0}%</span>
               </div>
               <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden">
@@ -190,139 +185,154 @@ const SubjectDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-12">
         <div className="lg:col-span-8 space-y-6">
           {materia.bloques.map((bloque, idx) => (
-            <div key={bloque.id} className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/10 shadow-sm">
-              <div className="flex items-center justify-between p-6 bg-surface-container-low/30">
+            <div key={bloque.id} className="bg-white rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm">
+              <div className="flex items-center justify-between p-5 md:p-6 bg-surface-container-low/30">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold font-headline">
+                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-black font-headline text-sm shadow-md">
                     {(idx + 1).toString().padStart(2, '0')}
                   </div>
                   <div>
-                    <h3 className="font-headline font-bold text-primary">{bloque.name}</h3>
-                    <p className="text-xs text-on-surface-variant">{bloque.clases.length} Clases disponibles</p>
+                    <h3 className="font-headline font-black text-primary uppercase text-sm md:text-base tracking-tight">{bloque.name}</h3>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{bloque.clases.length} Clases</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6 space-y-4">
+              <div className="p-4 md:p-6 space-y-3">
                 {bloque.clases.map(clase => (
                   <div 
                     key={clase.id} 
-                    className={`flex items-center gap-4 p-4 rounded-xl transition-all border ${
+                    className={twMerge(
+                      "flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl transition-all border",
                       clase.status === 'LIVE' 
-                      ? 'bg-primary/5 border-primary/20 ring-2 ring-primary/5' 
-                      : 'bg-surface-container-low border-transparent hover:border-outline-variant/20'
-                    }`}
+                      ? 'bg-primary/5 border-primary/20 ring-4 ring-primary/5' 
+                      : 'bg-surface-container-low/40 border-transparent hover:border-outline-variant/10 hover:bg-white hover:shadow-md'
+                    )}
                   >
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      clase.status === 'LIVE' ? 'bg-primary text-white shadow-lg' : 'bg-surface-container-high text-primary'
-                    }`}>
-                      {clase.status === 'LIVE' ? <Video className="w-6 h-6 animate-pulse" /> : <PlayCircle className="w-6 h-6 opacity-40" />}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm text-primary truncate">{clase.title}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        {clase.status === 'LIVE' && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className={twMerge(
+                        "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                        clase.status === 'LIVE' ? 'bg-primary text-white shadow-lg' : 'bg-white text-primary border border-outline-variant/10'
+                      )}>
+                        {clase.status === 'LIVE' ? <Video className="w-6 h-6 animate-pulse" /> : <PlayCircle className="w-6 h-6 opacity-40" />}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-black text-xs md:text-sm text-primary uppercase tracking-tight truncate">{clase.title}</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          {clase.status === 'LIVE' && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+                              </span>
+                              <span className="text-[8px] font-black text-error uppercase tracking-widest">EN VIVO</span>
+                            </div>
+                          )}
+                          {clase.status === 'RECORDED' && (
+                            <span className={twMerge(
+                              "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                              clase.video_url ? "bg-secondary/10 text-secondary" : "bg-surface-container-highest text-outline"
+                            )}>
+                              {clase.video_url ? 'GRABADA' : 'FINALIZADA'}
                             </span>
-                            <span className="text-[10px] font-black text-error uppercase tracking-widest">CLASE EN VIVO</span>
-                          </div>
-                        )}
-                        {clase.status === 'RECORDED' && (
-                          <span className={twMerge(
-                            "text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
-                            clase.video_url ? "bg-secondary-fixed/50 text-secondary" : "bg-surface-container-highest text-outline"
-                          )}>
-                            {clase.video_url ? 'GRABADA' : 'FINALIZADA'}
+                          )}
+                          {clase.status === 'PROCESSING' && (
+                            <span className="text-[8px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">PROCESANDO</span>
+                          )}
+                          {(clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
+                            <span className="text-[8px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
+                          )}
+                          <span className="text-[8px] md:text-[9px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">
+                            {clase.status === 'LIVE' ? '¡Únete ahora!' : formatToLocal(clase.scheduled_at)}
                           </span>
-                        )}
-                        {clase.status === 'PROCESSING' && (
-                          <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">PROCESANDO</span>
-                        )}
-                        {(clase.status === 'SCHEDULED' || clase.status === 'PLANNED') && (
-                          <span className="text-[9px] font-black bg-surface-container-highest text-outline px-2 py-0.5 rounded-full uppercase tracking-widest">PROGRAMADA</span>
-                        )}
-                        <span className="text-[10px] text-on-surface-variant font-medium">
-                          {clase.status === 'LIVE' ? '¡Únete ahora mismo!' : formatToLocal(clase.scheduled_at)}
-                        </span>
+                        </div>
                       </div>
                     </div>
 
-                    {clase.status === 'LIVE' ? (
-                      <button 
-                        onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
-                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
-                      >
-                        ENTRAR EN VIVO
-                      </button>
-                    ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && clase.video_url ? (
-                      <button 
-                        onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
-                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-primary hover:bg-primary/5"
-                      >
-                        VER GRABACIÓN
-                      </button>
-                    ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && !clase.video_url ? (
-                      <button 
-                        disabled
-                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-outline opacity-60 cursor-not-allowed flex items-center gap-2"
-                      >
-                        <Clock className="w-3 h-3" />
-                        EN PROCESO
-                      </button>
-                    ) : (
-                      <button 
-                        disabled
-                        className="px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all text-outline opacity-40 cursor-not-allowed"
-                      >
-                        PRÓXIMAMENTE
-                      </button>
-                    )}
+                    <div className="w-full sm:w-auto">
+                      {clase.status === 'LIVE' ? (
+                        <button 
+                          onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-container active:scale-95"
+                        >
+                          ENTRAR
+                        </button>
+                      ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && clase.video_url ? (
+                        <button 
+                          onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-white text-primary border border-primary/10 hover:bg-primary/5 active:scale-95 shadow-sm"
+                        >
+                          VER CLASE
+                        </button>
+                      ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && !clase.video_url ? (
+                        <button 
+                          disabled
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-outline opacity-50 cursor-not-allowed flex items-center justify-center gap-2 bg-surface-container"
+                        >
+                          <Clock className="w-3 h-3" />
+                          PROCESANDO
+                        </button>
+                      ) : (
+                        <button 
+                          disabled
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-outline opacity-30 cursor-not-allowed bg-surface-container"
+                        >
+                          ESPERAR
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {bloque.clases.length === 0 && (
-                   <p className="text-center py-4 text-xs text-on-surface-variant italic">No hay clases registradas en este módulo.</p>
+                   <p className="text-center py-6 text-[10px] text-on-surface-variant italic font-medium uppercase tracking-widest opacity-40">No hay clases registradas aún.</p>
                 )}
               </div>
             </div>
           ))}
 
           {/* Scripture Block */}
-          <div className="p-10 bg-surface-container-highest rounded-2xl border-l-4 border-secondary relative overflow-hidden">
-            <Quote className="absolute right-6 top-6 w-16 h-16 text-secondary/5" />
-            <p className="text-xl font-body italic text-primary leading-relaxed mb-4 relative z-10">
+          <div className="p-6 md:p-10 bg-surface-container-highest/50 rounded-[2.5rem] border-l-8 border-secondary relative overflow-hidden group">
+            <Quote className="absolute right-6 top-6 w-16 h-16 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
+            <p className="text-lg md:text-xl font-body italic text-primary leading-relaxed mb-6 relative z-10 selection:bg-secondary/20">
               "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
             </p>
-            <p className="text-sm font-headline font-bold text-secondary uppercase tracking-widest relative z-10">— 2 Timoteo 2:15</p>
+            <div className="flex items-center gap-3 relative z-10">
+               <div className="w-8 h-px bg-secondary/30" />
+               <p className="text-[10px] md:text-xs font-black text-secondary uppercase tracking-[0.3em]">2 Timoteo 2:15</p>
+            </div>
           </div>
         </div>
 
-        <aside className="lg:col-span-4 space-y-8">
-          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/15 shadow-sm">
-            <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-8">Información del Curso</h4>
-            <div className="space-y-6">
-               <div className="flex items-start gap-4">
-                  <Library className="w-5 h-5 text-secondary flex-shrink-0" />
+        <aside className="lg:col-span-4 space-y-6 md:space-y-8">
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-outline-variant/10 shadow-sm">
+            <h4 className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+               <div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Información del Curso
+            </h4>
+            <div className="space-y-6 md:space-y-8">
+               <div className="flex items-start gap-4 group">
+                  <div className="p-3 bg-secondary/5 rounded-xl group-hover:bg-secondary/10 transition-colors">
+                    <Library className="w-5 h-5 text-secondary flex-shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-xs font-bold text-primary font-headline">Recursos Digitales</p>
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed mt-1">Guías de estudio y bibliografía descargable en cada lección.</p>
+                    <p className="text-xs font-black text-primary font-headline uppercase tracking-tight">Recursos Digitales</p>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed mt-1 opacity-70">Guías de estudio y bibliografía descargable en cada lección.</p>
                   </div>
                </div>
-               <div className="flex items-start gap-4">
-                  <Video className="w-5 h-5 text-secondary flex-shrink-0" />
+               <div className="flex items-start gap-4 group">
+                  <div className="p-3 bg-primary/5 rounded-xl group-hover:bg-primary/10 transition-colors">
+                    <Video className="w-5 h-5 text-primary flex-shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-xs font-bold text-primary font-headline">Clases en Vivo</p>
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed mt-1">Participación interactiva y resolución de dudas en tiempo real.</p>
+                    <p className="text-xs font-black text-primary font-headline uppercase tracking-tight">Clases en Vivo</p>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed mt-1 opacity-70">Participación interactiva y resolución de dudas en tiempo real.</p>
                   </div>
                </div>
             </div>
           </div>
         </aside>
       </div>
-    </>
+    </div>
   );
 };
 

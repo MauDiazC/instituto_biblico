@@ -374,13 +374,14 @@ const VirtualClassroomPage: React.FC = () => {
 
       <div className="max-w-full mx-auto">
         {/* MAIN VIDEO AREA - CINEMA MODE */}
-        <section className="bg-black w-full flex justify-center border-b border-white/5">
-          <div className="w-full max-w-full aspect-video h-[60vh] md:h-[82vh] relative shadow-2xl overflow-hidden">
+        <section className="bg-black w-full flex justify-center border-b border-white/5 overflow-hidden">
+          <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
               <iframe 
                 src={`${clase.room_url}${clase.room_url.includes('?') ? '&' : '?'}sidebar=1&tbar=1`} 
                 allow="camera; microphone; fullscreen; display-capture; autoplay" 
-                className="absolute inset-0 w-full h-full border-0" 
+                className="absolute inset-0 w-full h-full border-0 m-0 p-0" 
+                style={{ width: '100%', height: '100%', border: 'none' }}
               />
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">

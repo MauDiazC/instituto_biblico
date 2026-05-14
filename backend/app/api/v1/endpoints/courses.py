@@ -76,7 +76,6 @@ async def get_or_create_daily_room(
                     "enable_emoji_reactions": True,
                     "enable_hand_raising": True,
                     "enable_screenshare": True,
-                    "user_video_max_height": 1080,
                     "lang": "es"
                 }
             }

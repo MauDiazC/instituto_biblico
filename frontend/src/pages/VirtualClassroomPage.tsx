@@ -200,10 +200,10 @@ const VirtualClassroomPage: React.FC = () => {
       }
 
       const meeting = new VideoSDKMeeting();
-      const config = {
+      const config: any = {
         name: isTeacher ? "Docente" : "Estudiante",
         meetingId: clase.room_url,
-        apiKey: apiKey as string,
+        apiKey: apiKey,
         containerId: "videosdk-container",
         micEnabled: true,
         webcamEnabled: true,
@@ -214,12 +214,12 @@ const VirtualClassroomPage: React.FC = () => {
         whiteboardEnabled: true,
         raiseHandEnabled: true,
         recordingEnabled: true,
-        recordingWebhookUrl: "", // Optional
+        recordingWebhookUrl: "", 
         participantCanLeave: true,
         brandingEnabled: true,
         brandName: "Sacred Archive",
         poweredBy: false,
-        primaryColor: "#0066cc", // Adjust to match theme
+        primaryColor: "#0066cc",
         realtimeTranscription: {
           enabled: false,
           visible: false,

@@ -173,15 +173,17 @@ const SubjectDetailPage: React.FC = () => {
             <p className="text-on-surface-variant text-lg max-w-xl leading-relaxed">{materia.description}</p>
             <p className="text-[9px] text-outline mt-2 font-mono opacity-50 uppercase tracking-tighter italic">Sincronización activa: {lastUpdate}</p>
           </div>
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient w-full md:w-72 border border-outline-variant/10">
-            <div className="flex justify-between items-end mb-3">
-              <span className="text-xs font-label font-bold text-on-surface-variant uppercase tracking-tighter">Tu Progreso</span>
-              <span className="text-2xl font-black font-headline text-primary">{materia.progress || 0}%</span>
+          {!isTeacher && (
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-ambient w-full md:w-72 border border-outline-variant/10">
+              <div className="flex justify-between items-end mb-3">
+                <span className="text-xs font-label font-bold text-on-surface-variant uppercase tracking-tighter">Tu Progreso</span>
+                <span className="text-2xl font-black font-headline text-primary">{materia.progress || 0}%</span>
+              </div>
+              <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+                <div className="h-full bg-secondary transition-all duration-1000 ease-out" style={{ width: `${materia.progress || 0}%` }}></div>
+              </div>
             </div>
-            <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden">
-              <div className="h-full bg-secondary transition-all duration-1000 ease-out" style={{ width: `${materia.progress || 0}%` }}></div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

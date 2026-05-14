@@ -62,6 +62,7 @@ async def get_or_create_videosdk_room(
 
     async with httpx.AsyncClient() as client:
         # Create a room in VideoSDK
+        print(f"VIDEOSDK: Creating room for class {clase.id}")
         response = await client.post(
             "https://api.videosdk.live/v2/rooms",
             headers={
@@ -74,13 +75,22 @@ async def get_or_create_videosdk_room(
         )
         
         if response.status_code != 200 and response.status_code != 201:
-            raise HTTPException(status_code=500, detail=f"Error creating VideoSDK room: {response.text}")
+            error_detail = response.text
+            print(f"VIDEOSDK ERROR: {response.status_code} - {error_detail}")
+            raise HTTPException(status_code=500, detail=f"Error creating VideoSDK room: {error_detail}")
 
         room_data = response.json()
-        clase.room_url = room_data["roomId"]
+        meeting_id = room_data.get("roomId")
+        
+        if not meeting_id:
+             print(f"VIDEOSDK ERROR: No roomId in response: {room_data}")
+             raise HTTPException(status_code=500, detail="Invalid response from VideoSDK")
+
+        clase.room_url = meeting_id
         clase.status = ClassStatus.LIVE
         db.commit()
         db.refresh(clase)
+        print(f"VIDEOSDK: Room created successfully: {meeting_id}")
         
     return clase
 

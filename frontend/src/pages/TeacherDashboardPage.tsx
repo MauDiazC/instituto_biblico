@@ -17,12 +17,14 @@ interface LiveClass {
   id: number;
   title: string;
   scheduled_at: string;
-  status?: string;
+  status: string;
   bloque?: {
-    materia_id: number;
-  } | {
-    materia_id: number;
-  }[];
+    materia?: {
+      id: number;
+      name: string;
+    };
+    materia_id?: number;
+  };
 }
 
 const getApiUrl = () => {
@@ -43,6 +45,7 @@ const TeacherDashboardPage: React.FC = () => {
   const [totalStudents, setTotalStudents] = useState(0);
   const [pendingSubmissions, setPendingSubmissions] = useState(0);
   const [nextClass, setNextClass] = useState<LiveClass | null>(null);
+  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
   const [timeLeft, setTimeLeft] = useState({ hours: '00', mins: '00', secs: '00' });
   const [isLive, setIsLive] = useState(false);
 
@@ -90,24 +93,34 @@ const TeacherDashboardPage: React.FC = () => {
         
         const { data: clases, error: clasesError } = await supabase
           .from('clases')
-          .select('id, title, scheduled_at, status, bloque:bloques(materia_id)')
+          .select('id, title, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
           .gt('scheduled_at', twelveHoursAgo)
           .order('scheduled_at', { ascending: true });
 
         if (clasesError) throw clasesError;
         if (clases && clases.length > 0) {
-          // Prioritize: LIVE > upcoming SCHEDULED > most recent RECORDED
-          const liveClass = clases.find(c => c.status === 'LIVE');
+          // 1. Identify all live classes in the academy
+          const liveList = clases.filter(c => c.status === 'LIVE');
+          setLiveClasses(liveList as any);
+
+          // 2. Identify the next scheduled class (either in the future, or scheduled in the last 12 hours but not yet live)
           const nextScheduled = clases.find(c => c.status === 'SCHEDULED' && parseUTC(c.scheduled_at).getTime() > Date.now());
+          const currentScheduled = clases.find(c => c.status === 'SCHEDULED');
           
-          const selected = liveClass || nextScheduled || clases[clases.length - 1];
-          setNextClass(selected);
+          const selected = nextScheduled || currentScheduled || (liveList.length === 0 ? clases[clases.length - 1] : null);
+          setNextClass(selected as any);
           
-          const startTime = parseUTC(selected.scheduled_at).getTime();
-          const now = Date.now();
-          
-          if (selected.status === 'LIVE' || (selected.status === 'SCHEDULED' && startTime <= now)) {
-            setIsLive(true);
+          if (selected) {
+            const startTime = parseUTC(selected.scheduled_at).getTime();
+            const now = Date.now();
+            
+            if (selected.status === 'LIVE' || (selected.status === 'SCHEDULED' && startTime <= now)) {
+              setIsLive(true);
+            } else {
+              setIsLive(false);
+            }
+          } else {
+            setIsLive(false);
           }
         }
 
@@ -184,7 +197,7 @@ const TeacherDashboardPage: React.FC = () => {
         throw new Error(errorData.detail || `Error del servidor (${response.status})`);
       }
       
-      const materiaId = (nextClass as any).bloque?.materia_id || 1;
+      const materiaId = (nextClass as any).bloque?.materia?.id || (nextClass as any).bloque?.materia_id || 1;
       navigate(`/dashboard/courses/${materiaId}/lessons/${nextClass.id}`);
     } catch (error) {
       console.error('CRITICAL: handleStartClass failed:', error);
@@ -285,55 +298,97 @@ const TeacherDashboardPage: React.FC = () => {
 
         {/* Right Sidebar Column */}
         <div className="space-y-8">
-          {/* 4. Live Session Hub */}
-          <div className="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-premium">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div className="relative z-10">
-              <p className="text-secondary-fixed-dim text-xs uppercase tracking-widest font-bold mb-2">
-                {isLive ? 'Transmisión en Curso' : 'Próxima Clase en Vivo'}
-              </p>
-              <h3 className="text-xl font-bold font-headline mb-4">{nextClass ? nextClass.title : 'No hay transmisiones'}</h3>
+          {/* 4. Live Session Hub - Active Live Classes */}
+          {liveClasses.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error"></span>
+                </span>
+                <p className="text-primary font-black font-headline text-xs uppercase tracking-widest leading-none">
+                  Transmisiones En Vivo
+                </p>
+              </div>
               
-              {isLive ? (
-                <div className="bg-white/10 rounded-xl p-6 mb-6 flex flex-col items-center justify-center backdrop-blur-md border border-white/10 animate-pulse">
-                  <div className="flex items-center gap-2 text-secondary mb-1">
-                    <span className="w-2 h-2 bg-secondary rounded-full"></span>
-                    <p className="text-xs font-black uppercase tracking-widest font-headline">En Vivo</p>
-                  </div>
-                  <p className="text-sm font-body text-white/80">La clase ya ha comenzado</p>
-                </div>
-              ) : (
-                <div className="bg-white/10 rounded-xl p-4 mb-6 flex justify-around backdrop-blur-md border border-white/10">
-                  <div className="text-center font-headline">
-                    <p className="text-2xl font-black">{timeLeft.hours}</p>
-                    <p className="text-[10px] uppercase font-label">Horas</p>
-                  </div>
-                  <div className="text-2xl font-black">:</div>
-                  <div className="text-center font-headline">
-                    <p className="text-2xl font-black">{timeLeft.mins}</p>
-                    <p className="text-[10px] uppercase font-label">Mins</p>
-                  </div>
-                  <div className="text-2xl font-black">:</div>
-                  <div className="text-center font-headline">
-                    <p className="text-2xl font-black">{timeLeft.secs}</p>
-                    <p className="text-[10px] uppercase font-label">Segs</p>
-                  </div>
-                </div>
-              )}
+              {liveClasses.map((live) => {
+                const liveMateriaId = live.bloque?.materia?.id || 1;
+                const liveMateriaName = live.bloque?.materia?.name || 'Materia';
+                return (
+                  <div key={live.id} className="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-premium">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
+                    <div className="relative z-10">
+                      <p className="text-secondary-fixed-dim text-[10px] uppercase tracking-widest font-black mb-1">
+                        {liveMateriaName}
+                      </p>
+                      <h3 className="text-lg font-bold font-headline mb-4 line-clamp-2">{live.title}</h3>
+                      
+                      <div className="bg-white/10 rounded-xl p-4 mb-4 flex flex-col items-center justify-center backdrop-blur-md border border-white/10">
+                        <p className="text-xs font-body text-white/80 text-center">La clase ha comenzado y está transmitiendo en vivo.</p>
+                      </div>
 
-              <button 
-                disabled={!nextClass || (nextClass as any).status === 'RECORDED'}
-                onClick={handleStartClass}
-                className={`w-full ${nextClass && (nextClass as any).status !== 'RECORDED' ? 'bg-secondary' : 'bg-white/10 cursor-not-allowed'} text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2`}
-              >
-                <Video className="w-5 h-5" />
-                {nextClass ? (
-                  (nextClass as any).status === 'RECORDED' ? 'TRANSMISIÓN TERMINADA' :
-                  (isLive ? 'UNIRSE AHORA' : 'INICIAR TRANSMISIÓN')
-                ) : 'SIN DIRECTOS'}
-              </button>
+                      <button 
+                        onClick={() => navigate(`/dashboard/courses/${liveMateriaId}/lessons/${live.id}`)}
+                        className="w-full bg-secondary text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <Video className="w-5 h-5 animate-pulse" />
+                        UNIRSE AHORA
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
+
+          {/* 4b. Live Session Hub - Next Scheduled Class (Only if not currently LIVE) */}
+          {nextClass && nextClass.status !== 'LIVE' && nextClass.status !== 'RECORDED' && (
+            <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 shadow-sm">
+              <p className="text-primary font-black font-headline text-xs uppercase tracking-widest mb-4">
+                Próxima Clase Programada
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold mb-1">
+                    {nextClass.bloque?.materia?.name || 'Materia'}
+                  </p>
+                  <h3 className="text-lg font-bold font-headline text-primary line-clamp-2">{nextClass.title}</h3>
+                </div>
+
+                {isLive ? (
+                  <div className="bg-secondary/10 text-secondary border border-secondary/20 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <p className="text-xs font-black uppercase tracking-wider font-headline">Listo para Iniciar</p>
+                    <p className="text-[10px] text-center mt-1">El horario programado ha llegado.</p>
+                  </div>
+                ) : (
+                  <div className="bg-surface-container-highest/30 rounded-xl p-4 flex justify-around border border-outline-variant/5">
+                    <div className="text-center font-headline">
+                      <p className="text-2xl font-black text-primary">{timeLeft.hours}</p>
+                      <p className="text-[9px] uppercase font-label text-on-surface-variant">Horas</p>
+                    </div>
+                    <div className="text-2xl font-black text-primary/30">:</div>
+                    <div className="text-center font-headline">
+                      <p className="text-2xl font-black text-primary">{timeLeft.mins}</p>
+                      <p className="text-[9px] uppercase font-label text-on-surface-variant">Mins</p>
+                    </div>
+                    <div className="text-2xl font-black text-primary/30">:</div>
+                    <div className="text-center font-headline">
+                      <p className="text-2xl font-black text-primary">{timeLeft.secs}</p>
+                      <p className="text-[9px] uppercase font-label text-on-surface-variant">Segs</p>
+                    </div>
+                  </div>
+                )}
+
+                <button 
+                  onClick={handleStartClass}
+                  className="w-full bg-primary text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-primary-container active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-primary/10"
+                >
+                  <Video className="w-5 h-5" />
+                  {isLive ? 'INICIAR TRANSMISIÓN' : 'PREPARAR CLASE'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 5. Recent Submissions Quick View */}
           <div className="bg-surface-container-low p-6 rounded-2xl shadow-sm">

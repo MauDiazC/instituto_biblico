@@ -273,12 +273,19 @@ const SubjectDetailPage: React.FC = () => {
                           <Clock className="w-3 h-3" />
                           PROCESANDO
                         </button>
+                      ) : isTeacher && (clase.status === 'SCHEDULED' || clase.status === 'PLANNED') ? (
+                        <button 
+                          onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-secondary text-white shadow-lg shadow-secondary/20 hover:bg-[#5d4201] active:scale-95"
+                        >
+                          PREPARAR
+                        </button>
                       ) : (
                         <button 
                           disabled
                           className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-outline opacity-30 cursor-not-allowed bg-surface-container"
                         >
-                          ESPERAR
+                          PROXIMAMENTE
                         </button>
                       )}
                     </div>

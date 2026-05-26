@@ -299,47 +299,57 @@ const TeacherDashboardPage: React.FC = () => {
         {/* Right Sidebar Column */}
         <div className="space-y-8">
           {/* 4. Live Session Hub - Active Live Classes */}
-          {liveClasses.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              {liveClasses.length > 0 ? (
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error"></span>
                 </span>
-                <p className="text-primary font-black font-headline text-xs uppercase tracking-widest leading-none">
-                  Transmisiones En Vivo
-                </p>
-              </div>
-              
-              {liveClasses.map((live) => {
-                const liveMateriaId = live.bloque?.materia?.id || 1;
-                const liveMateriaName = live.bloque?.materia?.name || 'Materia';
-                return (
-                  <div key={live.id} className="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-premium">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="relative z-10">
-                      <p className="text-secondary-fixed-dim text-[10px] uppercase tracking-widest font-black mb-1">
-                        {liveMateriaName}
-                      </p>
-                      <h3 className="text-lg font-bold font-headline mb-4 line-clamp-2">{live.title}</h3>
-                      
-                      <div className="bg-white/10 rounded-xl p-4 mb-4 flex flex-col items-center justify-center backdrop-blur-md border border-white/10">
-                        <p className="text-xs font-body text-white/80 text-center">La clase ha comenzado y está transmitiendo en vivo.</p>
-                      </div>
-
-                      <button 
-                        onClick={() => navigate(`/dashboard/courses/${liveMateriaId}/lessons/${live.id}`)}
-                        className="w-full bg-secondary text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2"
-                      >
-                        <Video className="w-5 h-5 animate-pulse" />
-                        UNIRSE AHORA
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              ) : (
+                <span className="w-2.5 h-2.5 rounded-full bg-outline/40"></span>
+              )}
+              <p className="text-primary font-black font-headline text-xs uppercase tracking-widest leading-none">
+                Transmisiones En Vivo
+              </p>
             </div>
-          )}
+            
+            {liveClasses.length > 0 ? (
+              <div className="space-y-4">
+                {liveClasses.map((live) => {
+                  const liveMateriaId = live.bloque?.materia?.id || 1;
+                  const liveMateriaName = live.bloque?.materia?.name || 'Materia';
+                  return (
+                    <div key={live.id} className="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-premium">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
+                      <div className="relative z-10">
+                        <p className="text-secondary-fixed-dim text-[10px] uppercase tracking-widest font-black mb-1">
+                          {liveMateriaName}
+                        </p>
+                        <h3 className="text-lg font-bold font-headline mb-4 line-clamp-2">{live.title}</h3>
+                        
+                        <div className="bg-white/10 rounded-xl p-4 mb-4 flex flex-col items-center justify-center backdrop-blur-md border border-white/10">
+                          <p className="text-xs font-body text-white/80 text-center">La clase ha comenzado y está transmitiendo en vivo.</p>
+                        </div>
+
+                        <button 
+                          onClick={() => navigate(`/dashboard/courses/${liveMateriaId}/lessons/${live.id}`)}
+                          className="w-full bg-secondary text-white py-3 rounded-xl font-black font-headline tracking-tight transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <Video className="w-5 h-5 animate-pulse" />
+                          UNIRSE AHORA
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-on-surface-variant font-body italic text-center py-6">
+                No hay clases en vivo en este momento.
+              </p>
+            )}
+          </div>
 
           {/* 4b. Live Session Hub - Next Scheduled Class (Only if not currently LIVE) */}
           {nextClass && nextClass.status !== 'LIVE' && nextClass.status !== 'RECORDED' && (

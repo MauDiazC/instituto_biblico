@@ -258,14 +258,14 @@ const SubjectDetailPage: React.FC = () => {
                         >
                           ENTRAR
                         </button>
-                      ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && clase.video_url ? (
+                      ) : clase.status === 'RECORDED' ? (
                         <button 
                           onClick={() => navigate(`/dashboard/courses/${materia.id}/lessons/${clase.id}`)}
                           className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-white text-primary border border-primary/10 hover:bg-primary/5 active:scale-95 shadow-sm"
                         >
-                          VER CLASE
+                          {clase.video_url ? 'VER CLASE' : 'VER DETALLES'}
                         </button>
-                      ) : (clase.status === 'RECORDED' || clase.status === 'PROCESSING') && !clase.video_url ? (
+                      ) : clase.status === 'PROCESSING' ? (
                         <button 
                           disabled
                           className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-outline opacity-50 cursor-not-allowed flex items-center justify-center gap-2 bg-surface-container"

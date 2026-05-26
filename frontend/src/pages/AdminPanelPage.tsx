@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   Edit, 
@@ -17,9 +18,9 @@ import {
   ChevronRight,
   GraduationCap,
   Award,
-  Filter
+  Filter,
+  Video
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { twMerge } from 'tailwind-merge';
@@ -41,8 +42,10 @@ const getApiUrl = () => {
 const VITE_API_URL = getApiUrl();
 
 const AdminPanelPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [liveClasses, setLiveClasses] = useState<any[]>([]);
   
   // Stats & Global Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,8 +80,30 @@ const AdminPanelPage: React.FC = () => {
     }
   };
 
+  const fetchLiveClasses = async () => {
+    try {
+      const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+      const { data: clases, error: clasesError } = await supabase
+        .from('clases')
+        .select('id, title, scheduled_at, status, bloque:bloques(materia:materias(id, name))')
+        .eq('status', 'LIVE')
+        .gt('scheduled_at', twelveHoursAgo)
+        .order('scheduled_at', { ascending: true });
+
+      if (!clasesError && clases) {
+        setLiveClasses(clases);
+      }
+    } catch (err) {
+      console.error('Error fetching live classes for admin:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchLiveClasses();
+
+    const interval = setInterval(fetchLiveClasses, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleToggleStatus = async (user: UserData) => {
@@ -322,28 +347,74 @@ const AdminPanelPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Dual Lists */}
-      <div className="space-y-12">
-         <UserTable title="Personal Docente" data={teachers} icon={Award} />
-         <UserTable title="Comunidad Estudiantil" data={students} icon={GraduationCap} />
-         
-         {admins.length > 0 && (
-           <div className="opacity-60">
-             <UserTable title="Administradores" data={admins} icon={ShieldCheck} />
-           </div>
-         )}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - User lists */}
+        <div className="lg:col-span-2 space-y-12">
+           <UserTable title="Personal Docente" data={teachers} icon={Award} />
+           <UserTable title="Comunidad Estudiantil" data={students} icon={GraduationCap} />
+           
+           {admins.length > 0 && (
+             <div className="opacity-60">
+               <UserTable title="Administradores" data={admins} icon={ShieldCheck} />
+             </div>
+           )}
 
-      {/* Scripture Block */}
-      <div className="mt-16 max-w-3xl">
-        <div className="bg-white p-10 rounded-[3rem] border-l-8 border-secondary shadow-premium relative overflow-hidden group">
-          <Quote className="absolute right-8 top-8 w-24 h-24 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
-          <p className="text-xl md:text-2xl italic font-body text-primary leading-relaxed relative z-10">
-            "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
-          </p>
-          <div className="flex items-center gap-4 mt-8 relative z-10">
-             <div className="w-12 h-px bg-secondary/40" />
-             <p className="font-black text-secondary text-sm uppercase tracking-[0.4em] leading-none">2 Timoteo 2:15</p>
+           {/* Scripture Block */}
+           <div className="mt-16 max-w-3xl">
+             <div className="bg-white p-10 rounded-[3rem] border-l-8 border-secondary shadow-premium relative overflow-hidden group">
+               <Quote className="absolute right-8 top-8 w-24 h-24 text-secondary/5 group-hover:scale-110 transition-transform duration-700" />
+               <p className="text-xl md:text-2xl italic font-body text-primary leading-relaxed relative z-10">
+                 "Procura con diligencia presentarte a Dios aprobado, como obrero que no tiene de qué avergonzarse, que usa bien la palabra de verdad."
+               </p>
+               <div className="flex items-center gap-4 mt-8 relative z-10">
+                  <div className="w-12 h-px bg-secondary/40" />
+                  <p className="font-black text-secondary text-sm uppercase tracking-[0.4em] leading-none">2 Timoteo 2:15</p>
+               </div>
+             </div>
+           </div>
+        </div>
+
+        {/* Right Column - Live Classes widget */}
+        <div className="space-y-6">
+          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 shadow-sm">
+             <div className="flex items-center gap-2 mb-4">
+                <span className="w-2.5 h-2.5 rounded-full bg-outline/40"></span>
+                <p className="text-primary font-black font-headline text-xs uppercase tracking-widest leading-none">
+                  Transmisiones En Vivo
+                </p>
+             </div>
+             
+             {liveClasses.length > 0 ? (
+                <div className="space-y-4">
+                  {liveClasses.map((live) => {
+                    const liveMateriaId = live.bloque?.materia?.id || 1;
+                    const liveMateriaName = live.bloque?.materia?.name || 'Materia';
+                    return (
+                      <div key={live.id} className="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-premium">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-full -mr-16 -mt-16"></div>
+                        <div className="relative z-10">
+                          <p className="text-secondary-fixed-dim text-[10px] uppercase tracking-widest font-black mb-1">
+                            {liveMateriaName}
+                          </p>
+                          <h3 className="text-sm font-bold font-headline mb-4 line-clamp-2">{live.title}</h3>
+                          
+                          <button 
+                            onClick={() => navigate(`/dashboard/courses/${liveMateriaId}/lessons/${live.id}`)}
+                            className="w-full bg-secondary text-white py-2.5 rounded-xl font-black font-headline text-[10px] uppercase tracking-wider transition-all hover:bg-on-secondary-container active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <Video className="w-4 h-4 animate-pulse" />
+                            UNIRSE AHORA
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+             ) : (
+                <p className="text-xs text-on-surface-variant font-body italic text-center py-6">
+                  No hay clases en vivo en este momento.
+                </p>
+             )}
           </div>
         </div>
       </div>

@@ -242,9 +242,9 @@ const VirtualClassroomPage: React.FC = () => {
               },
             },
             layout: {
-              type: "SPOTLIGHT", // Regresar a Speaker View como estaba originalmente
+              type: "GRID", // Cambiado a GRID para que los alumnos puedan ver a todos sus compañeros en el en vivo
               priority: "SPEAKER",
-              gridSize: 4,
+              gridSize: 12, // Ampliar el tamaño de la cuadrícula para ver más participantes a la vez
             },
             changeLayout: true, // Permitir que los alumnos cambien de vista si lo desean
             participantCanLeave: true,

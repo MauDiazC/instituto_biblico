@@ -44,7 +44,7 @@ const RegisterPage: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        alert("¡Registro exitoso! Por favor, revisa tu correo electrónico para confirmar tu cuenta antes de iniciar sesión.");
+        alert("¡Registro exitoso! Ya puedes iniciar sesión con tus credenciales.");
         navigate('/auth/login');
       }
     } catch (err: any) {

@@ -6,6 +6,7 @@ import uuid
 class UserService:
     @staticmethod
     def get_or_create_user(db: Session, token_data: TokenData, raw_payload: dict) -> User:
+        # 1. Search by current Supabase Auth UUID (sub)
         user = db.query(User).filter(User.id == token_data.sub).first()
         
         if not user:
@@ -24,7 +25,19 @@ class UserService:
             # Determine provider
             app_metadata = raw_payload.get("app_metadata", {})
             provider = app_metadata.get("provider", "email")
-            
+
+            # 2. Check if an orphaned record with the same email exists from a previous signup
+            existing_by_email = db.query(User).filter(User.email == token_data.email).first()
+            if existing_by_email:
+                try:
+                    db.delete(existing_by_email)
+                    db.commit()
+                except Exception as e:
+                    print(f"DEBUG: Could not delete orphaned user by email: {e}")
+                    db.rollback()
+                    existing_by_email.email = f"deleted_{existing_by_email.id}_{existing_by_email.email}"
+                    db.commit()
+
             user = User(
                 id=token_data.sub,
                 email=token_data.email,

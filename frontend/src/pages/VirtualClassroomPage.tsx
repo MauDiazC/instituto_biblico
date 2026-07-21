@@ -72,6 +72,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [recordingToast, setRecordingToast] = useState<string | null>(null);
   const [dailyToken, setDailyToken] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -206,6 +207,23 @@ const VirtualClassroomPage: React.FC = () => {
     window.addEventListener("message", handleDailyMessage);
     return () => window.removeEventListener("message", handleDailyMessage);
   }, []);
+
+  useEffect(() => {
+    if (clase?.status === 'LIVE' && clase.room_url && clase.room_url.includes('daily.co')) {
+      const isTeacherUser = role === 'teacher' || role === 'admin';
+      
+      // If teacher, wait until we have the token
+      if (isTeacherUser && !dailyToken) {
+        return; // Wait for token
+      }
+      
+      if (!iframeSrc) {
+        const url = dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url;
+        setIframeSrc(url);
+        console.log("DAILY IFRAME SRC SET:", url);
+      }
+    }
+  }, [clase, dailyToken, iframeSrc, role]);
 
   useEffect(() => {
     if (lessonId) {
@@ -586,12 +604,19 @@ const VirtualClassroomPage: React.FC = () => {
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
               clase.room_url.includes('daily.co') ? (
-                <iframe
-                  src={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
-                  title={clase.title}
-                  className="w-full h-full border-0 min-h-[400px]"
-                  allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
-                />
+                iframeSrc ? (
+                  <iframe
+                    src={iframeSrc}
+                    title={clase.title}
+                    className="w-full h-full border-0 min-h-[400px]"
+                    allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-secondary mb-4" />
+                    <p className="font-headline font-bold text-lg mb-2">Conectando a la sala...</p>
+                  </div>
+                )
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
                   <Loader2 className="w-10 h-10 animate-spin text-secondary mb-4" />

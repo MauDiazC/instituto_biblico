@@ -70,6 +70,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [isEnding, setIsEnding] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [recordingToast, setRecordingToast] = useState<string | null>(null);
+  const [dailyToken, setDailyToken] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -126,6 +127,23 @@ const VirtualClassroomPage: React.FC = () => {
         return { ...classData, is_completed: !!completion };
       });
 
+      // Fetch Daily meeting token if teacher and class is LIVE
+      if ((role === 'teacher' || role === 'admin') && classData.status === 'LIVE' && classData.room_url && classData.room_url.includes('daily.co') && !dailyToken) {
+        try {
+          const tokenRes = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/token`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          });
+          if (tokenRes.ok) {
+            const tokenData = await tokenRes.json();
+            if (tokenData.token) {
+              setDailyToken(tokenData.token);
+            }
+          }
+        } catch (tokenErr) {
+          console.error('Error fetching Daily token:', tokenErr);
+        }
+      }
+
       if (classData.video_url) {
         setRecordingLink(classData.video_url);
       } else if (classData.status === 'RECORDED' && !recordingLink) {
@@ -163,7 +181,7 @@ const VirtualClassroomPage: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [lessonId, userSubmission, recordingLink]);
+  }, [lessonId, userSubmission, recordingLink, dailyToken, role]);
 
   useEffect(() => {
     if (lessonId) {
@@ -508,14 +526,14 @@ const VirtualClassroomPage: React.FC = () => {
               clase.room_url.includes('daily.co') ? (
                 <div className="relative w-full h-full">
                   <iframe
-                    src={clase.room_url}
+                    src={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
                     title={clase.title}
                     className="w-full h-full border-0 min-h-[400px]"
                     allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
                   />
                   <div className="absolute top-4 right-4 z-20">
                     <a
-                      href={clase.room_url}
+                      href={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2.5 bg-secondary text-white font-headline font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium hover:scale-105 active:scale-95 transition-all flex items-center gap-2"

@@ -115,6 +115,45 @@ async def end_class(
     db.commit()
     return {"status": "success"}
 
+@router.get("/classes/{class_id}/token")
+async def get_daily_meeting_token(
+    class_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
+):
+    clase = db.query(Clase).filter(Clase.id == class_id).first()
+    if not clase or not clase.room_url:
+        raise HTTPException(status_code=404, detail="Active room not found")
+        
+    if "daily.co" not in clase.room_url:
+        return {"token": None}
+        
+    room_name = clase.room_url.split("/")[-1]
+    
+    if not settings.DAILY_API_KEY:
+        raise HTTPException(status_code=500, detail="Daily API key missing")
+        
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.daily.co/v1/meeting-tokens",
+            headers={
+                "Authorization": f"Bearer {settings.DAILY_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "properties": {
+                    "room_name": room_name,
+                    "is_owner": True,
+                    "user_name": current_user.full_name or "Docente"
+                }
+            }
+        )
+        if response.status_code == 200:
+            token_data = response.json()
+            return {"token": token_data.get("token")}
+            
+    return {"token": None}
+
 @router.get("/classes/{class_id}/recording-link")
 async def get_recording_link(
     class_id: int,

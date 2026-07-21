@@ -513,7 +513,20 @@ const VirtualClassroomPage: React.FC = () => {
                   allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
                 />
               ) : (
-                <div id="videosdk-container" className="w-full h-full" />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
+                  <Loader2 className="w-10 h-10 animate-spin text-secondary mb-4" />
+                  <p className="font-headline font-bold text-lg mb-2">Actualizando sala a Daily.co...</p>
+                  <p className="text-xs opacity-60 max-w-md">Esta clase requiere actualizar su sala al nuevo proveedor Daily.co.</p>
+                  {isTeacher && (
+                    <button
+                      onClick={handleStartClass}
+                      disabled={isStarting}
+                      className="mt-6 px-6 py-3 bg-secondary text-white rounded-xl font-headline font-bold text-xs uppercase tracking-widest shadow-md hover:scale-105 active:scale-95 transition-all"
+                    >
+                      {isStarting ? 'Iniciando Daily.co...' : 'ACTIVAR SALA DAILY.CO'}
+                    </button>
+                  )}
+                </div>
               )
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">

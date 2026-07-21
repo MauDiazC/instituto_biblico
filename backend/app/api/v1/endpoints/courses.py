@@ -154,6 +154,44 @@ async def get_daily_meeting_token(
             
     return {"token": None}
 
+@router.post("/classes/{class_id}/recording/start")
+async def start_daily_recording(
+    class_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
+):
+    clase = db.query(Clase).filter(Clase.id == class_id).first()
+    if not clase or not clase.room_url:
+        raise HTTPException(status_code=404, detail="Active room not found")
+        
+    if "daily.co" not in clase.room_url:
+        raise HTTPException(status_code=400, detail="Recording only supported on Daily.co rooms")
+        
+    # Extracción ultra-segura del nombre de la sala (removiendo parámetros y barras finales)
+    room_url_clean = clase.room_url.split("?")[0].rstrip("/")
+    room_name = room_url_clean.split("/")[-1]
+    
+    print(f"DAILY RECORDING: Attempting to start recording for room_name={room_name} (class_id={class_id})")
+    
+    if not settings.DAILY_API_KEY:
+        raise HTTPException(status_code=500, detail="Daily API key missing")
+        
+    async with httpx.AsyncClient() as client:
+        # Start cloud recording in Daily.co
+        response = await client.post(
+            f"https://api.daily.co/v1/rooms/{room_name}/recordings/start",
+            headers={
+                "Authorization": f"Bearer {settings.DAILY_API_KEY}",
+                "Content-Type": "application/json"
+            }
+        )
+        print(f"DAILY RECORDING RESPONSE: status={response.status_code}, response={response.text}")
+        
+        if response.status_code == 200 or response.status_code == 201:
+            return {"status": "success", "message": "Recording started"}
+            
+        raise HTTPException(status_code=response.status_code, detail=f"Daily API error: {response.text}")
+
 @router.get("/classes/{class_id}/recording-link")
 async def get_recording_link(
     class_id: int,

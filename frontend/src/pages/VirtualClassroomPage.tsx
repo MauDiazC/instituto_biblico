@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle, ArrowLeft, Info, ListChecks, HelpCircle as HelpIcon } from 'lucide-react';
+import { Play, CheckCircle, FileText, HelpCircle, MessageSquare, Lock, PlayCircle, Volume2, Loader2, Video, Send, Clock, X, Download, Upload, CheckCircle2, Square, MessageCircle, AlertCircle, ArrowLeft, Info, ListChecks, HelpCircle as HelpIcon, ExternalLink } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { getInitials } from '../utils/avatars';
 import { formatToLocal } from '../utils/date';
@@ -506,12 +506,25 @@ const VirtualClassroomPage: React.FC = () => {
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
               clase.room_url.includes('daily.co') ? (
-                <iframe
-                  src={clase.room_url}
-                  title={clase.title}
-                  className="w-full h-full border-0 min-h-[400px]"
-                  allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
-                />
+                <div className="relative w-full h-full">
+                  <iframe
+                    src={clase.room_url}
+                    title={clase.title}
+                    className="w-full h-full border-0 min-h-[400px]"
+                    allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
+                  />
+                  <div className="absolute top-4 right-4 z-20">
+                    <a
+                      href={clase.room_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 bg-secondary text-white font-headline font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      ABRIR EN PANTALLA COMPLETA
+                    </a>
+                  </div>
+                </div>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
                   <Loader2 className="w-10 h-10 animate-spin text-secondary mb-4" />

@@ -186,16 +186,19 @@ const VirtualClassroomPage: React.FC = () => {
 
   useEffect(() => {
     const handleDailyMessage = (e: MessageEvent) => {
-      if (e.data && e.data.type === "daily-js-event") {
-        console.log("Daily event received:", e.data.event);
-        if (e.data.event === "recording-started") {
-          setIsRecording(true);
-          setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
-          setTimeout(() => setRecordingToast(null), 8000);
-        } else if (e.data.event === "recording-stopped") {
-          setIsRecording(false);
-          setRecordingToast("Grabación detenida.");
-          setTimeout(() => setRecordingToast(null), 5000);
+      if (e.data) {
+        const action = e.data.action || e.data.event;
+        if (action) {
+          console.log("Daily action/event received:", action);
+          if (action === "recording-started") {
+            setIsRecording(true);
+            setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+            setTimeout(() => setRecordingToast(null), 8000);
+          } else if (action === "recording-stopped") {
+            setIsRecording(false);
+            setRecordingToast("Grabación detenida.");
+            setTimeout(() => setRecordingToast(null), 5000);
+          }
         }
       }
     };
@@ -396,6 +399,15 @@ const VirtualClassroomPage: React.FC = () => {
       if (response.ok) {
         setIsRecording(true);
         setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");
+        // Fallback para ocultar el mensaje de "Preparando..." si no llega el postMessage del iframe
+        setTimeout(() => {
+          setRecordingToast(prev => {
+            if (prev && prev.includes("Preparando")) {
+              return null;
+            }
+            return prev;
+          });
+        }, 8000);
       } else {
         const errData = await response.json().catch(() => ({}));
         alert(`Error al iniciar grabación: ${errData.detail || "Error al conectar con la grabación"}`);

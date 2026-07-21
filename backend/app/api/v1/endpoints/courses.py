@@ -40,7 +40,7 @@ async def create_book(
     return libro
 
 @router.post("/classes/{class_id}/room", response_model=ClaseRead)
-async def get_or_create_videosdk_room(
+async def get_or_create_daily_room(
     class_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(RoleChecker([Role.ADMIN, Role.TEACHER]))
@@ -49,66 +49,56 @@ async def get_or_create_videosdk_room(
     if not clase:
         raise HTTPException(status_code=404, detail="Class not found")
     
-    # Si ya tiene una room_url, verificamos que no sea una URL vieja de Daily.co
-    if clase.room_url:
-        if "daily.co" not in clase.room_url:
-            return clase
-        # Si es de Daily, la ignoramos y generamos una nueva de VideoSDK
-        clase.room_url = None
+    # Si ya tiene una room_url válida de Daily.co, la retornamos
+    if clase.room_url and "daily.co" in clase.room_url:
+        clase.status = ClassStatus.LIVE
+        db.commit()
+        return clase
 
-    if not settings.VIDEOSDK_API_KEY or not settings.VIDEOSDK_SECRET:
+    if not settings.DAILY_API_KEY:
         raise HTTPException(
             status_code=500, 
-            detail="VideoSDK configuration missing. Please add VIDEOSDK_API_KEY and VIDEOSDK_SECRET to your .env file."
+            detail="DAILY_API_KEY configuration missing. Please add DAILY_API_KEY to your .env file."
         )
 
-    # Generamos el JWT Token requerido por VideoSDK
-    try:
-        iat = int(time.time())
-        exp = iat + 3600 # 1 hora de validez
-        payload = {
-            "apikey": settings.VIDEOSDK_API_KEY,
-            "permissions": ["allow_join", "allow_mod", "allow_recording"],
-            "iat": iat,
-            "exp": exp,
-            "version": 2
-        }
-        token = jwt.encode(payload, settings.VIDEOSDK_SECRET, algorithm="HS256")
-    except Exception as e:
-        print(f"JWT Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error generating auth token")
-
     async with httpx.AsyncClient() as client:
-        # Create a room in VideoSDK
-        print(f"VIDEOSDK: Creating room for class {clase.id}")
+        # Create a room in Daily.co
+        print(f"DAILY.CO: Creating room for class {clase.id}")
         response = await client.post(
-            "https://api.videosdk.live/v2/rooms",
+            "https://api.daily.co/v1/rooms",
             headers={
-                "Authorization": token, 
+                "Authorization": f"Bearer {settings.DAILY_API_KEY}", 
                 "Content-Type": "application/json"
             },
             json={
-                "customRoomId": f"class-{clase.id}"
+                "name": f"class-{clase.id}-{int(time.time())}",
+                "properties": {
+                    "enable_chat": True,
+                    "enable_screenshare": True,
+                    "start_video_off": True,
+                    "start_audio_off": True,
+                    "exp": int(time.time()) + 86400  # 24 horas de validez
+                }
             }
         )
         
         if response.status_code != 200 and response.status_code != 201:
             error_detail = response.text
-            print(f"VIDEOSDK ERROR: {response.status_code} - {error_detail}")
-            raise HTTPException(status_code=500, detail=f"Error creating VideoSDK room: {error_detail}")
+            print(f"DAILY ERROR: {response.status_code} - {error_detail}")
+            raise HTTPException(status_code=500, detail=f"Error creating Daily.co room: {error_detail}")
 
         room_data = response.json()
-        meeting_id = room_data.get("roomId")
+        room_url = room_data.get("url")
         
-        if not meeting_id:
-             print(f"VIDEOSDK ERROR: No roomId in response: {room_data}")
-             raise HTTPException(status_code=500, detail="Invalid response from VideoSDK")
+        if not room_url:
+             print(f"DAILY ERROR: No url in response: {room_data}")
+             raise HTTPException(status_code=500, detail="Invalid response from Daily.co")
 
-        clase.room_url = meeting_id
+        clase.room_url = room_url
         clase.status = ClassStatus.LIVE
         db.commit()
         db.refresh(clase)
-        print(f"VIDEOSDK: Room created successfully: {meeting_id}")
+        print(f"DAILY.CO: Room created successfully: {room_url}")
         
     return clase
 

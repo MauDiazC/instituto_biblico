@@ -194,7 +194,7 @@ const VirtualClassroomPage: React.FC = () => {
 
   useEffect(() => {
     // Wait for class and auth to be ready
-    if (!authLoading && clase?.status === 'LIVE' && clase.room_url && !videoSdkInitialized.current) {
+    if (!authLoading && clase?.status === 'LIVE' && clase.room_url && !clase.room_url.includes('daily.co') && !videoSdkInitialized.current) {
       const apiKey = import.meta.env.VITE_VIDEOSDK_API_KEY;
       
       if (!apiKey) {
@@ -505,7 +505,16 @@ const VirtualClassroomPage: React.FC = () => {
         <section className="bg-black w-full flex justify-center border-b border-white/5 overflow-hidden">
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
-              <div id="videosdk-container" className="w-full h-full" />
+              clase.room_url.includes('daily.co') ? (
+                <iframe
+                  src={clase.room_url}
+                  title={clase.title}
+                  className="w-full h-full border-0 min-h-[400px]"
+                  allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
+                />
+              ) : (
+                <div id="videosdk-container" className="w-full h-full" />
+              )
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">
                 <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />

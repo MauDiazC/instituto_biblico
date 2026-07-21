@@ -18,15 +18,20 @@ celery_app.conf.update(
 )
 
 @celery_app.task
-def update_class_video_task(clase_id: int, video_url: str):
+def update_class_video_task(clase_id: int, video_url: str, duration: int = 999999):
     """
     Background task to update a class video URL.
     Only sets status to RECORDED and clears room_url if class is not currently LIVE.
+    If class already has a video, prevents overwriting it with short accidental recordings (< 10s).
     """
     db = SessionLocal()
     try:
         clase = db.query(Clase).filter(Clase.id == clase_id).first()
         if clase:
+            if clase.video_url and duration < 10:
+                print(f"CELERY: Skipping overwriting video_url for class {clase_id} with short recording ({duration}s)")
+                return f"Skipped: Class {clase_id} has existing video and new duration is too short ({duration}s)"
+                
             clase.video_url = video_url
             if clase.status != ClassStatus.LIVE:
                 clase.status = ClassStatus.RECORDED

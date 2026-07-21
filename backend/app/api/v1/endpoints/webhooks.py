@@ -25,12 +25,13 @@ async def video_webhook(
         data = payload.get("data", {})
         room_name = data.get("room_name")
         download_link = data.get("download_link")
+        duration = data.get("duration", 999999) # Default to a high number if not present
         
         if room_name and room_name.startswith("class-"):
             try:
                 class_id = int(room_name.split("-")[1])
-                update_class_video_task.delay(class_id, download_link)
-                return {"status": "success", "message": f"Class {class_id} queued for update"}
+                update_class_video_task.delay(class_id, download_link, int(duration))
+                return {"status": "success", "message": f"Class {class_id} queued for update with duration {duration}s"}
             except (IndexError, ValueError):
                 pass
 

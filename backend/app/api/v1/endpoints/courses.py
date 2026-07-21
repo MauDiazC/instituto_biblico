@@ -444,18 +444,33 @@ async def sync_recordings(
                 )
                 if response.status_code == 200:
                     recordings = response.json().get("data", [])
+                    longest_recordings = {}
+                    
                     for rec in recordings:
                         room_name = rec.get("room_name", "")
                         if room_name.startswith("class-"):
                             try:
                                 class_id = int(room_name.split("-")[1])
-                                clase = db.query(Clase).filter(Clase.id == class_id).first()
-                                if clase and clase.status != ClassStatus.LIVE and (clase.status != ClassStatus.RECORDED or not clase.video_url):
-                                    clase.status = ClassStatus.RECORDED
-                                    clase.external_video_id = rec.get("id")
-                                    db.commit()
-                                    daily_count += 1
-                            except (IndexError, ValueError): continue
+                                duration = rec.get("duration", 0)
+                                rec_id = rec.get("id")
+                                
+                                # Track the longest recording for this class_id
+                                if class_id not in longest_recordings or duration > longest_recordings[class_id]["duration"]:
+                                    longest_recordings[class_id] = {
+                                        "id": rec_id,
+                                        "duration": duration
+                                    }
+                            except (IndexError, ValueError):
+                                continue
+                                
+                    # Apply the longest recording for each class to the database
+                    for class_id, rec_info in longest_recordings.items():
+                        clase = db.query(Clase).filter(Clase.id == class_id).first()
+                        if clase and clase.status != ClassStatus.LIVE:
+                            clase.status = ClassStatus.RECORDED
+                            clase.external_video_id = rec_info["id"]
+                            db.commit()
+                            daily_count += 1
         except Exception as e:
             print(f"Daily Sync Error: {str(e)}")
 

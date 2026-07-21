@@ -75,6 +75,7 @@ async def get_or_create_daily_room(
                 "properties": {
                     "enable_chat": True,
                     "enable_screenshare": True,
+                    "enable_recording": "cloud",
                     "exp": int(time.time()) + 86400  # 24 horas de validez
                 }
             }

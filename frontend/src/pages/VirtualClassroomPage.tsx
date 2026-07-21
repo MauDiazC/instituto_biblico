@@ -130,7 +130,7 @@ const VirtualClassroomPage: React.FC = () => {
       });
 
       // Fetch Daily meeting token if teacher and class is LIVE
-      if ((role === 'teacher' || role === 'admin') && classData.status === 'LIVE' && classData.room_url && classData.room_url.includes('daily.co') && !dailyToken) {
+      if ((role === 'teacher' || role === 'admin') && classData.status === 'LIVE' && classData.room_url && classData.room_url.includes('daily.co') && dailyToken === null) {
         try {
           const tokenRes = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/token`, {
             headers: { 'Authorization': `Bearer ${session?.access_token}` }
@@ -139,10 +139,15 @@ const VirtualClassroomPage: React.FC = () => {
             const tokenData = await tokenRes.json();
             if (tokenData.token) {
               setDailyToken(tokenData.token);
+            } else {
+              setDailyToken("NO_TOKEN");
             }
+          } else {
+            setDailyToken("NO_TOKEN");
           }
         } catch (tokenErr) {
           console.error('Error fetching Daily token:', tokenErr);
+          setDailyToken("NO_TOKEN");
         }
       }
 
@@ -187,20 +192,24 @@ const VirtualClassroomPage: React.FC = () => {
 
   useEffect(() => {
     const handleDailyMessage = (e: MessageEvent) => {
-      if (e.data) {
-        const action = e.data.action || e.data.event;
-        if (action) {
-          console.log("Daily action/event received:", action);
-          if (action === "recording-started") {
-            setIsRecording(true);
-            setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
-            setTimeout(() => setRecordingToast(null), 8000);
-          } else if (action === "recording-stopped") {
-            setIsRecording(false);
-            setRecordingToast("Grabación detenida.");
-            setTimeout(() => setRecordingToast(null), 5000);
+      try {
+        if (e && e.data) {
+          const action = e.data.action || e.data.event;
+          if (action) {
+            console.log("Daily action/event received:", action);
+            if (action === "recording-started") {
+              setIsRecording(true);
+              setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+              setTimeout(() => setRecordingToast(null), 8000);
+            } else if (action === "recording-stopped") {
+              setIsRecording(false);
+              setRecordingToast("Grabación detenida.");
+              setTimeout(() => setRecordingToast(null), 5000);
+            }
           }
         }
+      } catch (err) {
+        console.error("Error in Daily message handler:", err);
       }
     };
 
@@ -212,13 +221,13 @@ const VirtualClassroomPage: React.FC = () => {
     if (clase?.status === 'LIVE' && clase.room_url && clase.room_url.includes('daily.co')) {
       const isTeacherUser = role === 'teacher' || role === 'admin';
       
-      // If teacher, wait until we have the token
-      if (isTeacherUser && !dailyToken) {
+      // If teacher, wait until we have the token (or the NO_TOKEN fallback)
+      if (isTeacherUser && dailyToken === null) {
         return; // Wait for token
       }
       
       if (!iframeSrc) {
-        const url = dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url;
+        const url = (dailyToken && dailyToken !== "NO_TOKEN") ? `${clase.room_url}?t=${dailyToken}` : clase.room_url;
         setIframeSrc(url);
         console.log("DAILY IFRAME SRC SET:", url);
       }

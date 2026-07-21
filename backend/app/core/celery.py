@@ -20,15 +20,17 @@ celery_app.conf.update(
 @celery_app.task
 def update_class_video_task(clase_id: int, video_url: str):
     """
-    Background task to update a class status to RECORDED and set the video URL.
+    Background task to update a class video URL.
+    Only sets status to RECORDED and clears room_url if class is not currently LIVE.
     """
     db = SessionLocal()
     try:
         clase = db.query(Clase).filter(Clase.id == clase_id).first()
         if clase:
-            clase.status = ClassStatus.RECORDED
             clase.video_url = video_url
-            clase.room_url = None  # Limpiamos el link de la sala en vivo
+            if clase.status != ClassStatus.LIVE:
+                clase.status = ClassStatus.RECORDED
+                clase.room_url = None  # Limpiamos el link de la sala solo si ya finalizó
             db.commit()
             return f"Success: Class {clase_id} updated with video {video_url}"
         return f"Error: Class {clase_id} not found"

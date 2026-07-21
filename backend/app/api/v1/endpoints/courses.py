@@ -384,7 +384,7 @@ async def sync_recordings(
                             try:
                                 class_id = int(room_name.split("-")[1])
                                 clase = db.query(Clase).filter(Clase.id == class_id).first()
-                                if clase and (clase.status != ClassStatus.RECORDED or not clase.video_url):
+                                if clase and clase.status != ClassStatus.LIVE and (clase.status != ClassStatus.RECORDED or not clase.video_url):
                                     clase.status = ClassStatus.RECORDED
                                     clase.external_video_id = rec.get("id")
                                     db.commit()
@@ -458,15 +458,22 @@ async def sync_recordings(
                                 if clase: print(f"VIDEOSDK SYNC: Matched by meetingId: {meeting_id} -> class {clase.id}")
 
                             if clase:
-                                if clase.status != ClassStatus.RECORDED or not clase.video_url:
-                                    print(f"VIDEOSDK SYNC: Updating class {clase.id} with video {file_url}")
-                                    clase.status = ClassStatus.RECORDED
+                                if clase.status != ClassStatus.LIVE:
+                                    if clase.status != ClassStatus.RECORDED or not clase.video_url:
+                                        print(f"VIDEOSDK SYNC: Updating class {clase.id} with video {file_url}")
+                                        clase.status = ClassStatus.RECORDED
+                                        clase.video_url = file_url
+                                        clase.external_video_id = recording_id
+                                        db.commit()
+                                        videosdk_count += 1
+                                    else:
+                                        print(f"VIDEOSDK SYNC: Class {clase.id} already has video, skipping update.")
+                                else:
+                                    # Class is currently LIVE, save video_url for when it ends, but DO NOT interrupt the live session
+                                    print(f"VIDEOSDK SYNC: Class {clase.id} is currently LIVE. Saving video_url without ending session.")
                                     clase.video_url = file_url
                                     clase.external_video_id = recording_id
                                     db.commit()
-                                    videosdk_count += 1
-                                else:
-                                    print(f"VIDEOSDK SYNC: Class {clase.id} already has video, skipping update.")
                             else:
                                 print(f"VIDEOSDK SYNC: No class found for recording {recording_id}")
                         

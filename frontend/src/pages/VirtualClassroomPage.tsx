@@ -71,6 +71,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [recordingToast, setRecordingToast] = useState<string | null>(null);
   const [dailyToken, setDailyToken] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -182,6 +183,26 @@ const VirtualClassroomPage: React.FC = () => {
       if (!silent) setLoading(false);
     }
   }, [lessonId, userSubmission, recordingLink, dailyToken, role]);
+
+  useEffect(() => {
+    const handleDailyMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "daily-js-event") {
+        console.log("Daily event received:", e.data.event);
+        if (e.data.event === "recording-started") {
+          setIsRecording(true);
+          setRecordingToast("¡Grabación Iniciada! Ya puedes comenzar la clase.");
+          setTimeout(() => setRecordingToast(null), 8000);
+        } else if (e.data.event === "recording-stopped") {
+          setIsRecording(false);
+          setRecordingToast("Grabación detenida.");
+          setTimeout(() => setRecordingToast(null), 5000);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleDailyMessage);
+    return () => window.removeEventListener("message", handleDailyMessage);
+  }, []);
 
   useEffect(() => {
     if (lessonId) {
@@ -364,6 +385,29 @@ const VirtualClassroomPage: React.FC = () => {
     }
   };
 
+  const handleStartRecording = async () => {
+    try {
+      setIsStarting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${VITE_API_URL}/courses/classes/${lessonId}/recording/start`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      if (response.ok) {
+        setIsRecording(true);
+        setRecordingToast("Preparando grabación... Espera unos segundos antes de hablar.");
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        alert(`Error al iniciar grabación: ${errData.detail || "Error al conectar con la grabación"}`);
+      }
+    } catch (error: any) {
+      console.error('Error starting recording:', error);
+      alert(`Error de red: ${error.message}`);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   const handleEndClass = async () => {
     if (!window.confirm('¿Deseas finalizar la transmisión?')) return;
     try {
@@ -507,9 +551,15 @@ const VirtualClassroomPage: React.FC = () => {
             </button>
           )}
           {isTeacher && (clase.status === 'LIVE') && (
-            <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
-              <Square className="w-4 h-4 fill-current" /> Finalizar
-            </button>
+            !isRecording ? (
+              <button onClick={handleStartRecording} disabled={isStarting} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 animate-pulse">
+                <Video className="w-4 h-4 text-white" /> Grabar
+              </button>
+            ) : (
+              <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
+                <Square className="w-4 h-4 fill-current" /> Finalizar
+              </button>
+            )
           )}
           <button onClick={handleToggleCompletion} disabled={isCompleting} className={`px-4 py-2 rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 ${clase.is_completed ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
             {clase.is_completed ? <CheckCircle2 className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -524,25 +574,12 @@ const VirtualClassroomPage: React.FC = () => {
           <div className="w-full relative shadow-2xl bg-black h-[60vh] md:h-[85vh]">
             {clase.status === 'LIVE' && clase.room_url ? (
               clase.room_url.includes('daily.co') ? (
-                <div className="relative w-full h-full">
-                  <iframe
-                    src={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
-                    title={clase.title}
-                    className="w-full h-full border-0 min-h-[400px]"
-                    allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
-                  />
-                  <div className="absolute top-4 right-4 z-20">
-                    <a
-                      href={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2.5 bg-secondary text-white font-headline font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      ABRIR EN PANTALLA COMPLETA
-                    </a>
-                  </div>
-                </div>
+                <iframe
+                  src={dailyToken ? `${clase.room_url}?t=${dailyToken}` : clase.room_url}
+                  title={clase.title}
+                  className="w-full h-full border-0 min-h-[400px]"
+                  allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
+                />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
                   <Loader2 className="w-10 h-10 animate-spin text-secondary mb-4" />

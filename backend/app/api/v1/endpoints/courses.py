@@ -227,6 +227,9 @@ async def get_recording_link(
         if download_link:
             # Reemplazar attachment por inline para permitir la reproducción en el reproductor de HTML5
             download_link = download_link.replace("response-content-disposition=attachment", "response-content-disposition=inline")
+            # Añadir hash de extensión .mp4 al final para obligar a Safari a reconocer el tipo de archivo
+            if not download_link.endswith("#.mp4"):
+                download_link += "#.mp4"
             data["download_link"] = download_link
             
         return data

@@ -705,7 +705,10 @@ const VirtualClassroomPage: React.FC = () => {
               )
             ) : (clase.status === 'RECORDED' || clase.status === 'COMPLETED' || clase.status === 'PROCESSING') && finalVideoUrl ? (
               <div className="w-full h-full flex items-center justify-center bg-black">
-                <video src={finalVideoUrl} controls className="w-full h-full object-contain" controlsList="nodownload" playsInline />
+                <video controls className="w-full h-full object-contain" controlsList="nodownload" playsInline preload="auto">
+                  <source src={finalVideoUrl} type="video/mp4" />
+                  Tu navegador no soporta reproducción de video.
+                </video>
               </div>
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-neutral-900/60 text-center p-8">

@@ -1,7 +1,8 @@
 import httpx
 import jwt
 import time
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List
@@ -195,6 +196,7 @@ async def start_daily_recording(
 @router.get("/classes/{class_id}/recording-link")
 async def get_recording_link(
     class_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -210,29 +212,76 @@ async def get_recording_link(
     if not clase.external_video_id:
         raise HTTPException(status_code=400, detail="No recording found for this class")
 
+    # Construir URL absoluta del streaming proxy local
+    base_url = str(request.base_url).rstrip("/")
+    api_prefix = "/api/v1" if "/api/v1" not in base_url else ""
+    stream_url = f"{base_url}{api_prefix}/courses/classes/{class_id}/video-stream"
+    
+    return {"download_link": stream_url}
+
+@router.get("/classes/{class_id}/video-stream")
+async def stream_class_video(
+    class_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    clase = db.query(Clase).filter(Clase.id == class_id).first()
+    if not clase or not clase.external_video_id:
+        raise HTTPException(status_code=404, detail="Recording not found")
+        
     if not settings.DAILY_API_KEY:
         raise HTTPException(status_code=500, detail="Daily.co API Key not configured")
-
+        
     async with httpx.AsyncClient() as client:
+        # 1. Obtener access-link de Daily.co
         response = await client.get(
             f"https://api.daily.co/v1/recordings/{clase.external_video_id}/access-link",
             headers={"Authorization": f"Bearer {settings.DAILY_API_KEY}"}
         )
-        
         if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Error from Daily API: {response.text}")
+            raise HTTPException(status_code=500, detail="Failed to retrieve recording link from Daily")
             
-        data = response.json()
-        download_link = data.get("download_link")
-        if download_link:
-            # Reemplazar attachment por inline para permitir la reproducción en el reproductor de HTML5
-            download_link = download_link.replace("response-content-disposition=attachment", "response-content-disposition=inline")
-            # Añadir hash de extensión .mp4 al final para obligar a Safari a reconocer el tipo de archivo
-            if not download_link.endswith("#.mp4"):
-                download_link += "#.mp4"
-            data["download_link"] = download_link
+        download_url = response.json().get("download_link")
+        if not download_url:
+            raise HTTPException(status_code=404, detail="Download URL not found in Daily response")
             
-        return data
+    # 2. Hacer proxy a S3 con cabeceras de Rango (crítico para Safari y navegadores móviles)
+    headers = {}
+    range_header = request.headers.get("range")
+    if range_header:
+        headers["Range"] = range_header
+        
+    client = httpx.AsyncClient()
+    req = client.build_request("GET", download_url, headers=headers)
+    r = await client.send(req, stream=True)
+    
+    if r.status_code >= 400:
+        await r.aclose()
+        await client.aclose()
+        raise HTTPException(status_code=r.status_code, detail="Error loading video stream from storage")
+        
+    response_headers = {
+        "Accept-Ranges": "bytes",
+        "Content-Type": "video/mp4",
+    }
+    if "Content-Range" in r.headers:
+        response_headers["Content-Range"] = r.headers["Content-Range"]
+    if "Content-Length" in r.headers:
+        response_headers["Content-Length"] = r.headers["Content-Length"]
+        
+    async def stream_generator():
+        try:
+            async for chunk in r.iter_bytes():
+                yield chunk
+        finally:
+            await r.aclose()
+            await client.aclose()
+            
+    return StreamingResponse(
+        stream_generator(),
+        status_code=r.status_code,
+        headers=response_headers
+    )
 
 @router.post("/", response_model=MateriaRead, status_code=status.HTTP_201_CREATED)
 async def create_materia(

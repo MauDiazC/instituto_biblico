@@ -222,7 +222,14 @@ async def get_recording_link(
         if response.status_code != 200:
             raise HTTPException(status_code=500, detail=f"Error from Daily API: {response.text}")
             
-        return response.json()
+        data = response.json()
+        download_link = data.get("download_link")
+        if download_link:
+            # Reemplazar attachment por inline para permitir la reproducción en el reproductor de HTML5
+            download_link = download_link.replace("response-content-disposition=attachment", "response-content-disposition=inline")
+            data["download_link"] = download_link
+            
+        return data
 
 @router.post("/", response_model=MateriaRead, status_code=status.HTTP_201_CREATED)
 async def create_materia(

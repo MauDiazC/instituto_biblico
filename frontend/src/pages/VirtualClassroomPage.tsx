@@ -73,6 +73,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [dailyToken, setDailyToken] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+  const [confirmEnd, setConfirmEnd] = useState(false);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -460,7 +461,6 @@ const VirtualClassroomPage: React.FC = () => {
   };
 
   const handleEndClass = async () => {
-    if (!window.confirm('¿Deseas finalizar la transmisión?')) return;
     try {
       setIsEnding(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -470,7 +470,7 @@ const VirtualClassroomPage: React.FC = () => {
       });
       if (response.ok) {
         setClase(prev => prev ? { ...prev, status: 'RECORDED', room_url: null } : null);
-        navigate(`/dashboard/courses/${clase?.bloque?.materia_id}`);
+        navigate(`/dashboard/courses/${clase?.bloque?.materia_id || id}`);
       }
     } catch (error) {
       console.error('Error ending class:', error);
@@ -607,8 +607,20 @@ const VirtualClassroomPage: React.FC = () => {
                 <Video className="w-4 h-4 text-white" /> Grabar
               </button>
             ) : (
-              <button onClick={handleEndClass} disabled={isEnding} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95">
-                <Square className="w-4 h-4 fill-current" /> Finalizar
+              <button 
+                onClick={() => {
+                  if (confirmEnd) {
+                    handleEndClass();
+                  } else {
+                    setConfirmEnd(true);
+                    setTimeout(() => setConfirmEnd(false), 4000);
+                  }
+                }} 
+                disabled={isEnding} 
+                className={`px-4 py-2 text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 ${confirmEnd ? 'bg-amber-600 hover:bg-amber-700' : 'bg-error'}`}
+              >
+                <Square className="w-4 h-4 fill-current" /> 
+                {confirmEnd ? '¿CONFIRMAR FINALIZAR?' : 'Finalizar'}
               </button>
             )
           )}

@@ -110,3 +110,32 @@ class RoleChecker:
                 detail="The user doesn't have enough privileges"
             )
         return user
+
+def get_current_user_from_token(token_str: str, db: Session) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        header = jwt.get_unverified_header(token_str)
+        alg = header.get("alg")
+        key = get_supabase_public_key() if alg == "ES256" else settings.SUPABASE_JWT_SECRET
+        payload = jwt.decode(
+            token_str,
+            key,
+            algorithms=["ES256", "HS256"],
+            audience="authenticated"
+        )
+        uid = payload.get("sub")
+        email = payload.get("email")
+        if uid is None:
+            raise credentials_exception
+        token_data = TokenData(sub=uuid.UUID(uid), email=email)
+    except Exception as e:
+        print(f"DEBUG: Token validation error: {e}")
+        raise credentials_exception
+        
+    user = user_service.get_or_create_user(db, token_data, payload)
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user

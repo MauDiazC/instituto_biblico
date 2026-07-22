@@ -8,7 +8,7 @@ from sqlalchemy import func
 from typing import List
 from app.core.config import settings
 from app.core.database import get_db
-from app.api.v1.endpoints.auth import get_current_user, RoleChecker
+from app.api.v1.endpoints.auth import get_current_user, RoleChecker, get_current_user_from_token
 from app.models.user import User, Role
 from app.models.course import Materia, Bloque, Clase, Enrollment, ClassStatus, Libro, Tarea, Entrega, Consulta, ConsultaStatus, ClaseCompletada
 from app.schemas.course import (
@@ -212,10 +212,16 @@ async def get_recording_link(
     if not clase.external_video_id:
         raise HTTPException(status_code=400, detail="No recording found for this class")
 
-    # Construir URL absoluta del streaming proxy local
+    # Extraer el token de autorización actual para incluirlo en la URL del stream
+    auth_header = request.headers.get("Authorization")
+    token = ""
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+
+    # Construir URL absoluta del streaming proxy local con el token
     base_url = str(request.base_url).rstrip("/")
     api_prefix = "/api/v1" if "/api/v1" not in base_url else ""
-    stream_url = f"{base_url}{api_prefix}/courses/classes/{class_id}/video-stream"
+    stream_url = f"{base_url}{api_prefix}/courses/classes/{class_id}/video-stream?token={token}"
     
     return {"download_link": stream_url}
 
@@ -223,8 +229,12 @@ async def get_recording_link(
 async def stream_class_video(
     class_id: int,
     request: Request,
+    token: str = Query(...),
     db: Session = Depends(get_db)
 ):
+    # Validar el token antes de permitir la transmisión del video
+    get_current_user_from_token(token, db)
+    
     clase = db.query(Clase).filter(Clase.id == class_id).first()
     if not clase or not clase.external_video_id:
         raise HTTPException(status_code=404, detail="Recording not found")

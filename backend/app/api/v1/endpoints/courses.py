@@ -271,7 +271,7 @@ async def stream_class_video(
         
     async def stream_generator():
         try:
-            async for chunk in r.iter_bytes():
+            async for chunk in r.aiter_bytes():
                 yield chunk
         finally:
             await r.aclose()

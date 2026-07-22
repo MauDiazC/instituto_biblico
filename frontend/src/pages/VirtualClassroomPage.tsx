@@ -74,6 +74,7 @@ const VirtualClassroomPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
 
   const [questions, setQuestions] = useState<Consulta[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -217,6 +218,21 @@ const VirtualClassroomPage: React.FC = () => {
     window.addEventListener("message", handleDailyMessage);
     return () => window.removeEventListener("message", handleDailyMessage);
   }, []);
+
+  useEffect(() => {
+    let timer: any;
+    if (isRecording) {
+      setRecordingSeconds(0);
+      timer = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      setRecordingSeconds(0);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isRecording]);
 
   useEffect(() => {
     // Reset all class-specific states when moving to a new lesson/class page
@@ -388,6 +404,12 @@ const VirtualClassroomPage: React.FC = () => {
     }
   }, [clase, isTeacher, authLoading, role]);
 
+
+  const formatTime = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+  };
 
   const handleToggleCompletion = async () => {
     try {
@@ -602,11 +624,22 @@ const VirtualClassroomPage: React.FC = () => {
             </button>
           )}
           {isTeacher && (clase.status === 'LIVE') && (
-            !isRecording ? (
-              <button onClick={handleStartRecording} disabled={isStarting} className="px-4 py-2 bg-error text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 animate-pulse">
-                <Video className="w-4 h-4 text-white" /> Grabar
-              </button>
-            ) : (
+            <>
+              {isRecording ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600/20 border border-red-500/30 text-red-500 rounded-full font-headline font-bold text-xs uppercase tracking-wider animate-pulse">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                  <span>REC {formatTime(recordingSeconds)}</span>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleStartRecording} 
+                  disabled={isStarting} 
+                  className="px-4 py-2 bg-secondary text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 animate-pulse"
+                >
+                  <Video className="w-4 h-4 text-white" /> Grabar
+                </button>
+              )}
+              
               <button 
                 onClick={() => {
                   if (confirmEnd) {
@@ -619,10 +652,14 @@ const VirtualClassroomPage: React.FC = () => {
                 disabled={isEnding} 
                 className={`px-4 py-2 text-white rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 ${confirmEnd ? 'bg-amber-600 hover:bg-amber-700' : 'bg-error'}`}
               >
-                <Square className="w-4 h-4 fill-current" /> 
-                {confirmEnd ? '¿CONFIRMAR FINALIZAR?' : 'Finalizar'}
+                {isEnding ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Square className="w-4 h-4 fill-current" />
+                )}
+                {confirmEnd ? (isEnding ? 'Finalizando...' : '¿CONFIRMAR?') : 'Finalizar'}
               </button>
-            )
+            </>
           )}
           <button onClick={handleToggleCompletion} disabled={isCompleting} className={`px-4 py-2 rounded-lg font-headline font-bold text-xs transition-all shadow-sm flex items-center gap-2 active:scale-95 ${clase.is_completed ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
             {clase.is_completed ? <CheckCircle2 className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}

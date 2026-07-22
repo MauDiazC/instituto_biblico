@@ -218,6 +218,18 @@ const VirtualClassroomPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Reset all class-specific states when moving to a new lesson/class page
+    setClase(null);
+    setRecordingLink(null);
+    setDailyToken(null);
+    setIframeSrc(null);
+    setIsRecording(false);
+    setSubmission('');
+    setUserSubmission(null);
+    setRecordingToast(null);
+  }, [lessonId]);
+
+  useEffect(() => {
     if (clase?.status === 'LIVE' && clase.room_url && clase.room_url.includes('daily.co')) {
       const isTeacherUser = role === 'teacher' || role === 'admin';
       

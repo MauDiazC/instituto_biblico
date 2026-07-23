@@ -184,6 +184,17 @@ async def start_daily_recording(
             headers={
                 "Authorization": f"Bearer {settings.DAILY_API_KEY}",
                 "Content-Type": "application/json"
+            },
+            json={
+                "width": 1280,
+                "height": 720,
+                "fps": 25,
+                "videoBitrate": 1000000,
+                "audioBitrate": 96000,
+                "layout": {
+                    "preset": "default",
+                    "max_cam_streams": 12
+                }
             }
         )
         print(f"DAILY RECORDING RESPONSE: status={response.status_code}, response={response.text}")
@@ -261,7 +272,7 @@ async def stream_class_video(
     if range_header:
         headers["Range"] = range_header
         
-    client = httpx.AsyncClient()
+    client = httpx.AsyncClient(timeout=None)
     req = client.build_request("GET", download_url, headers=headers)
     r = await client.send(req, stream=True)
     
